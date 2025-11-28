@@ -34,7 +34,7 @@ java {
 
 application {
     // Define the main class for the application.
-    mainClass = "org.example.App"
+    mainClass = "io.github.sasori_256.town_planning.App"
 }
 
 tasks.named<Test>("test") {

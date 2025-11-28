@@ -28,3 +28,11 @@ replay_pid*
 
 # Ignore Gradle build output directory
 build
+
+# IDE specific files
+.project
+.classpath
+.settings/
+bin/
+*.iml
+.idea/

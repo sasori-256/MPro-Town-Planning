@@ -97,4 +97,4 @@
 使用する外部ライブラリ、APIなどを記述します。
 
 * (例: Java標準ライブラリ (Swing, JavaFX) のみ使用)
-* (例: サウンド再生のために `javax.sound.sampled.*` を使用)s
+* (例: サウンド再生のために `javax.sound.sampled.*` を使用)

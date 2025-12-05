@@ -11,7 +11,7 @@ import java.awt.geom.Point2D;
  * ゲームの状態を管理し、イベントを発行する。
  * TODO: Mapの管理をMapModelクラスで行うようにリファクタリングする。
  */
-class GameModel implements Updatable {
+public class GameModel implements Updatable {
   private final EventBus eventBus;
   private final Map<String, GameEntity> tile = new HashMap<>(); // TODO: MapModelクラスに移動する
   private int souls = 100; // 初期ソウル数

@@ -10,7 +10,7 @@ import java.awt.geom.Point2D;
  * 各建物は一意のID、位置情報、建物の種類を持つ。
  * TODO: 一旦abstractにはせず、将来的に必要に応じてサブクラス化する。
  */
-class Building implements GameEntity, Renderable {
+public class Building implements GameEntity, Renderable {
   private final String id;
   private final Point2D position;
   private final BuildingType type;

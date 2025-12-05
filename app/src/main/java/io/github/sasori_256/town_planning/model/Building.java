@@ -26,6 +26,7 @@ public class Building implements GameEntity, Renderable {
    *
    * @return ID
    */
+  @Override
   public String getID() {
     return this.id;
   }

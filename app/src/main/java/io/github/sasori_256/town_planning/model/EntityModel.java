@@ -8,7 +8,7 @@ import java.awt.geom.Point2D;
  * Interfaceの方に定義を置くべきか検討中。
  * TODO: 将来的に必要に応じてサブクラス化するか、インターフェースに統合する。
  */
-abstract class EntityModel {
+public abstract class EntityModel {
   public Point2D worldPos;
 
   public abstract boolean draw();

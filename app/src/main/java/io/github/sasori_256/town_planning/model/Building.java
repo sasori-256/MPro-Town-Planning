@@ -35,6 +35,7 @@ public class Building implements GameEntity, Renderable {
    *
    * @return 位置情報
    */
+  @Override
   public Point2D getPosition() {
     return this.position;
   }

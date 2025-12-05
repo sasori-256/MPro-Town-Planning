@@ -35,7 +35,6 @@ public class GameModel implements Updatable {
    * ex: 10%の確率で人口が増えるなど
    * TODO: 実装する
    *
-   * @return void
    */
   @Override
   public void tick() {

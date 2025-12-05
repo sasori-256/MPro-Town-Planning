@@ -2,7 +2,6 @@ package io.github.sasori_256.town_planning.model;
 
 import io.github.sasori_256.town_planning.core.*;
 import io.github.sasori_256.town_planning.event.*;
-import java.util.*;
 import java.awt.geom.Point2D;
 
 /**

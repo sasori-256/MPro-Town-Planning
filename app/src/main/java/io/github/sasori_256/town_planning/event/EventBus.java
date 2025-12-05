@@ -10,6 +10,7 @@ public class EventBus {
   private final Map<EventType, List<Consumer<Object>>> listeners = new ConcurrentHashMap<>();
 
   public void subscribe(EventType type, Consumer<Object> listener) {
+    listeners.computeIfAbsent(type, k -> new ArrayList<>()).add(listener);
   }
 
   public void publish(EventType type, Object data) {

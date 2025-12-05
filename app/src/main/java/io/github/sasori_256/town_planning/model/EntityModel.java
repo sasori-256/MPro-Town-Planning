@@ -9,8 +9,15 @@ import java.awt.geom.Point2D;
  * TODO: 将来的に必要に応じてサブクラス化するか、インターフェースに統合する。
  */
 public abstract class EntityModel {
-  public Point2D worldPos;
+  private final Point2D worldPos;
 
+  public EntityModel(Point2D worldPos) {
+    this.worldPos = worldPos;
+  }
+
+  public Point2D getWorldPos() {
+    return worldPos;
+  }
   public abstract boolean draw();
 
   public abstract boolean redraw();

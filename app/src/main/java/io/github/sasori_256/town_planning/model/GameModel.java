@@ -21,14 +21,9 @@ public class GameModel implements Updatable {
   }
 
   public boolean addSouls(int amount) {
-    try {
-      this.souls += amount;
-      eventBus.publish(EventType.SOUL_CHANGED, this.souls);
-      return true;
-    } catch (Exception e) {
-      System.err.println("Error adding souls: " + e.getMessage());
-      return false;
-    }
+    this.souls += amount;
+    eventBus.publish(EventType.SOUL_CHANGED, this.souls);
+    return true;
   }
 
   public int getSouls() {

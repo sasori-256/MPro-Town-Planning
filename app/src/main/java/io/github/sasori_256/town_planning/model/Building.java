@@ -45,6 +45,7 @@ public class Building implements GameEntity, Renderable {
    *
    * @return 表示用のシンボル(仮置き)
    */
+  @Override
   public String getDisplaySymbol() {
     return this.type.getSymbol();
   }

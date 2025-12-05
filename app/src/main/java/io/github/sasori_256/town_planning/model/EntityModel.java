@@ -11,11 +11,7 @@ import java.awt.geom.Point2D;
 abstract class EntityModel {
   public Point2D worldPos;
 
-  public boolean draw() {
-    return false;
-  }
+  public abstract boolean draw();
 
-  public boolean redraw() {
-    return false;
-  }
+  public abstract boolean redraw();
 }

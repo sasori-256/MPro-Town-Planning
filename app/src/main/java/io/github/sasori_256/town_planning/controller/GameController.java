@@ -1,35 +1,31 @@
 package io.github.sasori_256.town_planning.controller;
 
-import io.github.sasori_256.town_planning.core.*;
-import io.github.sasori_256.town_planning.model.GameModel; // なんかnot visibleになってしまう
-import java.util.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import io.github.sasori_256.town_planning.model.GameModel;
 import java.awt.geom.Point2D;
-import javax.swing.Timer;
 
 /**
  * 入力を処理し、ゲームモデルを制御するコントローラークラス。
- * タイマーを使用して定期的にゲームモデルの状態を更新する。
- * TODO: マウス操作やキーボード操作の処理を追加する。
+ * ユーザーの操作（マウスクリック、キー入力）をモデルのアクションに変換する。
  */
-public class GameController implements ActionListener {
+public class GameController {
   private final GameModel gameModel;
-  private final Timer timer;
 
-  public GameController(GameModel gameModel, int tickIntervalMs) {
+  public GameController(GameModel gameModel) {
     this.gameModel = gameModel;
-    this.timer = new Timer(tickIntervalMs, this);
-    this.timer.start();
   }
 
   public void onMapClicked(Point2D position) {
-    // マップがクリックされたときの処理をここに追加
+    // マップがクリックされたときの処理
+    // 例: 建物建設、エンティティ選択など
     System.out.println("Map clicked at: " + position);
+    // 仮の実装: クリックした位置にソウルを追加してみる
+    gameModel.addSouls(10);
   }
-
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    gameModel.tick();
+  
+  public void startGame() {
+      // 描画コールバックはApp側で設定するか、あるいはここでViewを渡してもらうか設計次第だが
+      // ここでは一旦nullを渡しておく（まだViewがないため）。
+      // 実際にはViewの再描画メソッドを渡す必要がある。
+      // gameModel.startGameLoop(() -> view.repaint());
   }
 }

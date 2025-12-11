@@ -13,16 +13,13 @@ import java.util.UUID;
  * Strategyパターンを用いて振る舞いを定義する。
  * 継承による拡張ではなく、コンポジション（Strategy）による機能追加を推奨する。
  */
-public class GameObject implements GameEntity {
+public abstract class GameObject implements GameEntity {
   private final String id;
   private Point2D position;
 
   // Strategies
   private UpdateStrategy updateStrategy;
   private RenderStrategy renderStrategy;
-
-  // 汎用的な属性ストレージ (ECSのComponentの簡易版)
-  private final Map<String, Object> attributes = new HashMap<>();
 
   public GameObject(Point2D position) {
     this.id = UUID.randomUUID().toString();
@@ -44,8 +41,9 @@ public class GameObject implements GameEntity {
     return position;
   }
 
-  public void setPosition(Point2D position) {
+  public boolean setPosition(Point2D position) {
     this.position = position;
+    return true;
   }
 
   public void setUpdateStrategy(UpdateStrategy updateStrategy) {
@@ -66,14 +64,5 @@ public class GameObject implements GameEntity {
     if (renderStrategy != null) {
       renderStrategy.render(g, this);
     }
-  }
-
-  public void setAttribute(String key, Object value) {
-    attributes.put(key, value);
-  }
-
-  @SuppressWarnings("unchecked")
-  public <T> T getAttribute(String key) {
-    return (T) attributes.get(key);
   }
 }

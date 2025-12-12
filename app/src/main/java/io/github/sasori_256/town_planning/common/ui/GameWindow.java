@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Toolkit;
+import java.awt.event.MouseListener;
 import java.awt.geom.Point2D;
 import java.io.File;
 
@@ -181,19 +182,7 @@ class GameMapPanel extends JPanel{
  * タイトル: "Town Planning Game"
  * @see GameMapPanel
  */
-public class GameWindow extends JFrame {
-  private GameMap generateTestMap() {
-    GameMap testMap = new GameMap(10, 10);
-    for(int x=0; x<10; x++){
-      testMap.cells[0][x].terrain = TerrainType.SEA;
-      testMap.cells[1][x].terrain = TerrainType.SEA;
-      testMap.cells[8][x].terrain = TerrainType.COAST_YP;
-      testMap.cells[9][x].terrain = TerrainType.SEA;
-      testMap.cells[6][x].building = BuildingGameObject.GRAVEL_ROAD_XPXM;
-    }
-
-    return testMap;
-  }
+public class GameWindow extends JFrame implements MouseListener {
   public GameWindow() {
     setTitle("Town Planning Game");
     setSize(640, 640);
@@ -203,7 +192,21 @@ public class GameWindow extends JFrame {
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     setVisible(true);
   }
-  public static void main(String[] args) {
-    new GameWindow();
+
+  private GameMap generateTestMap() {
+    GameMap testMap = new GameMap(10, 10);
+    for(int x=0; x<10; x++){
+      testMap.cells[0][x].terrain = TerrainType.SEA;
+      testMap.cells[1][x].terrain = TerrainType.SEA;
+      testMap.cells[8][x].terrain = TerrainType.COAST_YP;
+      testMap.cells[9][x].terrain = TerrainType.SEA;
+      testMap.cells[6][x].building = BuildingGameObject.GRAVEL_ROAD_XPXM;
+    }
+    return testMap;
   }
+  public void mouseClicked(java.awt.event.MouseEvent e) {}
+  public void mousePressed(java.awt.event.MouseEvent e) {}
+  public void mouseReleased(java.awt.event.MouseEvent e) {}
+  public void mouseEntered(java.awt.event.MouseEvent e) {}
+  public void mouseExited(java.awt.event.MouseEvent e) {}
 }

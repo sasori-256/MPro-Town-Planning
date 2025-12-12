@@ -1,7 +1,5 @@
 package io.github.sasori_256.town_planning.model;
 
-import io.github.sasori_256.town_planning.core.GameEntity;
-import io.github.sasori_256.town_planning.core.Terrain;
 import java.util.Optional;
 
 public class MapCell {

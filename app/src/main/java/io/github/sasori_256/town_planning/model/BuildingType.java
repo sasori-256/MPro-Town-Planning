@@ -8,21 +8,22 @@ import java.awt.Color;
 public enum BuildingType {
   HOUSE("住居", "H", Color.CYAN, 50, 4, 100),
   CHURCH("教会", "C", Color.YELLOW, 150, 0, 150),
-  GRAVEYARD("墓地", "G", Color.GRAY, 100, 0, 100);
+  GRAVEYARD("墓地", "G", Color.GRAY, 100, 0, 100),
+  NONE("none", " ", Color.BLACK, 0, 0, 0);
 
   private final String displayName;
   private final String symbol;
   private final Color color;
   private final int cost;
-  private final int capacity;
+  private final int maxPopulation;
   private final int maxDurability;
 
-  BuildingType(String displayName, String symbol, Color color, int cost, int capacity, int maxDurability) {
+  BuildingType(String displayName, String symbol, Color color, int cost, int maxPopulation, int maxDurability) {
     this.displayName = displayName;
     this.symbol = symbol;
     this.color = color;
     this.cost = cost;
-    this.capacity = capacity;
+    this.maxPopulation = maxPopulation;
     this.maxDurability = maxDurability;
   }
 
@@ -43,8 +44,8 @@ public enum BuildingType {
     return cost;
   }
 
-  public int getCapacity() {
-    return capacity;
+  public int getMaxPopulation() {
+    return maxPopulation;
   }
 
   public int getMaxDurability() {

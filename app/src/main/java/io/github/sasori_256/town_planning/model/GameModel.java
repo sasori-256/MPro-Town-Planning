@@ -140,81 +140,51 @@ public class GameModel implements GameContext, Updatable {
   }
 
   public void addSouls(int amount) {
-
     this.souls += amount;
-
     eventBus.publish(EventType.SOUL_CHANGED, souls);
-
   }
 
   /**
-   * 
    * 指定座標付近の死体から魂を刈り取る。
    * 
    * @param pos クリック座標
    * 
    * @return 刈り取りに成功したらtrue
-   * 
    */
-
   public boolean harvestSoulAt(java.awt.geom.Point2D pos) {
-
     double harvestRadius = 1.0; // 半径1グリッド
 
     // 範囲内の死体を探す
-
     // Note: 複数の死体が重なっている場合、1つだけ回収するか全部回収するかは仕様次第。
-
     // ここでは最初に見つかった1つを回収する。
-
     java.util.Optional<GameObject> target = entities.stream()
-
         .filter(e -> {
-
           ResidentAttributes.State state = e.getAttribute(ResidentAttributes.State.STATE); // STATEキーが"state"文字列と重複注意。ResidentAttributes.STATE定数を使う。
 
           // AttributeキーはStringなので、ResidentAttributes.STATE (="state") を使う。
-
           // getAttributeの戻り値はEnum。
-
           Object stateObj = e.getAttribute(ResidentAttributes.STATE);
-
           return stateObj == ResidentAttributes.State.DEAD;
-
         })
-
         .filter(e -> e.getPosition().distance(pos) <= harvestRadius)
-
         .findFirst();
 
     if (target.isPresent()) {
-
       GameObject soul = target.get();
 
       // 魂回収
-
       int soulAmount = 10; // 仮: 住民の種類や信仰心によって変動させるとなお良い
 
       // 信仰心ボーナス計算 (例)
-
       Integer faith = soul.getAttribute(ResidentAttributes.FAITH);
-
       if (faith != null) {
-
         soulAmount += faith / 5;
-
       }
-
       eventBus.publish(EventType.SOUL_HARVESTED, soulAmount);
-
       destroyEntity(soul);
-
       return true;
-
     }
-
     return false;
-
   }
 
   /**
@@ -222,87 +192,60 @@ public class GameModel implements GameContext, Updatable {
    * 建物を建設する。
    * 
    * @param type 建物の種類
-   * 
    * @param pos  建設位置（グリッド座標）
    * 
    * @return 建設に成功したらtrue
    * 
    */
-
   public boolean constructBuilding(BuildingType type, java.awt.geom.Point2D pos) {
 
     // 1. コストチェック
 
     if (souls < type.getCost()) {
-
       return false;
-
     }
 
     // 2. マップ上の建設可否チェック
 
     // GameMap.placeBuilding内でチェックされるが、ここでは事前にチェックしてコスト消費を制御する
-
     if (!gameMap.isValid(pos) || !gameMap.getCell(pos).canBuild()) {
-
       return false;
-
     }
 
     // 3. 建設処理
 
     // 魂消費
-
     addSouls(-type.getCost());
 
     // GameObject生成
-
     GameObject building = new GameObject(pos);
 
     // Strategy設定
-
     building.setRenderStrategy(
         io.github.sasori_256.town_planning.model.strategy.SimpleRenderStrategy.fromBuildingType(type));
-
     // 建物ごとの固有ロジック
-
     if (type == BuildingType.HOUSE) {
-
       building.setUpdateStrategy(
           new io.github.sasori_256.town_planning.model.strategy.PopulationGrowthStrategy(type.getCapacity()));
-
     }
 
     // マップとエンティティリストへの登録
 
     // Note: placeBuildingはMapCellへの登録のみを行う。Entityリストへの登録は別途必要。
-
     // また、GameObjectとGameEntityの整合性を保つため、GameMapはGameObjectを受け取るように修正が必要かもしれないが、
-
     // 現状はGameMapはGameEntityを受け取る。GameObjectはGameEntityを実装しているのでOK。
-
     if (gameMap.placeBuilding(pos, building)) {
-
       addEntity(building);
-
       return true;
-
     } else {
-
       // 万が一Mapへの配置に失敗した場合は払い戻し（通常ここには来ないはず）
-
       addSouls(type.getCost());
-
       return false;
-
     }
-
   }
 
   public int getDay() {
-
     return day;
-
   }
 
 }

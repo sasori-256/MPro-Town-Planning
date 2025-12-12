@@ -1,9 +1,8 @@
-package io.github.sasori_256.town_planning.model.strategy;
+package io.github.sasori_256.town_planning.model.strategy.resident;
 
-import io.github.sasori_256.town_planning.core.GameObject;
+import io.github.sasori_256.town_planning.model.GameObject;
 import io.github.sasori_256.town_planning.core.strategy.RenderStrategy;
-import io.github.sasori_256.town_planning.model.ResidentAttributes;
-import io.github.sasori_256.town_planning.model.ResidentAttributes.State;
+import io.github.sasori_256.town_planning.model.entity.ResidentObject;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
@@ -21,9 +20,10 @@ public class ResidentRenderStrategy implements RenderStrategy {
 
   @Override
   public void render(Graphics2D g, GameObject self) {
-    State state = self.getAttribute(ResidentAttributes.STATE);
+    ResidentObject resident = (ResidentObject) self;
+    String state = resident.getState();
 
-    if (state == State.DEAD) {
+    if (state.equals("dead")) {
       // 死体の描画
       Point2D pos = self.getPosition();
       int x = (int) (pos.getX() * 32);

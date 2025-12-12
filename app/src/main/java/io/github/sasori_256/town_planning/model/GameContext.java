@@ -1,7 +1,8 @@
-package io.github.sasori_256.town_planning.core;
+package io.github.sasori_256.town_planning.model;
 
 import io.github.sasori_256.town_planning.event.EventBus;
 import io.github.sasori_256.town_planning.model.GameMap;
+import io.github.sasori_256.town_planning.model.GameObject;
 // Streamとは
 // Streamは、Java 8で導入されたjava.util.streamパッケージに属するクラスであり、
 // コレクションや配列などのデータソースに対して、関数型プログラミングのスタイルで操作を行うためのAPIを提供します。

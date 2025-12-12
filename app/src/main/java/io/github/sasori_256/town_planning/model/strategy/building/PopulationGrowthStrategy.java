@@ -1,12 +1,12 @@
-package io.github.sasori_256.town_planning.model.strategy;
+package io.github.sasori_256.town_planning.model.strategy.building;
 
-import io.github.sasori_256.town_planning.core.GameContext;
-import io.github.sasori_256.town_planning.core.GameObject;
+import io.github.sasori_256.town_planning.model.GameContext;
+import io.github.sasori_256.town_planning.model.GameObject;
 import io.github.sasori_256.town_planning.core.strategy.UpdateStrategy;
 import io.github.sasori_256.town_planning.event.EventType;
 import io.github.sasori_256.town_planning.model.BuildingType;
-import io.github.sasori_256.town_planning.model.ResidentAttributes;
 import io.github.sasori_256.town_planning.model.ResidentType;
+import io.github.sasori_256.town_planning.model.entity.ResidentObject;
 import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.util.concurrent.ThreadLocalRandom;
@@ -16,18 +16,18 @@ import java.util.concurrent.ThreadLocalRandom;
  * 一定時間ごとに新しい住民を生成する。
  */
 public class PopulationGrowthStrategy implements UpdateStrategy {
-  private final int maxCapacity;
+  private final int maxPopulation;
   private double timer = 0;
   private final double spawnInterval = 15.0; // 15秒ごとに判定
   private int currentPopulation = 0; // この家が生成した（管理している）住民数
 
-  public PopulationGrowthStrategy(int maxCapacity) {
-    this.maxCapacity = maxCapacity;
+  public PopulationGrowthStrategy(int maxPopulation) {
+    this.maxPopulation = maxPopulation;
   }
 
   @Override
   public void update(GameContext context, GameObject self) {
-    if (currentPopulation >= maxCapacity) {
+    if (currentPopulation >= maxPopulation) {
       return;
     }
 
@@ -43,14 +43,7 @@ public class PopulationGrowthStrategy implements UpdateStrategy {
   }
 
   private void spawnResident(GameContext context, Point2D spawnPos) {
-    GameObject resident = new GameObject(spawnPos);
-
-    // 属性設定
-    resident.setAttribute(ResidentAttributes.TYPE, ResidentType.CIVILIAN);
-    resident.setAttribute(ResidentAttributes.AGE, 0.0);
-    resident.setAttribute(ResidentAttributes.MAX_AGE, (double) ThreadLocalRandom.current().nextInt(60, 100)); // 寿命60-100
-    resident.setAttribute(ResidentAttributes.STATE, ResidentAttributes.State.ALIVE);
-    resident.setAttribute(ResidentAttributes.FAITH, 10);
+    GameObject resident = new ResidentObject(spawnPos, ResidentType.CITIZEN);
 
     // Strategy設定
     resident.setUpdateStrategy(new CompositeUpdateStrategy(

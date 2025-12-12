@@ -1,13 +1,12 @@
-package io.github.sasori_256.town_planning.model.strategy;
+package io.github.sasori_256.town_planning.model.strategy.disaster;
 
-import io.github.sasori_256.town_planning.core.GameContext;
-import io.github.sasori_256.town_planning.core.GameObject;
+import io.github.sasori_256.town_planning.model.GameContext;
+import io.github.sasori_256.town_planning.model.GameObject;
 import io.github.sasori_256.town_planning.core.strategy.RenderStrategy;
 import io.github.sasori_256.town_planning.core.strategy.UpdateStrategy;
 import io.github.sasori_256.town_planning.event.EventType;
 import io.github.sasori_256.town_planning.model.DisasterType;
-import io.github.sasori_256.town_planning.model.ResidentAttributes;
-import io.github.sasori_256.town_planning.model.ResidentAttributes.State;
+import io.github.sasori_256.town_planning.model.entity.ResidentObject;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
@@ -54,6 +53,7 @@ public class MeteorDisasterStrategy implements UpdateStrategy, RenderStrategy {
     }
   }
 
+  // TODO: ResidentObject用に直す
   private void impact(GameContext context, GameObject self) {
     impacted = true;
     self.setPosition(targetPos);

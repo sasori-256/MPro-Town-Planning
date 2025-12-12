@@ -1,6 +1,6 @@
 package io.github.sasori_256.town_planning.model.strategy;
 
-import io.github.sasori_256.town_planning.core.GameObject;
+import io.github.sasori_256.town_planning.model.GameObject;
 import io.github.sasori_256.town_planning.core.strategy.RenderStrategy;
 import io.github.sasori_256.town_planning.model.BuildingType;
 import java.awt.Color;

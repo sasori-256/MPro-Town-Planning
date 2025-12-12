@@ -1,4 +1,4 @@
-package io.github.sasori_256.town_planning.model;
+package io.github.sasori_256.town_planning.model.entity;
 
 import io.github.sasori_256.town_planning.model.GameObject;
 import io.github.sasori_256.town_planning.model.BuildingType;
@@ -24,7 +24,19 @@ public class BuildingObject extends GameObject {
     return this.type;
   }
 
-  public void setType(BuildingType buildingType) {
-    this.type = buildingType;
+  public int getCurrentDurability() {
+    return this.currentDurability;
+  }
+
+  public void setCurrentDurability(int durability) {
+    this.currentDurability = Math.max(0, Math.min(durability, this.type.getMaxDurability()));
+  }
+
+  public int getCurrentPopulation() {
+    return this.currentPopulation;
+  }
+
+  public void setCurrentPopulation(int population) {
+    this.currentPopulation = Math.max(0, Math.min(population, this.type.getMaxPopulation()));
   }
 }

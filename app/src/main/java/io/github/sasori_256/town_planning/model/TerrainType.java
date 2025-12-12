@@ -1,21 +1,24 @@
 package io.github.sasori_256.town_planning.model;
 
-import io.github.sasori_256.town_planning.core.Terrain;
-
 public enum TerrainType implements Terrain {
-  GRASS(true, true, "Grass"),
-  WATER(false, false, "Water"),
-  MOUNTAIN(false, false, "Mountain"),
-  ROAD(true, false, "Road");
+  GRASS("Grass", true, true),
+  WATER("Water", false, false),
+  MOUNTAIN("Mountain", false, false),
+  ROAD("Road", false, true);
 
+  private final String displayName;
   private final boolean walkable;
   private final boolean buildable;
-  private final String id;
 
-  TerrainType(boolean walkable, boolean buildable, String id) {
+  TerrainType(String displayName, boolean buildable, boolean walkable) {
+    this.displayName = displayName;
     this.walkable = walkable;
     this.buildable = buildable;
-    this.id = id;
+  }
+
+  @Override
+  public String getDisplayName() {
+    return displayName;
   }
 
   @Override
@@ -29,7 +32,6 @@ public enum TerrainType implements Terrain {
   }
 
   @Override
-  public String getId() {
-    return id;
+  public void draw() {
   }
 }

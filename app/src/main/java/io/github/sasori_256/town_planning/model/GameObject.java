@@ -1,4 +1,4 @@
-package io.github.sasori_256.town_planning.core;
+package io.github.sasori_256.town_planning.model;
 
 import io.github.sasori_256.town_planning.core.strategy.RenderStrategy;
 import io.github.sasori_256.town_planning.core.strategy.UpdateStrategy;

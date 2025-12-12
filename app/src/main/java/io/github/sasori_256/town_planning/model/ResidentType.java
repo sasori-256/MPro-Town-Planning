@@ -7,6 +7,7 @@ package io.github.sasori_256.town_planning.model;
  */
 public enum ResidentType {
   CIVILIAN("civilian", 50, 10, 1.0f),
+  CITIZEN("citizen", 50, 10, 1.0f),
   BELIEVER("believer", 60, 50, 1.5f),
   HERETIC("heretic", 100, 0, 0.5f);
 

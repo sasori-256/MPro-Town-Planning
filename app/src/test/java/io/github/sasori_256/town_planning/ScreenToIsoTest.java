@@ -1,10 +1,12 @@
 package io.github.sasori_256.town_planning;
 
 import org.junit.jupiter.api.Test;
+
+import io.github.sasori_256.town_planning.gameObject.Camera;
+import io.github.sasori_256.town_planning.map.controller.GameMapController;
+import io.github.sasori_256.town_planning.map.controller.handler.PlaceBuildingHandler;
+
 import static org.junit.jupiter.api.Assertions.*;
-import io.github.sasori_256.town_planning.controller.Camera;
-import io.github.sasori_256.town_planning.controller.GameMapController;
-import io.github.sasori_256.town_planning.controller.PlaceBuildingHandler;
 
 final class mEvent extends java.awt.event.MouseEvent {
     public mEvent(int x, int y) {

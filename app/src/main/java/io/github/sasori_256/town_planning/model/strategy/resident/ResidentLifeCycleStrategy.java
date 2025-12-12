@@ -26,9 +26,7 @@ public class ResidentLifeCycleStrategy implements UpdateStrategy {
     double dt = context.getDeltaTime();
 
     // 年齢取得と加齢
-    Double currentAge = resident.getAge();
-    if (currentAge == null)
-      currentAge = 0.0;
+    double currentAge = resident.getAge() != null ? resident.getAge() : 0.0;
 
     // 1日 = 1歳 とする設定（仮）
     // GameContextから1日の長さを取得できないため、dtをそのまま加算し、

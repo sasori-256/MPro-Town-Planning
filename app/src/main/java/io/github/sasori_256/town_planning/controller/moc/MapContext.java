@@ -1,8 +1,6 @@
-package io.github.sasori_256.town_planning.controller;
+package io.github.sasori_256.town_planning.controller.moc;
 
 import java.awt.geom.Point2D;
-
-import io.github.sasori_256.town_planning.controller.moc.BuildingGameObject;
 
 public interface MapContext {
 

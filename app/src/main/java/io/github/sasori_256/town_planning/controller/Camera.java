@@ -8,6 +8,7 @@ public class Camera {
     private int cellHeight;
     private int offsetX;
     private int offsetY;
+    private Point2D.Double center;
 
     public Camera(int cellWidth, int cellHeight) {
         this.cellWidth = cellWidth;
@@ -32,11 +33,18 @@ public class Camera {
         return offsetY;
     }
 
+    public Point2D.Double getCenter() {
+        return center;
+    }
+
     public void setOffset(int offsetX, int offsetY) {
         this.offsetX = offsetX;
         this.offsetY = offsetY;
     }
 
+    public void setCenter(Point2D.Double center) {
+        this.center = center;
+    }
     /**
      * スクリーン座標をアイソメトリック座標に変換する
      * @param screenX スクリーンのX座標
@@ -44,8 +52,8 @@ public class Camera {
      * @return アイソメトリック座標
      */
     public Point2D.Double screenToIso(int screenX, int screenY){
-        double adjX = screenX - this.offsetX;
-        double adjY = screenY - this.offsetY;
+        double adjX = screenX + this.center.x - this.offsetX;
+        double adjY = screenY + this.center.y - this.offsetY;
         double isoX = adjX / this.cellWidth + adjY / this.cellHeight;
         double isoY = adjY / this.cellHeight - adjX / this.cellWidth;
         return new Point2D.Double(isoX, isoY);

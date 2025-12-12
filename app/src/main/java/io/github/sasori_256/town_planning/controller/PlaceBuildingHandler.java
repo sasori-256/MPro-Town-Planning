@@ -20,9 +20,8 @@ public class PlaceBuildingHandler implements Consumer<Point2D.Double>{
 
     @Override
     public void accept(Point2D.Double isoPoint) {
-        isoPoint.x = Math.floor(isoPoint.x);
-        isoPoint.y = Math.floor(isoPoint.y);
-        mapContext.placeBuilding(isoPoint, selectedBuilding);
+        Point2D.Double flooredPoint = new Point2D.Double(Math.floor(isoPoint.x), Math.floor(isoPoint.y));
+        mapContext.placeBuilding(flooredPoint, selectedBuilding);
         gameMapController.setActionOnClick(new ClickGameMapHandler());
     }
     

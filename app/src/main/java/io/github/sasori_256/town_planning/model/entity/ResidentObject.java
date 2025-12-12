@@ -20,7 +20,7 @@ public class ResidentObject extends GameObject {
     this.state = "Idle";
   }
 
-  private void addAge(double years) {
+  public void addAge(double years) {
     this.age = Math.min(this.age + years, this.type.getMaxAge());
   }
 

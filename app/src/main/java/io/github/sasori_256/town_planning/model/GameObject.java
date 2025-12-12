@@ -41,9 +41,8 @@ public abstract class GameObject implements GameEntity {
     return position;
   }
 
-  public boolean setPosition(Point2D position) {
+  public void setPosition(Point2D position) {
     this.position = position;
-    return true;
   }
 
   public void setUpdateStrategy(UpdateStrategy updateStrategy) {

@@ -7,7 +7,7 @@ import java.awt.geom.Point2D;
  * 各エンティティは一意のIDと位置情報を持つ。
  */
 public interface GameEntity {
-  String getID();
+  String getId();
 
   Point2D getPosition();
 }

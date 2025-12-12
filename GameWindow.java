@@ -1,4 +1,4 @@
-// package io.github.sasori_256.town_planning.view;
+package io.github.sasori_256.town_planning.view;
 
 import java.awt.BorderLayout;
 import java.awt.Color;

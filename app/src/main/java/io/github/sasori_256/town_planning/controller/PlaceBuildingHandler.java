@@ -3,16 +3,19 @@ package io.github.sasori_256.town_planning.controller;
 import java.awt.geom.Point2D;
 import java.util.function.Consumer;
 
-import io.github.sasori_256.town_planning.controller.moc.BuildingGameObject;
-import io.github.sasori_256.town_planning.controller.moc.MapContext;
+// import io.github.sasori_256.town_planning.controller.moc.BuildingGameObject;
+// import io.github.sasori_256.town_planning.controller.moc.MapContext;
+import io.github.sasori_256.town_planning.model.MapContext;
+import io.github.sasori_256.town_planning.model.entity.BuildingObject;
+
 
 
 public class PlaceBuildingHandler implements Consumer<Point2D.Double>{
     private MapContext mapContext;
-    private BuildingGameObject selectedBuilding;
+    private BuildingObject selectedBuilding;
     private GameMapController gameMapController;
 
-    public PlaceBuildingHandler(MapContext mapContext, BuildingGameObject selectedBuilding, GameMapController gameMapController) {
+    public PlaceBuildingHandler(MapContext mapContext, BuildingObject selectedBuilding, GameMapController gameMapController) {
         this.mapContext = mapContext;
         this.selectedBuilding = selectedBuilding;
         this.gameMapController = gameMapController;

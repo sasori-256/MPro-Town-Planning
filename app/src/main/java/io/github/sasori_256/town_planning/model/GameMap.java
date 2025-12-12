@@ -2,8 +2,9 @@ package io.github.sasori_256.town_planning.model;
 
 import io.github.sasori_256.town_planning.event.*;
 import java.awt.geom.Point2D;
+import io.github.sasori_256.town_planning.model.MapContext;
 
-public class GameMap {
+public class GameMap implements MapContext {
   private final int width;
   private final int height;
   private final MapCell[][] cells;
@@ -23,12 +24,14 @@ public class GameMap {
     }
   }
 
-  public boolean isValid(Point2D pos) {
+  @Override
+  public boolean isValid(Point2D.Double pos) {
     return pos.getX() >= 0 && pos.getX() < width
         && pos.getY() >= 0 && pos.getY() < height;
   }
 
-  public MapCell getCell(Point2D pos) {
+  @Override
+  public MapCell getCell(Point2D.Double pos) {
     if (!isValid(pos)) {
       // 無効な位置へのアクセスは例外を投げる
       // またはnullを返す、境界用のダミーセルを返すなどの方法も考えられる
@@ -37,7 +40,8 @@ public class GameMap {
     return cells[(int) pos.getY()][(int) pos.getX()];
   }
 
-  public boolean placeBuilding(Point2D.Float pos, GameObject building) {
+  @Override
+  public boolean placeBuilding(Point2D.Double pos, GameObject building) {
     if (!isValid(pos)) {
       return false;
     }
@@ -50,7 +54,8 @@ public class GameMap {
     return false;
   }
 
-  public boolean removeBuilding(Point2D.Float pos) {
+  @Override
+  public boolean removeBuilding(Point2D.Double pos) {
     if (!isValid(pos)) {
       return false;
     }
@@ -63,10 +68,12 @@ public class GameMap {
     return false;
   }
 
+  @Override
   public int getWidth() {
     return width;
   }
 
+  @Override
   public int getHeight() {
     return height;
   }

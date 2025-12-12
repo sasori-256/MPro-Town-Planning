@@ -1,0 +1,11 @@
+package io.github.sasori_256.town_planning.model;
+
+public interface Terrain {
+  String getDisplayName();
+
+  boolean isWalkable();
+
+  boolean isBuildable();
+
+  void draw();
+}

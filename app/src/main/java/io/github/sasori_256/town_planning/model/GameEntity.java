@@ -1,4 +1,4 @@
-package io.github.sasori_256.town_planning.core;
+package io.github.sasori_256.town_planning.model;
 
 import java.awt.geom.Point2D;
 
@@ -7,7 +7,7 @@ import java.awt.geom.Point2D;
  * 各エンティティは一意のIDと位置情報を持つ。
  */
 public interface GameEntity {
-  String getID();
+  String getId();
 
   Point2D getPosition();
 }

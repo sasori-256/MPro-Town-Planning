@@ -65,16 +65,18 @@ public class MeteorDisasterStrategy implements UpdateStrategy, RenderStrategy {
 
     for (GameObject target : targets) {
       // 住民への処理
-      State state = target.getAttribute(ResidentAttributes.STATE);
-      if (state == State.ALIVE) {
-        // 即死させる
-        target.setAttribute(ResidentAttributes.STATE, State.DEAD);
-        context.getEventBus().publish(EventType.RESIDENT_DIED, target);
+      if (target instanceof ResidentObject) {
+        ResidentObject resident = (ResidentObject) target;
+        if (resident.isAlive()) {
+          // 即死させる
+          resident.setDead();
+          context.getEventBus().publish(EventType.RESIDENT_DIED, resident);
 
-        // 災害による死亡は魂を即時回収できるボーナスがあるかも？
-        // ここでは単純に死亡させるのみとし、回収は別途クリック等で行うか、
-        // あるいは「刈り取る」災害ならここで回収イベントを投げる。
-        // 今回は「隕石で死ぬ -> 死体になる」だけにする。
+          // 災害による死亡は魂を即時回収できるボーナスがあるかも？
+          // ここでは単純に死亡させるのみとし、回収は別途クリック等で行うか、
+          // あるいは「刈り取る」災害ならここで回収イベントを投げる。
+          // 今回は「隕石で死ぬ -> 死体になる」だけにする。
+        }
       }
 
       // 建物への処理 (属性チェックなどで判定)

@@ -2,12 +2,22 @@ package io.github.sasori_256.town_planning.gameObject.model;
 
 import java.awt.geom.Point2D;
 
+import io.github.sasori_256.town_planning.common.core.strategy.UpdateStrategy;
+
 /**
  * ゲームのエンティティを表すインターフェース。
  * 各エンティティは一意のIDと位置情報を持つ。
  */
 public interface GameEntity {
-  String getId();
+  int getLayerIndex();
 
-  Point2D getPosition();
+  void setLayerIndex(int layerIndex);
+
+  Point2D.Double getPosition();
+
+  void setPosition(Point2D.Double position);
+
+  void setUpdateStrategy(UpdateStrategy upadteStrategy);
+
+  void removeEntity();
 }

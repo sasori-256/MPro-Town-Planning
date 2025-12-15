@@ -2,7 +2,7 @@ package io.github.sasori_256.town_planning.common.core;
 
 import io.github.sasori_256.town_planning.common.core.strategy.UpdateStrategy;
 import io.github.sasori_256.town_planning.gameObject.model.GameContext;
-import io.github.sasori_256.town_planning.gameObject.model.GameObject;
+import io.github.sasori_256.town_planning.gameObject.model.BaseGameEntity;
 
 import java.util.Arrays;
 import java.util.List;
@@ -18,7 +18,7 @@ public class CompositeUpdateStrategy implements UpdateStrategy {
   }
 
   @Override
-  public void update(GameContext context, GameObject self) {
+  public void update(GameContext context, BaseGameEntity self) {
     for (UpdateStrategy strategy : strategies) {
       strategy.update(context, self);
     }

@@ -1,8 +1,8 @@
 package io.github.sasori_256.town_planning.gameObject.resident.strategy;
 
 import io.github.sasori_256.town_planning.common.core.strategy.UpdateStrategy;
+import io.github.sasori_256.town_planning.gameObject.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.gameObject.model.GameContext;
-import io.github.sasori_256.town_planning.gameObject.model.GameObject;
 
 import java.awt.geom.Point2D;
 import java.util.concurrent.ThreadLocalRandom;
@@ -18,7 +18,7 @@ public class RandomMoveStrategy implements UpdateStrategy {
   private final double speed = 2.0; // ピクセル/秒 (グリッドベースなら調整が必要)
 
   @Override
-  public void update(GameContext context, GameObject self) {
+  public void update(GameContext context, BaseGameEntity self) {
     double dt = context.getDeltaTime();
     moveTimer += dt;
 
@@ -35,7 +35,7 @@ public class RandomMoveStrategy implements UpdateStrategy {
     double nextY = current.getY() + dy * speed * dt;
 
     // マップ境界チェック (簡易)
-    if (context.getMap().isValid(new Point2D.Double(nextX, nextY))) {
+    if (context.getMap().isValidPos(new Point2D.Double(nextX, nextY))) {
       self.setPosition(new Point2D.Double(nextX, nextY));
     }
   }

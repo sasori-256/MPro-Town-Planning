@@ -2,18 +2,18 @@ package io.github.sasori_256.town_planning.gameObject.building;
 
 import java.awt.geom.Point2D;
 
-import io.github.sasori_256.town_planning.gameObject.model.GameObject;
+import io.github.sasori_256.town_planning.gameObject.model.BaseGameEntity;
 
 /**
  * 建物オブジェクトを表すクラス。
  * 建物の種類や特性を持つ。
  */
-public class BuildingObject extends GameObject {
+public class BuildingObject extends BaseGameEntity {
   private final BuildingType type;
   private int currentDurability;
   private int currentPopulation;
 
-  public BuildingObject(Point2D position, BuildingType buildingType) {
+  public BuildingObject(Point2D.Double position, BuildingType buildingType) {
     super(position);
     this.type = buildingType;
     this.currentDurability = buildingType.getMaxDurability();
@@ -38,5 +38,9 @@ public class BuildingObject extends GameObject {
 
   public void setCurrentPopulation(int population) {
     this.currentPopulation = Math.max(0, Math.min(population, this.type.getMaxPopulation()));
+  }
+
+  public void update() {
+
   }
 }

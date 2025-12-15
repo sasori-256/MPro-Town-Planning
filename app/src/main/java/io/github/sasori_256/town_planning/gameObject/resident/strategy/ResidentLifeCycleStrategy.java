@@ -3,8 +3,9 @@ package io.github.sasori_256.town_planning.gameObject.resident.strategy;
 import io.github.sasori_256.town_planning.common.core.strategy.UpdateStrategy;
 import io.github.sasori_256.town_planning.common.event.EventType;
 import io.github.sasori_256.town_planning.gameObject.model.GameContext;
-import io.github.sasori_256.town_planning.gameObject.model.GameObject;
+import io.github.sasori_256.town_planning.gameObject.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.gameObject.resident.ResidentObject;
+import io.github.sasori_256.town_planning.gameObject.resident.ResidentState;
 
 /**
  * 住民のライフサイクル（加齢、死亡）を管理するStrategy。
@@ -12,13 +13,13 @@ import io.github.sasori_256.town_planning.gameObject.resident.ResidentObject;
 public class ResidentLifeCycleStrategy implements UpdateStrategy {
 
   @Override
-  public void update(GameContext context, GameObject self) {
+  public void update(GameContext context, BaseGameEntity self) {
     if (!(self instanceof ResidentObject)) {
       return; // 住民オブジェクトでなければ無視
     }
     ResidentObject resident = (ResidentObject) self;
     // 状態取得
-    String state = resident.getState();
+    ResidentState state = resident.getState();
     if (state.equals("dead")) {
       return; // 生きてなければ加齢しない（死体処理は別途）
     }
@@ -26,7 +27,7 @@ public class ResidentLifeCycleStrategy implements UpdateStrategy {
     double dt = context.getDeltaTime();
 
     // 年齢取得と加齢
-    double currentAge = resident.getAge() != null ? resident.getAge() : 0.0;
+    double currentAge = resident.getAge();
 
     // 1日 = 1歳 とする設定（仮）
     // GameContextから1日の長さを取得できないため、dtをそのまま加算し、
@@ -36,7 +37,7 @@ public class ResidentLifeCycleStrategy implements UpdateStrategy {
     double agingRate = 1.0 / 10.0; // 1秒で0.1歳
     double newAge = currentAge + (dt * agingRate);
 
-    resident.addAge(newAge);
+    resident.setAge(newAge);
 
     // 寿命チェック
     Double maxAge = resident.getMaxAge();
@@ -45,9 +46,9 @@ public class ResidentLifeCycleStrategy implements UpdateStrategy {
     }
   }
 
-  private void die(GameContext context, GameObject self) {
+  private void die(GameContext context, BaseGameEntity self) {
     ResidentObject resident = (ResidentObject) self;
-    resident.setState("dead");
+    resident.setState(ResidentState.DEAD);
 
     // 死亡イベント発行 (ログ表示や効果音用)
     context.getEventBus().publish(EventType.RESIDENT_DIED, self);

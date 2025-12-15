@@ -2,7 +2,9 @@ package io.github.sasori_256.town_planning.map.model;
 
 import java.awt.geom.Point2D;
 
-import io.github.sasori_256.town_planning.common.event.*;
+import io.github.sasori_256.town_planning.common.event.EventBus;
+import io.github.sasori_256.town_planning.common.event.EventType;
+import io.github.sasori_256.town_planning.gameObject.building.BuildingObject;
 
 public class GameMap implements MapContext {
   private final int width;
@@ -10,6 +12,11 @@ public class GameMap implements MapContext {
   private final MapCell[][] cells;
   private final EventBus eventBus;
 
+  /**
+   * @param width
+   * @param height
+   * @param eventBus
+   */
   public GameMap(int width, int height, EventBus eventBus) {
     this.width = width;
     this.height = height;
@@ -25,14 +32,14 @@ public class GameMap implements MapContext {
   }
 
   @Override
-  public boolean isValid(Point2D.Double pos) {
+  public boolean isValidPos(Point2D.Double pos) {
     return pos.getX() >= 0 && pos.getX() < width
         && pos.getY() >= 0 && pos.getY() < height;
   }
 
   @Override
   public MapCell getCell(Point2D.Double pos) {
-    if (!isValid(pos)) {
+    if (!isValidPos(pos)) {
       // 無効な位置へのアクセスは例外を投げる
       // またはnullを返す、境界用のダミーセルを返すなどの方法も考えられる
       throw new IndexOutOfBoundsException("Invalid position: " + pos);
@@ -41,8 +48,8 @@ public class GameMap implements MapContext {
   }
 
   @Override
-  public boolean placeBuilding(Point2D.Double pos, GameObject building) {
-    if (!isValid(pos)) {
+  public boolean placeBuilding(Point2D.Double pos, BuildingObject building) {
+    if (!isValidPos(pos)) {
       return false;
     }
     MapCell cell = getCell(pos);
@@ -56,7 +63,7 @@ public class GameMap implements MapContext {
 
   @Override
   public boolean removeBuilding(Point2D.Double pos) {
-    if (!isValid(pos)) {
+    if (!isValidPos(pos)) {
       return false;
     }
     MapCell cell = getCell(pos);

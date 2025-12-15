@@ -1,10 +1,12 @@
-package io.github.sasori_256.town_planning.model;
+package io.github.sasori_256.town_planning.map.model;
 
 import java.util.Optional;
 
+import io.github.sasori_256.town_planning.gameObject.building.BuildingObject;
+
 public class MapCell {
   private Terrain terrain;
-  private GameEntity building;
+  private BuildingObject building;
 
   public MapCell(Terrain initTerrain) {
     this.terrain = initTerrain;
@@ -20,11 +22,11 @@ public class MapCell {
     return true;
   }
 
-  public Optional<GameEntity> getBuilding() {
+  public Optional<BuildingObject> getBuilding() {
     return Optional.ofNullable(building);
   }
 
-  public boolean setBuilding(GameEntity building) {
+  public boolean setBuilding(BuildingObject building) {
     this.building = building;
     return true;
   }

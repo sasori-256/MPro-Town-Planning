@@ -1,13 +1,19 @@
 package io.github.sasori_256.town_planning.map.model;
 
 import java.awt.geom.Point2D;
-import java.awt.geom.Point2D.Double;
+
+import io.github.sasori_256.town_planning.gameObject.building.BuildingObject;
 
 public interface MapContext {
-    public boolean isValid(Point2D.Double pos);
-    public MapCell getCell(Point2D.Double pos);
-    public boolean placeBuilding(Point2D.Double pos, GameObject building);
-    public boolean removeBuilding(Point2D.Double pos);
-    public int getWidth() ;
-    public int getHeight() ;
+  public boolean isValidPos(Point2D.Double pos);
+
+  public MapCell getCell(Point2D.Double pos);
+
+  public boolean placeBuilding(Point2D.Double pos, BuildingObject building);
+
+  public boolean removeBuilding(Point2D.Double pos);
+
+  public int getWidth();
+
+  public int getHeight();
 }

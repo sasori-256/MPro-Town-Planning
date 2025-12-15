@@ -84,7 +84,7 @@ public class GameLoop implements Runnable {
       }
 
       // 描画処理
-      renderCallback.run();
+      // renderCallback.run();
 
       // フレームレート制御: 次のフレームまで待機
       long sleepTime = (TIME_STEP_NANO - (System.nanoTime() - now)) / 1_000_000;

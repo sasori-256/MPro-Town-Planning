@@ -1,18 +1,24 @@
 package io.github.sasori_256.town_planning.gameObject.model;
 
-import io.github.sasori_256.town_planning.common.core.*;
-import io.github.sasori_256.town_planning.common.event.*;
-import io.github.sasori_256.town_planning.gameObject.building.BuildingType;
-import io.github.sasori_256.town_planning.map.model.GameMap;
-
-import java.util.ArrayList;
-import java.util.Collections;
+import java.awt.geom.Point2D;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 
+import io.github.sasori_256.town_planning.common.core.CompositeUpdateStrategy;
+import io.github.sasori_256.town_planning.common.core.GameLoop;
+import io.github.sasori_256.town_planning.common.core.Updatable;
+import io.github.sasori_256.town_planning.common.event.EventBus;
+import io.github.sasori_256.town_planning.common.event.EventType;
+import io.github.sasori_256.town_planning.gameObject.building.BuildingObject;
+import io.github.sasori_256.town_planning.gameObject.building.BuildingType;
+import io.github.sasori_256.town_planning.gameObject.building.strategy.PopulationGrowthStrategy;
+import io.github.sasori_256.town_planning.gameObject.resident.ResidentObject;
+import io.github.sasori_256.town_planning.gameObject.resident.ResidentState;
+import io.github.sasori_256.town_planning.map.model.GameMap;
+
 /**
- * ゲームの全体モデル。
+ * ゲームの環境情報を管理するモデルクラス。
  * GameContextの実装であり、GameLoopのホストでもある。
  */
 public class GameModel implements GameContext, Updatable {
@@ -21,7 +27,8 @@ public class GameModel implements GameContext, Updatable {
   private final GameLoop gameLoop;
 
   // スレッドセーフなリストを使用（更新スレッドと描画スレッド/UIスレッドからのアクセスがあるため）
-  private final List<GameObject> entities = new CopyOnWriteArrayList<>();
+  private final List<ResidentObject> residentEntities = new CopyOnWriteArrayList<>();
+  private final List<BuildingObject> buildingEntities = new CopyOnWriteArrayList<>();
 
   private int souls = 100;
   private int day = 1;
@@ -31,23 +38,16 @@ public class GameModel implements GameContext, Updatable {
   private double lastDeltaTime = 0;
 
   public GameModel(EventBus eventBus) {
-
     this.eventBus = eventBus;
 
     // マップサイズ 100x100 (仮)
-
     this.gameMap = new GameMap(100, 100, eventBus);
 
     // Event Subscriptions
-
     this.eventBus.subscribe(EventType.SOUL_HARVESTED, data -> {
-
       if (data instanceof Integer) {
-
         addSouls((Integer) data);
-
       }
-
     });
 
     // ゲームループのセットアップ
@@ -58,39 +58,21 @@ public class GameModel implements GameContext, Updatable {
     // あるいはViewがGameLoopのRenderCallbackを登録できるようにする。
     // ここでは、GameModelがループを管理し、View更新用Callbackを受け取れるように設計する。
 
-    this.gameLoop = new GameLoop(this::tick, () -> {
-      // Render Trigger (View側で購読するか、専用のリスナーを呼ぶ)
-      // 今回はEventBusだと高頻度すぎるかもしれないが、一旦保留。
-      // 通常、Viewは repaint() を呼び出す Runnable を渡す。
-    });
+    // this.gameLoop = new GameLoop(this::update, () -> {
+    // Render Trigger (View側で購読するか、専用のリスナーを呼ぶ)
+    // 今回はEventBusだと高頻度すぎるかもしれないが、一旦保留。
+    // 通常、Viewは repaint() を呼び出す Runnable を渡す。
+    // });
+    this.gameLoop = null;
   }
 
   public void startGameLoop(Runnable renderCallback) {
     // 既存のループを作り直す必要がある（RenderCallbackを注入するため）
     // またはGameLoopを少し改造してsetterをつける。
     // ここでは新しいGameLoopインスタンスを作る簡易実装。
-    GameLoop loop = new GameLoop(this::tick, renderCallback);
+    Runnable updateCallback = () -> update(this);
+    GameLoop loop = new GameLoop(updateCallback, renderCallback);
     loop.start();
-  }
-
-  @Override
-  public void tick() {
-    // 時間計測 (簡易的)
-    double dt = 1.0 / 60.0; // Fixed time step
-    this.lastDeltaTime = dt;
-
-    // 時間経過処理
-    dayTimer += dt;
-    if (dayTimer >= DAY_LENGTH) {
-      dayTimer = 0;
-      day++;
-      eventBus.publish(EventType.DAY_PASSED, day);
-    }
-
-    // 全エンティティの更新
-    for (GameObject entity : entities) {
-      entity.update(this);
-    }
   }
 
   // --- GameContext Implementation ---
@@ -105,9 +87,15 @@ public class GameModel implements GameContext, Updatable {
     return gameMap;
   }
 
+  /**
+   * 住民・建物の2種類の全エンティティをストリームで返す。
+   * 
+   * @return 指定した型の全エンティティのストリーム
+   */
   @Override
-  public Stream<GameObject> getEntities() {
-    return entities.stream();
+  public <T extends BaseGameEntity> Stream<T> getEntities() {
+    return Stream.concat(residentEntities.stream(), buildingEntities.stream())
+        .map(e -> (T) e);
   }
 
   @Override
@@ -116,24 +104,37 @@ public class GameModel implements GameContext, Updatable {
   }
 
   @Override
-  public void spawnEntity(GameObject entity) {
-    addEntity(entity);
+  public <T extends BaseGameEntity> void spawnEntity(T entity) {
+    if (entity instanceof ResidentObject) {
+      addResidentEntity((ResidentObject) entity);
+    } else if (entity instanceof BuildingObject) {
+      addBuildingEntity((BuildingObject) entity);
+    }
   }
 
   @Override
-  public void destroyEntity(GameObject entity) {
-    removeEntity(entity);
+  public <T extends BaseGameEntity> void removeEntity(T entity) {
+    if (entity instanceof ResidentObject) {
+      residentEntities.remove(entity);
+    } else if (entity instanceof BuildingObject) {
+      buildingEntities.remove(entity);
+    }
   }
 
   // --- Game Logic API ---
 
-  public void addEntity(GameObject entity) {
-    entities.add(entity);
+  public void addResidentEntity(ResidentObject entity) {
+    residentEntities.add(entity);
+    eventBus.publish(EventType.RESIDENT_BORN, entity.getPosition());
+  }
+
+  public void addBuildingEntity(BuildingObject entity) {
+    buildingEntities.add(entity);
     eventBus.publish(EventType.MAP_UPDATED, entity.getPosition());
   }
 
-  public void removeEntity(GameObject entity) {
-    entities.remove(entity);
+  public void removeBuildingEntity(BuildingObject entity) {
+    gameMap.removeBuilding(entity.getPosition());
     // マップ上の占有情報などもクリアする必要があるならMap経由で行う
     eventBus.publish(EventType.MAP_UPDATED, entity.getPosition());
   }
@@ -160,31 +161,27 @@ public class GameModel implements GameContext, Updatable {
     // 範囲内の死体を探す
     // Note: 複数の死体が重なっている場合、1つだけ回収するか全部回収するかは仕様次第。
     // ここでは最初に見つかった1つを回収する。
-    java.util.Optional<GameObject> target = entities.stream()
+    java.util.Optional<ResidentObject> target = residentEntities.stream()
         .filter(e -> {
-          ResidentAttributes.State state = e.getAttribute(ResidentAttributes.State.STATE); // STATEキーが"state"文字列と重複注意。ResidentAttributes.STATE定数を使う。
-
-          // AttributeキーはStringなので、ResidentAttributes.STATE (="state") を使う。
-          // getAttributeの戻り値はEnum。
-          Object stateObj = e.getAttribute(ResidentAttributes.STATE);
-          return stateObj == ResidentAttributes.State.DEAD;
+          ResidentState state = e.getState();
+          return state == ResidentState.DEAD;
         })
         .filter(e -> e.getPosition().distance(pos) <= harvestRadius)
         .findFirst();
 
     if (target.isPresent()) {
-      GameObject soul = target.get();
+      ResidentObject deadResident = target.get();
 
       // 魂回収
       int soulAmount = 10; // 仮: 住民の種類や信仰心によって変動させるとなお良い
 
       // 信仰心ボーナス計算 (例)
-      Integer faith = soul.getAttribute(ResidentAttributes.FAITH);
+      Integer faith = deadResident.getFaith();
       if (faith != null) {
         soulAmount += faith / 5;
       }
       eventBus.publish(EventType.SOUL_HARVESTED, soulAmount);
-      destroyEntity(soul);
+      removeEntity(deadResident);
       return true;
     }
     return false;
@@ -200,10 +197,9 @@ public class GameModel implements GameContext, Updatable {
    * @return 建設に成功したらtrue
    * 
    */
-  public boolean constructBuilding(BuildingType type, java.awt.geom.Point2D pos) {
+  public boolean constructBuilding(Point2D.Double pos, BuildingType type) {
 
     // 1. コストチェック
-
     if (souls < type.getCost()) {
       return false;
     }
@@ -211,7 +207,7 @@ public class GameModel implements GameContext, Updatable {
     // 2. マップ上の建設可否チェック
 
     // GameMap.placeBuilding内でチェックされるが、ここでは事前にチェックしてコスト消費を制御する
-    if (!gameMap.isValid(pos) || !gameMap.getCell(pos).canBuild()) {
+    if (!gameMap.isValidPos(pos) || !gameMap.getCell(pos).canBuild()) {
       return false;
     }
 
@@ -220,25 +216,25 @@ public class GameModel implements GameContext, Updatable {
     // 魂消費
     addSouls(-type.getCost());
 
-    // GameObject生成
-    GameObject building = new GameObject(pos);
+    // BaseGameEntity生成
+    BuildingObject building = new BuildingObject(pos, type);
 
     // Strategy設定
-    building.setRenderStrategy(
-        io.github.sasori_256.town_planning.gameObject.model.strategy.SimpleRenderStrategy.fromBuildingType(type));
+    // building.setRenderStrategy( type.getRenderStrategy() );
     // 建物ごとの固有ロジック
     if (type == BuildingType.HOUSE) {
-      building.setUpdateStrategy(
-          new io.github.sasori_256.town_planning.gameObject.building.strategy.model.strategy.PopulationGrowthStrategy(type.getCapacity()));
+      CompositeUpdateStrategy compositeUpdateStrategy = new CompositeUpdateStrategy(
+          new PopulationGrowthStrategy(type.getMaxPopulation()));
+      building.setUpdateStrategy(compositeUpdateStrategy);
     }
-
     // マップとエンティティリストへの登録
 
-    // Note: placeBuildingはMapCellへの登録のみを行う。Entityリストへの登録は別途必要。
-    // また、GameObjectとGameEntityの整合性を保つため、GameMapはGameObjectを受け取るように修正が必要かもしれないが、
+    // NOTE:
+    // placeBuildingはMapCellへの登録のみを行う。Entityリストへの登録は別途必要。
+    // また、BaseGameEntityとGameEntityの整合性を保つため、GameMapはBaseGameEntityを受け取るように修正が必要かもしれないが、
     // 現状はGameMapはGameEntityを受け取る。GameObjectはGameEntityを実装しているのでOK。
     if (gameMap.placeBuilding(pos, building)) {
-      addEntity(building);
+      spawnEntity(building);
       return true;
     } else {
       // 万が一Mapへの配置に失敗した場合は払い戻し（通常ここには来ないはず）
@@ -249,6 +245,66 @@ public class GameModel implements GameContext, Updatable {
 
   public int getDay() {
     return day;
+  }
+
+  public GameMap getGameMap() {
+    return gameMap;
+  }
+
+  public GameLoop getGameLoop() {
+    return gameLoop;
+  }
+
+  public void setSouls(int souls) {
+    this.souls = souls;
+  }
+
+  public void setDay(int day) {
+    this.day = day;
+  }
+
+  public double getDayTimer() {
+    return dayTimer;
+  }
+
+  public void setDayTimer(double dayTimer) {
+    this.dayTimer = dayTimer;
+  }
+
+  public static double getDayLength() {
+    return DAY_LENGTH;
+  }
+
+  public double getLastDeltaTime() {
+    return lastDeltaTime;
+  }
+
+  public void setLastDeltaTime(double lastDeltaTime) {
+    this.lastDeltaTime = lastDeltaTime;
+  }
+
+  @Override
+  public void update(GameContext context) {
+    // 時間計測 (簡易的)
+    double dt = 1.0 / 60.0; // Fixed time step
+    this.lastDeltaTime = dt;
+
+    // 時間経過処理
+    dayTimer += dt;
+    if (dayTimer >= DAY_LENGTH) {
+      dayTimer = 0;
+      day++;
+      eventBus.publish(EventType.DAY_PASSED, day);
+    }
+
+    // 全エンティティの更新
+    for (ResidentObject resident : residentEntities) {
+      resident.update(context);
+    }
+
+    for (BuildingObject building : buildingEntities) {
+      building.update(context);
+    }
   }
 
 }

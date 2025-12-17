@@ -7,34 +7,46 @@ import java.util.function.Consumer;
 import io.github.sasori_256.town_planning.gameObject.Camera;
 import io.github.sasori_256.town_planning.map.controller.handler.*;
 
-public class GameMapController implements MouseListener{
-    private Camera camera;
-    private Consumer<Point2D.Double> actionOnClick;
+public class GameMapController implements MouseListener {
+  private Camera camera;
+  private Consumer<Point2D.Double> actionOnClick;
 
-    public GameMapController(Camera camera) {
-        this.camera = camera;
-        this.actionOnClick = new ClickGameMapHandler();
-    }
+  public GameMapController(Camera camera) {
+    this.camera = camera;
+    this.actionOnClick = new ClickGameMapHandler();
+  }
 
-    /**
-     * GameMap上でのクリック時の動作を設定する
-     * @param action
-     */
-    public void setActionOnClick(Consumer<Point2D.Double> action) {
-        this.actionOnClick = action;
-    }
+  /**
+   * GameMap上でのクリック時の動作を設定する
+   * 
+   * @param action
+   */
+  public void setActionOnClick(Consumer<Point2D.Double> action) {
+    this.actionOnClick = action;
+  }
 
-    @Override
-    public void mouseClicked(MouseEvent e) {
-        Point2D.Double isoPoint = camera.screenToIso(e.getX(), e.getY());
-        // System.out.println("Iso Coordinates: (" + isoPoint.x + ", " + isoPoint.y + ")");
-        actionOnClick.accept(isoPoint);
-    }
+  @Override
+  public void mouseClicked(MouseEvent e) {
+    Point2D.Double isoPoint = camera.screenToIso(e.getX(), e.getY());
+    // System.out.println("Iso Coordinates: (" + isoPoint.x + ", " + isoPoint.y +
+    // ")");
+    actionOnClick.accept(isoPoint);
+  }
 
-    @Override public void mouseEntered(MouseEvent e) {}
-    @Override public void mouseExited(MouseEvent e) {}
-    @Override public void mousePressed(MouseEvent e) {}
-    @Override public void mouseReleased(MouseEvent e) {}
-    
-    
+  @Override
+  public void mouseEntered(MouseEvent e) {
+  }
+
+  @Override
+  public void mouseExited(MouseEvent e) {
+  }
+
+  @Override
+  public void mousePressed(MouseEvent e) {
+  }
+
+  @Override
+  public void mouseReleased(MouseEvent e) {
+  }
+
 }

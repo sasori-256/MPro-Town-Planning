@@ -1,19 +1,16 @@
 package io.github.sasori_256.town_planning.gameObject.building.strategy;
 
-import io.github.sasori_256.town_planning.common.core.strategy.UpdateStrategy;
-import io.github.sasori_256.town_planning.common.event.EventType;
 import io.github.sasori_256.town_planning.gameObject.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.gameObject.model.GameContext;
-import io.github.sasori_256.town_planning.gameObject.resident.ResidentObject;
-import io.github.sasori_256.town_planning.gameObject.resident.ResidentType;
-
+import io.github.sasori_256.town_planning.gameObject.model.GameEffect;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 住居の機能：人口増加。
  * 一定時間ごとに新しい住民を生成する。
+ * GameEffectとして実装（並行動作可能）。
  */
-public class PopulationGrowthStrategy implements UpdateStrategy {
+public class PopulationGrowthEffect implements GameEffect {
   private final int maxPopulation;
   private double timer = 0;
   private final double spawnInterval = 15.0; // 15秒ごとに判定
@@ -24,7 +21,7 @@ public class PopulationGrowthStrategy implements UpdateStrategy {
   }
 
   @Override
-  public void update(GameContext context, BaseGameEntity self) {
+  public void execute(GameContext context, BaseGameEntity self) {
     if (currentPopulation >= maxPopulation) {
       return;
     }
@@ -35,6 +32,8 @@ public class PopulationGrowthStrategy implements UpdateStrategy {
       // 50%の確率で住民生成
       if (ThreadLocalRandom.current().nextBoolean()) {
         currentPopulation++;
+        // ここで本来は住民生成イベントなどを発火する
+        System.out.println("Population increased! Total for this building: " + currentPopulation);
       }
     }
   }

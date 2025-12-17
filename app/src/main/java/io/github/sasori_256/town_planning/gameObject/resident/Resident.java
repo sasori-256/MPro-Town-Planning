@@ -4,14 +4,14 @@ import java.awt.geom.Point2D;
 
 import io.github.sasori_256.town_planning.gameObject.model.BaseGameEntity;
 
-public class ResidentObject extends BaseGameEntity {
+public class Resident extends BaseGameEntity {
   private final ResidentType type;
   private double age;
   private int faith;
   private int layerIndex;
   private ResidentState state;
 
-  public ResidentObject(Point2D.Double position, ResidentType residentType, ResidentState state) {
+  public Resident(Point2D.Double position, ResidentType residentType, ResidentState state) {
     super(position);
     this.type = residentType;
     this.age = 0.0;

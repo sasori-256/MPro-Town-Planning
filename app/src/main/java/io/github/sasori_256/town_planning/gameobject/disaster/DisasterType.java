@@ -1,4 +1,4 @@
-package io.github.sasori_256.town_planning.gameObject.disaster;
+package io.github.sasori_256.town_planning.gameobject.disaster;
 
 /**
  * 災害の種類定義。

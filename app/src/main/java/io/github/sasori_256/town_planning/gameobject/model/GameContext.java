@@ -1,4 +1,4 @@
-package io.github.sasori_256.town_planning.gameObject.model;
+package io.github.sasori_256.town_planning.gameobject.model;
 
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.map.model.GameMap;

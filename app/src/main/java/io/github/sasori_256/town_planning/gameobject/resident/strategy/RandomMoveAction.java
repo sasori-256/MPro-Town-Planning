@@ -1,8 +1,8 @@
-package io.github.sasori_256.town_planning.gameObject.resident.strategy;
+package io.github.sasori_256.town_planning.gameobject.resident.strategy;
 
-import io.github.sasori_256.town_planning.gameObject.model.BaseGameEntity;
-import io.github.sasori_256.town_planning.gameObject.model.GameAction;
-import io.github.sasori_256.town_planning.gameObject.model.GameContext;
+import io.github.sasori_256.town_planning.gameobject.model.BaseGameEntity;
+import io.github.sasori_256.town_planning.gameobject.model.GameAction;
+import io.github.sasori_256.town_planning.gameobject.model.GameContext;
 
 import java.awt.geom.Point2D;
 import java.util.concurrent.ThreadLocalRandom;

@@ -1,28 +1,39 @@
-package io.github.sasori_256.town_planning.gameObject;
+package io.github.sasori_256.town_planning.gameobject;
 
 import java.awt.geom.Point2D;
 import java.awt.Point;
 
+/**
+ * カメラクラス
+ * 引数は全てView基準?
+ * 
+ * @param cellWidth  アイソメトリックセルの幅
+ * @param cellHeight アイソメトリックセルの高さ
+ * @param offsetX    カメラのXオフセット
+ * @param offsetY    カメラのYオフセット
+ * @param center     カメラの中心点
+ */
 public class Camera {
-  private int cellWidth;
   private int cellHeight;
+  private int cellWidth;
   private int offsetX;
   private int offsetY;
   private Point2D.Double center;
 
-  public Camera(int cellWidth, int cellHeight) {
+  public Camera(int cellWidth, int cellHeight, Point2D.Double center) {
     this.cellWidth = cellWidth;
     this.cellHeight = cellHeight;
     this.offsetX = 0;
     this.offsetY = 0;
-  }
-
-  public int getCellWidth() {
-    return cellWidth;
+    this.center = center;
   }
 
   public int getCellHeight() {
     return cellHeight;
+  }
+
+  public int getCellWidth() {
+    return cellWidth;
   }
 
   public int getOffsetX() {
@@ -54,10 +65,10 @@ public class Camera {
    * @return アイソメトリック座標
    */
   public Point2D.Double screenToIso(int screenX, int screenY) {
-    double adjX = screenX + this.center.x - this.offsetX;
-    double adjY = screenY + this.center.y - this.offsetY;
-    double isoX = adjX / this.cellWidth + adjY / this.cellHeight;
-    double isoY = adjY / this.cellHeight - adjX / this.cellWidth;
+    double adjX = screenX - this.center.x - this.offsetX;
+    double adjY = screenY - this.center.y * 0 - this.offsetY;
+    double isoX = adjX / this.cellWidth + adjY / this.cellHeight - 1;
+    double isoY = adjY / this.cellHeight - adjX / this.cellWidth - 1;
     return new Point2D.Double(isoX, isoY);
   }
 
@@ -68,10 +79,9 @@ public class Camera {
    * @param isoY アイソメトリックのY座標
    * @return スクリーン座標
    */
-  public Point isoToScreen(double isoX, double isoY) {
-    double screenX = (isoX - isoY) * (this.cellWidth / 2.0) + this.offsetX;
-    double screenY = (isoX + isoY) * (this.cellHeight / 2.0) + this.offsetY;
-    return new Point((int) screenX, (int) screenY);
+  public Point2D.Double isoToScreen(Point2D.Double isoPos) {
+    double screenX = (this.cellWidth / 2) * (isoPos.x - isoPos.y - 1) + this.center.x + this.offsetX;
+    double screenY = (this.cellHeight / 2) * (isoPos.x + isoPos.y) + this.center.y * 0 + this.offsetY;
+    return new Point2D.Double(screenX, screenY);
   }
-
 }

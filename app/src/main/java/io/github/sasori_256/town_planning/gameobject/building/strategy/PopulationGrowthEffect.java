@@ -1,8 +1,8 @@
-package io.github.sasori_256.town_planning.gameObject.building.strategy;
+package io.github.sasori_256.town_planning.gameobject.building.strategy;
 
-import io.github.sasori_256.town_planning.gameObject.model.BaseGameEntity;
-import io.github.sasori_256.town_planning.gameObject.model.GameContext;
-import io.github.sasori_256.town_planning.gameObject.model.GameEffect;
+import io.github.sasori_256.town_planning.gameobject.model.BaseGameEntity;
+import io.github.sasori_256.town_planning.gameobject.model.GameContext;
+import io.github.sasori_256.town_planning.gameobject.model.GameEffect;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -16,7 +16,7 @@ public class PopulationGrowthEffect implements GameEffect {
   private final double spawnInterval = 15.0; // 15秒ごとに判定
   private int currentPopulation = 0; // この家が生成した（管理している）住民数
 
-  public PopulationGrowthStrategy(int maxPopulation) {
+  public PopulationGrowthEffect(int maxPopulation) {
     this.maxPopulation = maxPopulation;
   }
 

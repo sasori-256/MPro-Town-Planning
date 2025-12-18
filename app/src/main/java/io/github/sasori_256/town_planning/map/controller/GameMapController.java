@@ -4,7 +4,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.Point2D;
 import java.util.function.Consumer;
-import io.github.sasori_256.town_planning.gameObject.Camera;
+import io.github.sasori_256.town_planning.gameobject.Camera;
 import io.github.sasori_256.town_planning.map.controller.handler.*;
 
 public class GameMapController implements MouseListener {

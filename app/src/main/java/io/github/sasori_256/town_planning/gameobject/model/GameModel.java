@@ -1,4 +1,4 @@
-package io.github.sasori_256.town_planning.gameObject.model;
+package io.github.sasori_256.town_planning.gameobject.model;
 
 import java.awt.geom.Point2D;
 import java.util.List;
@@ -10,11 +10,11 @@ import io.github.sasori_256.town_planning.common.core.GameLoop;
 import io.github.sasori_256.town_planning.common.core.Updatable;
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.EventType;
-import io.github.sasori_256.town_planning.gameObject.building.BuildingObject;
-import io.github.sasori_256.town_planning.gameObject.building.BuildingType;
-import io.github.sasori_256.town_planning.gameObject.building.strategy.PopulationGrowthStrategy;
-import io.github.sasori_256.town_planning.gameObject.resident.ResidentObject;
-import io.github.sasori_256.town_planning.gameObject.resident.ResidentState;
+import io.github.sasori_256.town_planning.gameobject.building.Building;
+import io.github.sasori_256.town_planning.gameobject.building.BuildingType;
+import io.github.sasori_256.town_planning.gameobject.building.strategy.PopulationGrowthEffect;
+import io.github.sasori_256.town_planning.gameobject.resident.Resident;
+import io.github.sasori_256.town_planning.gameobject.resident.ResidentState;
 import io.github.sasori_256.town_planning.map.model.GameMap;
 
 /**
@@ -27,8 +27,8 @@ public class GameModel implements GameContext, Updatable {
   private final GameLoop gameLoop;
 
   // スレッドセーフなリストを使用（更新スレッドと描画スレッド/UIスレッドからのアクセスがあるため）
-  private final List<ResidentObject> residentEntities = new CopyOnWriteArrayList<>();
-  private final List<BuildingObject> buildingEntities = new CopyOnWriteArrayList<>();
+  private final List<Resident> residentEntities = new CopyOnWriteArrayList<>();
+  private final List<Building> buildingEntities = new CopyOnWriteArrayList<>();
 
   private int souls = 100;
   private int day = 1;
@@ -105,35 +105,35 @@ public class GameModel implements GameContext, Updatable {
 
   @Override
   public <T extends BaseGameEntity> void spawnEntity(T entity) {
-    if (entity instanceof ResidentObject) {
-      addResidentEntity((ResidentObject) entity);
-    } else if (entity instanceof BuildingObject) {
-      addBuildingEntity((BuildingObject) entity);
+    if (entity instanceof Resident) {
+      addResidentEntity((Resident) entity);
+    } else if (entity instanceof Building) {
+      addBuildingEntity((Building) entity);
     }
   }
 
   @Override
   public <T extends BaseGameEntity> void removeEntity(T entity) {
-    if (entity instanceof ResidentObject) {
+    if (entity instanceof Resident) {
       residentEntities.remove(entity);
-    } else if (entity instanceof BuildingObject) {
+    } else if (entity instanceof Building) {
       buildingEntities.remove(entity);
     }
   }
 
   // --- Game Logic API ---
 
-  public void addResidentEntity(ResidentObject entity) {
+  public void addResidentEntity(Resident entity) {
     residentEntities.add(entity);
     eventBus.publish(EventType.RESIDENT_BORN, entity.getPosition());
   }
 
-  public void addBuildingEntity(BuildingObject entity) {
+  public void addBuildingEntity(Building entity) {
     buildingEntities.add(entity);
     eventBus.publish(EventType.MAP_UPDATED, entity.getPosition());
   }
 
-  public void removeBuildingEntity(BuildingObject entity) {
+  public void removeBuildingEntity(Building entity) {
     gameMap.removeBuilding(entity.getPosition());
     // マップ上の占有情報などもクリアする必要があるならMap経由で行う
     eventBus.publish(EventType.MAP_UPDATED, entity.getPosition());
@@ -161,7 +161,7 @@ public class GameModel implements GameContext, Updatable {
     // 範囲内の死体を探す
     // Note: 複数の死体が重なっている場合、1つだけ回収するか全部回収するかは仕様次第。
     // ここでは最初に見つかった1つを回収する。
-    java.util.Optional<ResidentObject> target = residentEntities.stream()
+    java.util.Optional<Resident> target = residentEntities.stream()
         .filter(e -> {
           ResidentState state = e.getState();
           return state == ResidentState.DEAD;
@@ -170,7 +170,7 @@ public class GameModel implements GameContext, Updatable {
         .findFirst();
 
     if (target.isPresent()) {
-      ResidentObject deadResident = target.get();
+      Resident deadResident = target.get();
 
       // 魂回収
       int soulAmount = 10; // 仮: 住民の種類や信仰心によって変動させるとなお良い
@@ -217,16 +217,11 @@ public class GameModel implements GameContext, Updatable {
     addSouls(-type.getCost());
 
     // BaseGameEntity生成
-    BuildingObject building = new BuildingObject(pos, type);
+    Building building = new Building(pos, type);
 
     // Strategy設定
     // building.setRenderStrategy( type.getRenderStrategy() );
-    // 建物ごとの固有ロジック
-    if (type == BuildingType.HOUSE) {
-      CompositeUpdateStrategy compositeUpdateStrategy = new CompositeUpdateStrategy(
-          new PopulationGrowthStrategy(type.getMaxPopulation()));
-      building.setUpdateStrategy(compositeUpdateStrategy);
-    }
+    // 建物ごとの固有ロジックはBuildingコンストラクタで設定されるため、ここでは不要
     // マップとエンティティリストへの登録
 
     // NOTE:
@@ -298,11 +293,11 @@ public class GameModel implements GameContext, Updatable {
     }
 
     // 全エンティティの更新
-    for (ResidentObject resident : residentEntities) {
+    for (Resident resident : residentEntities) {
       resident.update(context);
     }
 
-    for (BuildingObject building : buildingEntities) {
+    for (Building building : buildingEntities) {
       building.update(context);
     }
   }

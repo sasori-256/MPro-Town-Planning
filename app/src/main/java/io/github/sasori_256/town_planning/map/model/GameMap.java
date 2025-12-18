@@ -4,7 +4,8 @@ import java.awt.geom.Point2D;
 
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.EventType;
-import io.github.sasori_256.town_planning.gameObject.building.BuildingObject;
+import io.github.sasori_256.town_planning.gameobject.building.Building;
+import io.github.sasori_256.town_planning.gameobject.building.BuildingType;
 
 public class GameMap implements MapContext {
   private final int width;
@@ -26,7 +27,7 @@ public class GameMap implements MapContext {
     // Cellsの初期化
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
-        cells[y][x] = new MapCell(TerrainType.GRASS);
+        cells[y][x] = new MapCell(new Point2D.Double(x, y), TerrainType.GRASS);
       }
     }
   }
@@ -48,7 +49,7 @@ public class GameMap implements MapContext {
   }
 
   @Override
-  public boolean placeBuilding(Point2D.Double pos, BuildingObject building) {
+  public boolean placeBuilding(Point2D.Double pos, Building building) {
     if (!isValidPos(pos)) {
       return false;
     }
@@ -67,7 +68,7 @@ public class GameMap implements MapContext {
       return false;
     }
     MapCell cell = getCell(pos);
-    if (cell.getBuilding().isPresent()) {
+    if (cell.getBuilding().getType() != BuildingType.NONE) {
       cell.removeBuilding();
       eventBus.publish(EventType.MAP_UPDATED, pos);
       return true;

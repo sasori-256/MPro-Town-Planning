@@ -1,16 +1,23 @@
 package io.github.sasori_256.town_planning.map.model;
 
-import java.util.Optional;
+import java.awt.geom.Point2D;
 
-import io.github.sasori_256.town_planning.gameObject.building.BuildingObject;
+import io.github.sasori_256.town_planning.gameobject.building.Building;
+import io.github.sasori_256.town_planning.gameobject.building.BuildingType;
 
 public class MapCell {
+  private final Point2D.Double position;
   private Terrain terrain;
-  private BuildingObject building;
+  private Building building;
 
-  public MapCell(Terrain initTerrain) {
+  public MapCell(Point2D.Double position, Terrain initTerrain) {
+    this.position = position;
     this.terrain = initTerrain;
-    this.building = null;
+    this.building = new Building(position, BuildingType.NONE);
+  }
+
+  public Point2D.Double getPosition() {
+    return position;
   }
 
   public Terrain getTerrain() {
@@ -22,27 +29,33 @@ public class MapCell {
     return true;
   }
 
-  public Optional<BuildingObject> getBuilding() {
-    return Optional.ofNullable(building);
+  public Building getBuilding() {
+    return building;
   }
 
-  public boolean setBuilding(BuildingObject building) {
+  public void setBuilding(Building building) {
     this.building = building;
-    return true;
   }
 
-  public boolean removeBuilding() {
+  public void removeBuilding() {
     this.building = null;
-    return true;
   }
 
+  /**
+   * 建物を建てられるかどうかを判定する
+   * 単純に地形が建築可能かつ建物が存在しない場合にtrueを返す
+   */
   public boolean canBuild() {
-    return terrain.isBuildable() && building == null;
+    return terrain.isBuildable() && building.getType() == BuildingType.NONE;
   }
 
+  /**
+   * 住民が歩けるかどうかを判定する
+   * 地形が歩行可能かつ建物が存在しない場合にtrueを返す
+   */
   public boolean canWalk() {
     boolean terrainOk = terrain.isWalkable();
-    boolean buildingOk = (building == null);
+    boolean buildingOk = (building.getType() == BuildingType.NONE);
     return terrainOk && buildingOk;
   }
 }

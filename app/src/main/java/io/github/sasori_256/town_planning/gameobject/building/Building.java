@@ -1,11 +1,11 @@
-package io.github.sasori_256.town_planning.gameObject.building;
+package io.github.sasori_256.town_planning.gameobject.building;
 
 import java.awt.geom.Point2D;
 import java.util.function.Supplier;
 
-import io.github.sasori_256.town_planning.gameObject.model.BaseGameEntity;
+import io.github.sasori_256.town_planning.gameobject.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.common.core.CompositeUpdateStrategy;
-import io.github.sasori_256.town_planning.gameObject.model.GameEffect;
+import io.github.sasori_256.town_planning.gameobject.model.GameEffect;
 
 /**
  * 建物オブジェクトを表すクラス。

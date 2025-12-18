@@ -12,112 +12,21 @@ import java.io.File;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-class Camera {
-  public static double scale = 32;
-  public static double posX = 320;
-  public static double posY = 160;
-}
-
-enum TerrainType {
-  GRASS("grass", true, true),
-  SEA("sea", false, false),
-  MOUNTAIN("mountain", false, false),
-  COAST_YP("coast_Yp", false, false);
-
-  final String displayName;
-  final boolean isWalkable;
-  final boolean isBuildable;
-
-  TerrainType(String displayName, boolean isWalkable, boolean isBuildable) {
-    this.displayName = displayName;
-    this.isWalkable = isWalkable;
-    this.isBuildable = isBuildable;
-  }
-
-  public String getDisplayName() {
-    return displayName;
-  }
-
-  public boolean isWalkable() {
-    return isWalkable;
-  }
-
-  public boolean isBuildable() {
-    return isBuildable;
-  }
-
-}
-
-enum BuildingGameObject {
-  NONE("none", 0),
-  HOUSE("house", 100),
-  GRAVEL_ROAD_XPXM("gravel_road_XpXm", 10);
-
-  final String displayName;
-  final int cost;
-
-  BuildingGameObject(String displayName, int cost) {
-    this.displayName = displayName;
-    this.cost = cost;
-  }
-
-  public String getDisplayName() {
-    return displayName;
-  }
-
-  public int getCost() {
-    return cost;
-  }
-}
-
-class MapCell {
-  public TerrainType terrain;
-  public BuildingGameObject building;
-
-  public MapCell(TerrainType initTerrain, BuildingGameObject initBuilding) {
-    this.terrain = initTerrain;
-    this.building = initBuilding;
-  }
-}
-
-class GameMap {
-  public final int width;
-  public final int height;
-  public final MapCell[][] cells;
-
-  public GameMap(int width, int height) {
-    this.width = width;
-    this.height = height;
-    this.cells = new MapCell[height][width];
-    for (int y = 0; y < height; y++) {
-      for (int x = 0; x < width; x++) {
-        cells[y][x] = new MapCell(TerrainType.GRASS, BuildingGameObject.NONE);
-      }
-    }
-  }
-}
+import io.github.sasori_256.town_planning.gameobject.Camera;
+import io.github.sasori_256.town_planning.map.model.GameMap;
+import io.github.sasori_256.town_planning.map.model.MapCell;
 
 /**
- * gameMapの内容を描画するクラス
+ * GameMapの内容を描画するクラス
  */
 class GameMapPanel extends JPanel {
   private final GameMap gameMap;
+  private final Camera camera;
 
-  public GameMapPanel(GameMap gameMap) {
+  public GameMapPanel(GameMap gameMap, Camera camera) {
     this.gameMap = gameMap;
+    this.camera = camera;
     setBackground(Color.BLACK);
-  }
-
-  /**
-   * isometric座標をスクリーン座標に変換する
-   * 
-   * @param isoPos map上の座標
-   * @return スクリーン座標
-   */
-  Point2D.Double isometricPosToScreenPos(Point2D.Double isoPos) {
-    double screenX = (isoPos.x - isoPos.y - 1) * Camera.scale + Camera.posX;
-    double screenY = (isoPos.x + isoPos.y) * Camera.scale / 2 + Camera.posY;
-    return new Point2D.Double(screenX, screenY);
   }
 
   /**
@@ -130,7 +39,7 @@ class GameMapPanel extends JPanel {
   Point2D.Double calculateShiftImage(Point2D.Double imgPos, Point2D.Double imgSize) {
     double shiftX = imgPos.x;
     double aspectRatio = imgSize.y / imgSize.x;
-    double shiftY = imgPos.y - (aspectRatio * 2 - 1) * Camera.scale / 2;
+    double shiftY = imgPos.y - (aspectRatio * 2 - 1) * camera.scale / 2;
     return new Point2D.Double(shiftX, shiftY);
   }
 
@@ -140,8 +49,8 @@ class GameMapPanel extends JPanel {
    * @return 画像のスケール
    */
   Point2D.Double calculateImageScale() {
-    double imageWidth = Camera.scale * 2;
-    double imageHeight = Camera.scale;
+    double imageWidth = camera.scale * 2;
+    double imageHeight = camera.scale;
     return new Point2D.Double(imageWidth, imageHeight);
   }
 
@@ -149,48 +58,71 @@ class GameMapPanel extends JPanel {
    * gameMapの内容を描画する
    * 
    * @param g 描画に使用するGraphicsオブジェクト
-   * @implNote 画像ファイルが見つからない場合、"Warning Image not found: imageName.png at (x,y)"
+   * @implNote 画像ファイルが見つからない場合、"Warning Image not found: imageName.pn
+   *           at (x,y)"
    *           という警告が出力されます。
    * @see GameMap
    */
   @Override
   public void paintComponent(Graphics g) {
     super.paintComponent(g);
-    for (int y = 0; y < gameMap.height; y++) {
-      for (int x = 0; x < gameMap.width; x++) {
-        MapCell cell = gameMap.cells[y][x];
+    final String PATH = "src/main/resources/images/";
+    final String ERROR_TERRAIN_IMAGE = "error_terrain.png";
+    final String ERROR_BUILDING_IMAGE = "error_building.png";
+
+    for (int y = 0; y < gameMap.getHeight(); y++) {
+      for (int x = 0; x < gameMap.getWidth(); x++) {
+        MapCell cell = gameMap.getCell(new Point2D.Double(x, y));
         Point2D.Double pos = new Point2D.Double(x, y);
         Point2D.Double screenPos;
         Point2D.Double shiftedScreenPos;
         Point2D.Double imageScale;
         Point2D.Double imageSize;
         Image img;
-        String terrainName = cell.terrain.getDisplayName();
-        if (new File(terrainName + ".png").exists()) {
-          img = Toolkit.getDefaultToolkit().getImage(terrainName + ".png");
-          screenPos = isometricPosToScreenPos(pos);
-          g.drawImage(img, (int) screenPos.x, (int) screenPos.y, (int) (Camera.scale * 2), (int) (Camera.scale), this);
+
+        // 地形の描画
+        // 画像ファイルが存在する場合はそれを使用し、存在しない場合はエラーメッセージを表示して代替画像を使用する
+        // TODO: 画像のプリロードを検討
+        // TODO: isoToScreenの引数型をPoint2D.Doubleかx, yの形式のどちらかに統一する
+        // TODO: camera.scaleの内容をどうにかする
+        // TODO: layerIndexに従った描画順序の実装
+        String terrainName = cell.getTerrain().getDisplayName();
+        String terrainImageName = terrainName + ".png";
+        if (new File(PATH + terrainImageName).exists()) {
+          img = Toolkit.getDefaultToolkit().getImage(PATH + terrainImageName);
+          screenPos = camera.isoToScreen(pos);
+          g.drawImage(img, (int) screenPos.x, (int) screenPos.y, (int) (camera.scale * 2), (int) (camera.scale), this);
         } else {
-          System.err.println("Warning: Image not found: " + terrainName + ".png at (" + x + ", " + y + ")");
-          img = Toolkit.getDefaultToolkit().getImage("error_terrain.png");
-          screenPos = isometricPosToScreenPos(pos);
-          g.drawImage(img, (int) screenPos.x, (int) screenPos.y, (int) (Camera.scale * 2), (int) (Camera.scale), this);
+          System.err.println("Warning: Image not found: " + terrainImageName + " at (" + x + ", " + y + ")");
+          img = Toolkit.getDefaultToolkit().getImage(PATH + ERROR_TERRAIN_IMAGE);
+          screenPos = camera.isoToScreen(pos);
+          g.drawImage(img, (int) screenPos.x, (int) screenPos.y, (int) (camera.scale * 2), (int) (camera.scale), this);
         }
-        String buildingName = cell.building.getDisplayName();
-        if ("none".equals(buildingName))
+
+        // 建物の描画
+        // 建物が存在しない場合はスキップ
+        // 画像ファイルが存在する場合はそれを使用し、存在しない場合はエラーメッセージを表示して代替画像を使用する
+        // TODO: 画像のプリロードを検討
+        // TODO: isoToScreenの引数型をPoint2D.Doubleかx, yの形式のどちらかに統一する
+        // TODO: camera.scaleの内容をどうにかする
+        // TODO: layerIndexに従った描画順序の実装
+        String buildingName = cell.getBuilding().getType().getDisplayName();
+        String buildingImageName = cell.getBuilding().getType().getImageName() + ".png";
+        if (buildingName.equals("none")) {
           continue;
-        if (new File(buildingName + ".png").exists()) {
-          img = Toolkit.getDefaultToolkit().getImage(buildingName + ".png");
-          screenPos = isometricPosToScreenPos(pos);
+        }
+        if (new File(buildingImageName).exists()) {
+          img = Toolkit.getDefaultToolkit().getImage(buildingImageName);
+          screenPos = camera.isoToScreen(pos);
           imageSize = new Point2D.Double(img.getWidth(this), img.getHeight(this));
           shiftedScreenPos = calculateShiftImage(screenPos, imageSize);
           imageScale = calculateImageScale();
           g.drawImage(img, (int) shiftedScreenPos.x, (int) shiftedScreenPos.y, (int) (imageScale.x),
               (int) (imageScale.y), this);
         } else {
-          System.err.println("Warning: Image not found: " + buildingName + ".png at (" + x + ", " + y + ")");
-          img = Toolkit.getDefaultToolkit().getImage("error_building.png");
-          screenPos = isometricPosToScreenPos(pos);
+          System.err.println("Warning: Image not found: " + buildingImageName + " at (" + x + ", " + y + ")");
+          img = Toolkit.getDefaultToolkit().getImage(ERROR_BUILDING_IMAGE);
+          screenPos = camera.isoToScreen(pos);
           imageScale = calculateImageScale();
           g.drawImage(img, (int) screenPos.x, (int) screenPos.y, (int) (imageScale.x), (int) (imageScale.y), this);
         }
@@ -206,41 +138,20 @@ class GameMapPanel extends JPanel {
  * 
  * @see GameMapPanel
  */
-public class GameWindow extends JFrame implements MouseListener {
-  public GameWindow() {
+public class GameWindow extends JFrame {
+  public GameWindow(MouseListener mouseListener, GameMap gameMap, Camera camera) {
     setTitle("Town Planning Game");
     setSize(640, 640);
-    GameMap gameMap = generateTestMap();
-    GameMapPanel gameMapPanel = new GameMapPanel(gameMap);
+    // マウス判定はGameWindowで受け取り、必要に応じてGameMapPanelに伝える
+    // Listenerの登録はGameWindowで行うが、Listener自体は外部から渡す形にする
+    this.addMouseListener(mouseListener);
+
+    GameMapPanel gameMapPanel = new GameMapPanel(gameMap, camera);
+
+    // BorderLayoutの中央にGameMapPanelを配置
+    // TODO: Layout管理の改善検討
     this.add(gameMapPanel, BorderLayout.CENTER);
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     setVisible(true);
-  }
-
-  private GameMap generateTestMap() {
-    GameMap testMap = new GameMap(10, 10);
-    for (int x = 0; x < 10; x++) {
-      testMap.cells[0][x].terrain = TerrainType.SEA;
-      testMap.cells[1][x].terrain = TerrainType.SEA;
-      testMap.cells[8][x].terrain = TerrainType.COAST_YP;
-      testMap.cells[9][x].terrain = TerrainType.SEA;
-      testMap.cells[6][x].building = BuildingGameObject.GRAVEL_ROAD_XPXM;
-    }
-    return testMap;
-  }
-
-  public void mouseClicked(java.awt.event.MouseEvent e) {
-  }
-
-  public void mousePressed(java.awt.event.MouseEvent e) {
-  }
-
-  public void mouseReleased(java.awt.event.MouseEvent e) {
-  }
-
-  public void mouseEntered(java.awt.event.MouseEvent e) {
-  }
-
-  public void mouseExited(java.awt.event.MouseEvent e) {
   }
 }

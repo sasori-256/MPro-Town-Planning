@@ -1,8 +1,8 @@
 package io.github.sasori_256.town_planning.common.core;
 
-import io.github.sasori_256.town_planning.gameObject.model.BaseGameEntity;
-import io.github.sasori_256.town_planning.gameObject.model.GameContext;
-import io.github.sasori_256.town_planning.gameObject.model.GameEffect;
+import io.github.sasori_256.town_planning.gameobject.model.BaseGameEntity;
+import io.github.sasori_256.town_planning.gameobject.model.GameContext;
+import io.github.sasori_256.town_planning.gameobject.model.GameEffect;
 
 import java.util.ArrayList;
 import java.util.List;

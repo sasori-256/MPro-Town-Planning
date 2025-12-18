@@ -1,10 +1,10 @@
 package io.github.sasori_256.town_planning.common.core;
 
 import io.github.sasori_256.town_planning.common.core.strategy.UpdateStrategy;
-import io.github.sasori_256.town_planning.gameObject.model.BaseGameEntity;
-import io.github.sasori_256.town_planning.gameObject.model.GameAction;
-import io.github.sasori_256.town_planning.gameObject.model.GameContext;
-import io.github.sasori_256.town_planning.gameObject.model.GameEffect;
+import io.github.sasori_256.town_planning.gameobject.model.BaseGameEntity;
+import io.github.sasori_256.town_planning.gameobject.model.GameAction;
+import io.github.sasori_256.town_planning.gameobject.model.GameContext;
+import io.github.sasori_256.town_planning.gameobject.model.GameEffect;
 
 /**
  * 1つのGameAction（排他）と複数のGameEffect（並行）を管理し実行するStrategy

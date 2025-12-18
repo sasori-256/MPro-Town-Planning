@@ -1,4 +1,4 @@
-package io.github.sasori_256.town_planning.gameObject.resident;
+package io.github.sasori_256.town_planning.gameobject.resident;
 
 /**
  * 住民の状態を表す列挙型。

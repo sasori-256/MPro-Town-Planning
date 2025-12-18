@@ -1,4 +1,4 @@
-package io.github.sasori_256.town_planning.gameObject.model;
+package io.github.sasori_256.town_planning.gameobject.model;
 
 /**
  * エンティティがとる排他的な行動（移動、攻撃、作業など）

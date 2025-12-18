@@ -1,4 +1,4 @@
-package io.github.sasori_256.town_planning.gameObject.disaster.strategy;
+package io.github.sasori_256.town_planning.gameobject.disaster.strategy;
 
 import java.awt.geom.Point2D;
 import java.util.List;
@@ -6,11 +6,11 @@ import java.util.stream.Collectors;
 
 import io.github.sasori_256.town_planning.common.core.strategy.UpdateStrategy;
 import io.github.sasori_256.town_planning.common.event.EventType;
-import io.github.sasori_256.town_planning.gameObject.disaster.DisasterType;
-import io.github.sasori_256.town_planning.gameObject.model.BaseGameEntity;
-import io.github.sasori_256.town_planning.gameObject.model.GameContext;
-import io.github.sasori_256.town_planning.gameObject.resident.ResidentObject;
-import io.github.sasori_256.town_planning.gameObject.resident.ResidentState;
+import io.github.sasori_256.town_planning.gameobject.disaster.DisasterType;
+import io.github.sasori_256.town_planning.gameobject.model.BaseGameEntity;
+import io.github.sasori_256.town_planning.gameobject.model.GameContext;
+import io.github.sasori_256.town_planning.gameobject.resident.Resident;
+import io.github.sasori_256.town_planning.gameobject.resident.ResidentState;
 
 /**
  * 隕石などの単発災害のロジック。
@@ -52,7 +52,7 @@ public class MeteorDisasterStrategy implements UpdateStrategy {
     }
   }
 
-  // TODO: ResidentObject用に直す
+  // TODO: Resident用に直す
   private void impact(GameContext context, BaseGameEntity self) {
     impacted = true;
     self.setPosition(targetPos);
@@ -64,8 +64,8 @@ public class MeteorDisasterStrategy implements UpdateStrategy {
 
     for (BaseGameEntity target : targets) {
       // 住民への処理
-      if (target instanceof ResidentObject) {
-        ResidentObject resident = (ResidentObject) target;
+      if (target instanceof Resident) {
+        Resident resident = (Resident) target;
         if (resident.getState() != ResidentState.DEAD) {
           // 即死させる
           resident.setState(ResidentState.DEAD);

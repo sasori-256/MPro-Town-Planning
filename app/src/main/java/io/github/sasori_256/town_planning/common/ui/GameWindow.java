@@ -183,9 +183,9 @@ class GameMapPanel extends JPanel{
  * @see GameMapPanel
  */
 public class GameWindow extends JFrame implements MouseListener {
-  public GameWindow() {
+  public GameWindow(int width, int height) {
     setTitle("Town Planning Game");
-    setSize(640, 640);
+    setSize(width, height);
     GameMap gameMap = generateTestMap();
     GameMapPanel gameMapPanel = new GameMapPanel(gameMap);
     this.add(gameMapPanel, BorderLayout.CENTER);

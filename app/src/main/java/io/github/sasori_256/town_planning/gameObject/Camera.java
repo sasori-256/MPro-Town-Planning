@@ -83,7 +83,7 @@ public class Camera {
      * @return スクリーン座標
      */
     public Point2D.Double isoToScreen(Point2D.Double isoPos){
-        double screenX = (isoPos.x - isoPos.y-1) * (this.cellWidth / 2.0) + this.center.x+ this.offsetX;
+        double screenX = (isoPos.x - isoPos.y - 1) * (this.cellWidth / 2.0) + this.center.x + this.offsetX;
         double screenY = (isoPos.x + isoPos.y) * (this.cellHeight / 2.0) + this.offsetY;
         return new Point2D.Double(screenX, screenY);
     }

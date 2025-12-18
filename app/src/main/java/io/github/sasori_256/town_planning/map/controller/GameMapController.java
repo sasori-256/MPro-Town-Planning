@@ -4,16 +4,23 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.Point2D;
 import java.util.function.Consumer;
+
 import io.github.sasori_256.town_planning.gameobject.Camera;
-import io.github.sasori_256.town_planning.map.controller.handler.*;
+import io.github.sasori_256.town_planning.gameobject.building.Building;
+import io.github.sasori_256.town_planning.gameobject.building.BuildingType;
+import io.github.sasori_256.town_planning.map.controller.handler.PlaceBuildingHandler;
+import io.github.sasori_256.town_planning.map.model.GameMap;
 
 public class GameMapController implements MouseListener {
   private Camera camera;
   private Consumer<Point2D.Double> actionOnClick;
 
-  public GameMapController(Camera camera) {
+  public GameMapController(Camera camera, GameMap gameMap) {
     this.camera = camera;
-    this.actionOnClick = new ClickGameMapHandler();
+    this.actionOnClick = new PlaceBuildingHandler(
+        gameMap,
+        new Building(new Point2D.Double(0, 0), BuildingType.HOUSE),
+        this); // こんな設定法でいいのか？
   }
 
   /**
@@ -27,7 +34,7 @@ public class GameMapController implements MouseListener {
 
   @Override
   public void mouseClicked(MouseEvent e) {
-    Point2D.Double isoPoint = camera.screenToIso(e.getX(), e.getY());
+    Point2D.Double isoPoint = camera.screenToIso(new Point2D.Double(e.getX(), e.getY()));
     // System.out.println("Iso Coordinates: (" + isoPoint.x + ", " + isoPoint.y +
     // ")");
     actionOnClick.accept(isoPoint);

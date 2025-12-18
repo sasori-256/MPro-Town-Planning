@@ -39,7 +39,7 @@ class GameMapPanel extends JPanel {
   Point2D.Double calculateShiftImage(Point2D.Double imgPos, Point2D.Double imgSize) {
     double shiftX = imgPos.x;
     double aspectRatio = imgSize.y / imgSize.x;
-    double shiftY = imgPos.y - (aspectRatio * 2 - 1) * camera.scale / 2;
+    double shiftY = imgPos.y - (aspectRatio * 2 - 1) * camera.getScale() / 2;
     return new Point2D.Double(shiftX, shiftY);
   }
 
@@ -49,8 +49,8 @@ class GameMapPanel extends JPanel {
    * @return 画像のスケール
    */
   Point2D.Double calculateImageScale() {
-    double imageWidth = camera.scale * 2;
-    double imageHeight = camera.scale;
+    double imageWidth = camera.getScale() * 2;
+    double imageHeight = camera.getScale();
     return new Point2D.Double(imageWidth, imageHeight);
   }
 
@@ -91,12 +91,14 @@ class GameMapPanel extends JPanel {
         if (new File(PATH + terrainImageName).exists()) {
           img = Toolkit.getDefaultToolkit().getImage(PATH + terrainImageName);
           screenPos = camera.isoToScreen(pos);
-          g.drawImage(img, (int) screenPos.x, (int) screenPos.y, (int) (camera.scale * 2), (int) (camera.scale), this);
+          g.drawImage(img, (int) screenPos.x, (int) screenPos.y, (int) (camera.getScale() * 2),
+              (int) (camera.getScale()), this);
         } else {
           System.err.println("Warning: Image not found: " + terrainImageName + " at (" + x + ", " + y + ")");
           img = Toolkit.getDefaultToolkit().getImage(PATH + ERROR_TERRAIN_IMAGE);
           screenPos = camera.isoToScreen(pos);
-          g.drawImage(img, (int) screenPos.x, (int) screenPos.y, (int) (camera.scale * 2), (int) (camera.scale), this);
+          g.drawImage(img, (int) screenPos.x, (int) screenPos.y, (int) (camera.getScale() * 2),
+              (int) (camera.getScale()), this);
         }
 
         // 建物の描画
@@ -139,9 +141,9 @@ class GameMapPanel extends JPanel {
  * @see GameMapPanel
  */
 public class GameWindow extends JFrame {
-  public GameWindow(MouseListener mouseListener, GameMap gameMap, Camera camera) {
+  public GameWindow(MouseListener mouseListener, GameMap gameMap, Camera camera, int width, int height) {
     setTitle("Town Planning Game");
-    setSize(640, 640);
+    setSize(width, height);
     // マウス判定はGameWindowで受け取り、必要に応じてGameMapPanelに伝える
     // Listenerの登録はGameWindowで行うが、Listener自体は外部から渡す形にする
     this.addMouseListener(mouseListener);

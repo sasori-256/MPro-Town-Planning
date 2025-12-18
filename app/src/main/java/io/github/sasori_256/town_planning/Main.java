@@ -1,5 +1,7 @@
 package io.github.sasori_256.town_planning;
 
+import java.awt.geom.Point2D;
+
 // import com.google.common.eventbus.EventBus;
 
 import io.github.sasori_256.town_planning.common.event.EventBus;
@@ -14,9 +16,9 @@ public class Main {
     EventBus eventBus = new EventBus();
     GameModel gameModel = new GameModel(eventBus);
     GameMap gameMap = gameModel.getGameMap();
-    Camera camera = new Camera(64, 32);
-    GameMapController gameMapController = new GameMapController(camera);
-    GameWindow gameWindow = new GameWindow();
+    Camera camera = new Camera(1, new Point2D.Double(0, 0));
+    GameMapController gameMapController = new GameMapController(camera, gameMap);
+    GameWindow gameWindow = new GameWindow(gameMapController, gameMap, camera, 640, 640);
 
   }
 }

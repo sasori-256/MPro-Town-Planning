@@ -1,4 +1,4 @@
-package io.github.sasori_256.town_planning.model;
+package io.github.sasori_256.town_planning.map.model;
 
 import java.util.Optional;
 

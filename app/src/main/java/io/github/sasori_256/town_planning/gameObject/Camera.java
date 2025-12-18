@@ -4,17 +4,29 @@ import java.awt.Point;
 
 
 public class Camera {
+    private double scale;
     private int cellWidth;
     private int cellHeight;
     private int offsetX;
     private int offsetY;
     private Point2D.Double center;
 
-    public Camera(int cellWidth, int cellHeight) {
-        this.cellWidth = cellWidth;
-        this.cellHeight = cellHeight;
+    /**
+     * defaultScaleが1のとき、セルの幅が64ピクセル、高さが32ピクセルになる。
+     * @param defaultScale
+     * @param center
+     */
+    public Camera(double defaultScale, Point2D.Double center) {
+        this.scale = defaultScale;
+        this.cellWidth = (int)(64 * defaultScale);
+        this.cellHeight = (int)(32 * defaultScale);
         this.offsetX = 0;
         this.offsetY = 0;
+        this.center = center;
+    }
+
+    public double getScale() {
+        return scale;
     }
 
     public int getCellWidth() {
@@ -37,6 +49,12 @@ public class Camera {
         return center;
     }
 
+    public void setScale(double scale) {
+        this.scale = scale;
+        this.cellWidth = (int)(64 * scale);
+        this.cellHeight = (int)(32 * scale);
+    }
+
     public void setOffset(int offsetX, int offsetY) {
         this.offsetX = offsetX;
         this.offsetY = offsetY;
@@ -45,30 +63,29 @@ public class Camera {
     public void setCenter(Point2D.Double center) {
         this.center = center;
     }
+
     /**
      * スクリーン座標をアイソメトリック座標に変換する
-     * @param screenX スクリーンのX座標
-     * @param screenY スクリーンのY座標
+     * @param screenPos スクリーン座標
      * @return アイソメトリック座標
      */
-    public Point2D.Double screenToIso(int screenX, int screenY){
-        double adjX = screenX + this.center.x - this.offsetX;
-        double adjY = screenY + this.center.y - this.offsetY;
-        double isoX = adjX / this.cellWidth + adjY / this.cellHeight;
-        double isoY = adjY / this.cellHeight - adjX / this.cellWidth;
+    public Point2D.Double screenToIso(Point2D.Double screenPos){
+        double adjX = screenPos.x - this.center.x - this.offsetX;
+        double adjY = screenPos.y - this.offsetY; // Iso座標の (0,0)はX軸上の中央にあるため、center.yは引かない
+        double isoX = (adjX / this.cellWidth + adjY / this.cellHeight) - 1; //原点を調整するために-1を引く
+        double isoY = (adjY / this.cellHeight - adjX / this.cellWidth) - 1; //原点を調整するために-1を引く
         return new Point2D.Double(isoX, isoY);
     }
 
     /**
      * アイソメトリック座標をスクリーン座標に変換する
-     * @param isoX アイソメトリックのX座標
-     * @param isoY アイソメトリックのY座標
+     * @param isoPos アイソメトリック座標
      * @return スクリーン座標
      */
-    public Point isoToScreen(double isoX, double isoY){
-        double screenX = (isoX - isoY) * (this.cellWidth / 2.0) + this.offsetX;
-        double screenY = (isoX + isoY) * (this.cellHeight / 2.0) + this.offsetY;
-        return new Point((int)screenX, (int)screenY);
+    public Point.Double isoToScreen(Point2D.Double isoPos){
+        double screenX = (isoPos.x - isoPos.y-1) * (this.cellWidth / 2.0) + this.center.x+ this.offsetX;
+        double screenY = (isoPos.x + isoPos.y) * (this.cellHeight / 2.0) + this.offsetY;
+        return new Point.Double(screenX, screenY);
     }
 
 }

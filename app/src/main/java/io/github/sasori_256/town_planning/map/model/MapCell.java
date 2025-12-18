@@ -38,7 +38,7 @@ public class MapCell {
   }
 
   public void removeBuilding() {
-    this.building = null;
+    this.building = new Building(position, BuildingType.NONE); // nullではなくNONEタイプを設定
   }
 
   /**

@@ -5,14 +5,16 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 
-import io.github.sasori_256.town_planning.common.core.CompositeUpdateStrategy;
 import io.github.sasori_256.town_planning.common.core.GameLoop;
 import io.github.sasori_256.town_planning.common.core.Updatable;
 import io.github.sasori_256.town_planning.common.event.EventBus;
-import io.github.sasori_256.town_planning.common.event.EventType;
+import io.github.sasori_256.town_planning.common.event.events.DayPassedEvent;
+import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
+import io.github.sasori_256.town_planning.common.event.events.ResidentBornEvent;
+import io.github.sasori_256.town_planning.common.event.events.SoulChangedEvent;
+import io.github.sasori_256.town_planning.common.event.events.SoulHarvestedEvent;
 import io.github.sasori_256.town_planning.gameobject.building.Building;
 import io.github.sasori_256.town_planning.gameobject.building.BuildingType;
-import io.github.sasori_256.town_planning.gameobject.building.strategy.PopulationGrowthEffect;
 import io.github.sasori_256.town_planning.gameobject.resident.Resident;
 import io.github.sasori_256.town_planning.gameobject.resident.ResidentState;
 import io.github.sasori_256.town_planning.map.model.GameMap;
@@ -24,11 +26,11 @@ import io.github.sasori_256.town_planning.map.model.GameMap;
 public class GameModel implements GameContext, Updatable {
   private final EventBus eventBus;
   private final GameMap gameMap;
-  private final GameLoop gameLoop;
+  private final GameLoop gameLoop; // 現在は未使用だが、startGameLoopで使われることを想定
 
-  // スレッドセーフなリストを使用（更新スレッドと描画スレッド/UIスレッドからのアクセスがあるため）
-  private final List<Resident> residentEntities = new CopyOnWriteArrayList<>();
+  // スレッドセーフなリストを使用
   private final List<Building> buildingEntities = new CopyOnWriteArrayList<>();
+  private final List<Resident> residentEntities = new CopyOnWriteArrayList<>();
 
   private int souls = 100;
   private int day = 1;
@@ -40,37 +42,22 @@ public class GameModel implements GameContext, Updatable {
   public GameModel(EventBus eventBus) {
     this.eventBus = eventBus;
 
-    // マップサイズ 100x100 (仮)
+    // マップサイズ 100x100
     this.gameMap = new GameMap(100, 100, eventBus);
 
     // Event Subscriptions
-    this.eventBus.subscribe(EventType.SOUL_HARVESTED, data -> {
-      if (data instanceof Integer) {
-        addSouls((Integer) data);
-      }
+    // SoulHarvestedEventを購読
+    this.eventBus.subscribe(SoulHarvestedEvent.class, event -> {
+        addSouls(event.amount());
     });
 
-    // ゲームループのセットアップ
-
-    // Updateはthis.tick()、RenderはView側で行うが、
-    // GameLoopはRunnableを受け取るので、Viewへの通知はEventBus経由かCallbackで行う必要がある。
-    // 今回は単純化のため、GameModelはUpdateのみをループで回し、Render更新通知をEventBusで投げる形にするか、
-    // あるいはViewがGameLoopのRenderCallbackを登録できるようにする。
-    // ここでは、GameModelがループを管理し、View更新用Callbackを受け取れるように設計する。
-
-    // this.gameLoop = new GameLoop(this::update, () -> {
-    // Render Trigger (View側で購読するか、専用のリスナーを呼ぶ)
-    // 今回はEventBusだと高頻度すぎるかもしれないが、一旦保留。
-    // 通常、Viewは repaint() を呼び出す Runnable を渡す。
-    // });
+    // GameLoopはstartGameLoopでインスタンス化されるためここではnull
     this.gameLoop = null;
   }
 
   public void startGameLoop(Runnable renderCallback) {
-    // 既存のループを作り直す必要がある（RenderCallbackを注入するため）
-    // またはGameLoopを少し改造してsetterをつける。
-    // ここでは新しいGameLoopインスタンスを作る簡易実装。
     Runnable updateCallback = () -> update(this);
+    // GameLoopのインスタンスは新しいものが作られるため、既存のgameLoopフィールドとの整合性は要検討
     GameLoop loop = new GameLoop(updateCallback, renderCallback);
     loop.start();
   }
@@ -87,15 +74,15 @@ public class GameModel implements GameContext, Updatable {
     return gameMap;
   }
 
-  /**
-   * 住民・建物の2種類の全エンティティをストリームで返す。
-   * 
-   * @return 指定した型の全エンティティのストリーム
-   */
+  // GameContextの定義に合わせて実装
   @Override
-  public <T extends BaseGameEntity> Stream<T> getEntities() {
-    return Stream.concat(residentEntities.stream(), buildingEntities.stream())
-        .map(e -> (T) e);
+  public Stream<Building> getBuildingEntities() {
+    return buildingEntities.stream();
+  }
+
+  @Override
+  public Stream<Resident> getResidentEntities() {
+    return residentEntities.stream();
   }
 
   @Override
@@ -125,18 +112,17 @@ public class GameModel implements GameContext, Updatable {
 
   public void addResidentEntity(Resident entity) {
     residentEntities.add(entity);
-    eventBus.publish(EventType.RESIDENT_BORN, entity.getPosition());
+    eventBus.publish(new ResidentBornEvent(entity.getPosition()));
   }
 
   public void addBuildingEntity(Building entity) {
     buildingEntities.add(entity);
-    eventBus.publish(EventType.MAP_UPDATED, entity.getPosition());
+    eventBus.publish(new MapUpdatedEvent(entity.getPosition()));
   }
 
   public void removeBuildingEntity(Building entity) {
     gameMap.removeBuilding(entity.getPosition());
-    // マップ上の占有情報などもクリアする必要があるならMap経由で行う
-    eventBus.publish(EventType.MAP_UPDATED, entity.getPosition());
+    eventBus.publish(new MapUpdatedEvent(entity.getPosition()));
   }
 
   public int getSouls() {
@@ -145,22 +131,15 @@ public class GameModel implements GameContext, Updatable {
 
   public void addSouls(int amount) {
     this.souls += amount;
-    eventBus.publish(EventType.SOUL_CHANGED, souls);
+    eventBus.publish(new SoulChangedEvent(souls));
   }
 
   /**
    * 指定座標付近の死体から魂を刈り取る。
-   * 
-   * @param pos クリック座標
-   * 
-   * @return 刈り取りに成功したらtrue
    */
   public boolean harvestSoulAt(java.awt.geom.Point2D pos) {
-    double harvestRadius = 1.0; // 半径1グリッド
+    double harvestRadius = 1.0; 
 
-    // 範囲内の死体を探す
-    // Note: 複数の死体が重なっている場合、1つだけ回収するか全部回収するかは仕様次第。
-    // ここでは最初に見つかった1つを回収する。
     java.util.Optional<Resident> target = residentEntities.stream()
         .filter(e -> {
           ResidentState state = e.getState();
@@ -172,127 +151,66 @@ public class GameModel implements GameContext, Updatable {
     if (target.isPresent()) {
       Resident deadResident = target.get();
 
-      // 魂回収
-      int soulAmount = 10; // 仮: 住民の種類や信仰心によって変動させるとなお良い
-
-      // 信仰心ボーナス計算 (例)
+      int soulAmount = 10; 
       Integer faith = deadResident.getFaith();
       if (faith != null) {
         soulAmount += faith / 5;
       }
-      eventBus.publish(EventType.SOUL_HARVESTED, soulAmount);
+      
+      // 魂回収イベント発行
+      eventBus.publish(new SoulHarvestedEvent(soulAmount));
       removeEntity(deadResident);
       return true;
     }
     return false;
   }
 
-  /**
-   * 
-   * 建物を建設する。
-   * 
-   * @param type 建物の種類
-   * @param pos  建設位置（グリッド座標）
-   * 
-   * @return 建設に成功したらtrue
-   * 
-   */
   public boolean constructBuilding(Point2D.Double pos, BuildingType type) {
-
-    // 1. コストチェック
     if (souls < type.getCost()) {
       return false;
     }
 
-    // 2. マップ上の建設可否チェック
-
-    // GameMap.placeBuilding内でチェックされるが、ここでは事前にチェックしてコスト消費を制御する
     if (!gameMap.isValidPos(pos) || !gameMap.getCell(pos).canBuild()) {
       return false;
     }
 
-    // 3. 建設処理
-
-    // 魂消費
     addSouls(-type.getCost());
 
-    // BaseGameEntity生成
     Building building = new Building(pos, type);
 
-    // Strategy設定
-    // building.setRenderStrategy( type.getRenderStrategy() );
-    // 建物ごとの固有ロジックはBuildingコンストラクタで設定されるため、ここでは不要
-    // マップとエンティティリストへの登録
-
-    // NOTE:
-    // placeBuildingはMapCellへの登録のみを行う。Entityリストへの登録は別途必要。
-    // また、BaseGameEntityとGameEntityの整合性を保つため、GameMapはBaseGameEntityを受け取るように修正が必要かもしれないが、
-    // 現状はGameMapはGameEntityを受け取る。GameObjectはGameEntityを実装しているのでOK。
     if (gameMap.placeBuilding(pos, building)) {
       spawnEntity(building);
       return true;
     } else {
-      // 万が一Mapへの配置に失敗した場合は払い戻し（通常ここには来ないはず）
       addSouls(type.getCost());
       return false;
     }
   }
 
-  public int getDay() {
-    return day;
-  }
-
-  public GameMap getGameMap() {
-    return gameMap;
-  }
-
-  public GameLoop getGameLoop() {
-    return gameLoop;
-  }
-
-  public void setSouls(int souls) {
-    this.souls = souls;
-  }
-
-  public void setDay(int day) {
-    this.day = day;
-  }
-
-  public double getDayTimer() {
-    return dayTimer;
-  }
-
-  public void setDayTimer(double dayTimer) {
-    this.dayTimer = dayTimer;
-  }
-
-  public static double getDayLength() {
-    return DAY_LENGTH;
-  }
-
-  public double getLastDeltaTime() {
-    return lastDeltaTime;
-  }
-
-  public void setLastDeltaTime(double lastDeltaTime) {
-    this.lastDeltaTime = lastDeltaTime;
-  }
+  // getters / setters
+  public int getDay() { return day; }
+  public GameMap getGameMap() { return gameMap; }
+  public GameLoop getGameLoop() { return gameLoop; } // 現状、startGameLoopで新しいループが作られるので、このgetterの用途は不明
+  public void setSouls(int souls) { this.souls = souls; }
+  public void setDay(int day) { this.day = day; }
+  public double getDayTimer() { return dayTimer; }
+  public void setDayTimer(double dayTimer) { this.dayTimer = dayTimer; }
+  public static double getDayLength() { return DAY_LENGTH; }
+  public double getLastDeltaTime() { return lastDeltaTime; }
+  public void setLastDeltaTime(double lastDeltaTime) { this.lastDeltaTime = lastDeltaTime; }
 
   @Override
   public void update(GameContext context) {
-    // 時間計測 (簡易的)
-    double dt = 1.0 / 60.0; // Fixed time step
+    double dt = 1.0 / 60.0;
     this.lastDeltaTime = dt;
 
-    // 時間経過処理
     dayTimer += dt;
     if (dayTimer >= DAY_LENGTH) {
       dayTimer = 0;
       day++;
-      eventBus.publish(EventType.DAY_PASSED, day);
+      eventBus.publish(new DayPassedEvent(day));
     }
 
-    // 全エンティティの更新
     for (Resident resident : residentEntities) {
       resident.update(context);
     }
@@ -301,5 +219,4 @@ public class GameModel implements GameContext, Updatable {
       building.update(context);
     }
   }
-
 }

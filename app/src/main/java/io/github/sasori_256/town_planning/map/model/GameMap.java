@@ -3,7 +3,7 @@ package io.github.sasori_256.town_planning.map.model;
 import java.awt.geom.Point2D;
 
 import io.github.sasori_256.town_planning.common.event.EventBus;
-import io.github.sasori_256.town_planning.common.event.EventType;
+import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
 import io.github.sasori_256.town_planning.gameobject.building.Building;
 import io.github.sasori_256.town_planning.gameobject.building.BuildingType;
 
@@ -56,7 +56,7 @@ public class GameMap implements MapContext {
     MapCell cell = getCell(pos);
     if (cell.canBuild()) {
       cell.setBuilding(building);
-      eventBus.publish(EventType.MAP_UPDATED, pos);
+      eventBus.publish(new MapUpdatedEvent(pos)); // 修正箇所
       return true;
     }
     return false;
@@ -70,7 +70,7 @@ public class GameMap implements MapContext {
     MapCell cell = getCell(pos);
     if (cell.getBuilding().getType() != BuildingType.NONE) {
       cell.removeBuilding();
-      eventBus.publish(EventType.MAP_UPDATED, pos);
+      eventBus.publish(new MapUpdatedEvent(pos)); // 修正箇所
       return true;
     }
     return false;

@@ -26,7 +26,7 @@ public class GameMapController implements MouseListener{
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        Point2D.Double isoPoint = camera.screenToIso(e.getX(), e.getY());
+        Point2D.Double isoPoint = camera.screenToIso(new Point2D.Double(e.getX(), e.getY()));
         // System.out.println("Iso Coordinates: (" + isoPoint.x + ", " + isoPoint.y + ")");
         actionOnClick.accept(isoPoint);
     }
@@ -35,6 +35,5 @@ public class GameMapController implements MouseListener{
     @Override public void mouseExited(MouseEvent e) {}
     @Override public void mousePressed(MouseEvent e) {}
     @Override public void mouseReleased(MouseEvent e) {}
-    
-    
+
 }

@@ -1,18 +1,11 @@
 package io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller;
 
-import java.util.ArrayList;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
-import java.awt.event.ActionListener;
-
-import io.github.sasori_256.town_planning.gameObject.model.BaseGameEntity;
-
-public class ItemNode implements MenuNode, ActionListener {
+public class DisasterNode implements MenuNode {
     private final String name;
     private final Supplier<BaseGameEntity> generator;
     private final Consumer<Supplier<BaseGameEntity>> onClickAction;
 
-    public ItemNode(String name, Supplier<BaseGameEntity> generator, Consumer<Supplier<BaseGameEntity>> onClickAction) {
+    public DisasterNode(String name, Supplier<BaseGameEntity> generator, Consumer<Supplier<BaseGameEntity>> onClickAction) {
         this.name = name;
         this.generator = generator;
     }
@@ -25,7 +18,7 @@ public class ItemNode implements MenuNode, ActionListener {
 
     @Override
     public ArrayList<MenuNode> getChildren() { 
-        System.err.println("Error: Attempted to get children from ItemNode");
+        System.err.println("Error: Attempted to get children from DisasterNode");
         return null;   
     }
 

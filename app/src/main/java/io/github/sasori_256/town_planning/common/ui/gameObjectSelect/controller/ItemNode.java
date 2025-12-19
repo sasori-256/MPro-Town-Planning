@@ -15,7 +15,6 @@ public class ItemNode implements MenuNode, ActionListener {
     public ItemNode(String name, Supplier<BaseGameEntity> generator, Consumer<Supplier<BaseGameEntity>> onClickAction) {
         this.name = name;
         this.generator = generator;
-        this.onClickAction = onClickAction;
     }
 
     @Override
@@ -32,6 +31,6 @@ public class ItemNode implements MenuNode, ActionListener {
 
     @Override
     public void actionPerformed(java.awt.event.ActionEvent e) {
-        onClickAction.accept(generator);
+        
     }
 }

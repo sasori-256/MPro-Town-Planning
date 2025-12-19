@@ -12,7 +12,7 @@ import java.io.File;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import io.github.sasori_256.town_planning.gameObject.Camera;
+import io.github.sasori_256.town_planning.gameobject.Camera;
 import io.github.sasori_256.town_planning.map.model.GameMap;
 import io.github.sasori_256.town_planning.map.model.MapCell;
 
@@ -20,6 +20,9 @@ import io.github.sasori_256.town_planning.map.model.MapCell;
  * gameMapの内容を描画するクラス
  */
 class GameMapPanel extends JPanel{
+  /**
+   * 画像を格納するための内部クラス
+   */
   private static class ImageStorage {
     String name;
     Image image;
@@ -35,8 +38,9 @@ class GameMapPanel extends JPanel{
   private int imageCount = 0;
 
   /**
-   * 配列に画像を登録する。
-   * 既に同名があれば上書き、容量を超える場合は警告を出す。
+   * 配列にすべての画像を読み込み、imageStoragesに格納する
+   * @implNote 画像は "src/main/resources/images/" フォルダから読み込まれる
+   * @see ImageStorage
    */
   private void loadImages() {
     final String PATH = "src/main/resources/images/"; // 画像のパス
@@ -57,7 +61,10 @@ class GameMapPanel extends JPanel{
   }
 
   /**
-   * 名前から画像を取得する。見つからなければnullを返す。
+   * 名前から画像を取得する。見つからなければerror_terrainを、それもなければnullを返す
+   * @param name 画像の名前
+   * @return 画像のImageStorageオブジェクト、見つからなければエラー画像のImageStorageオブジェクト
+   * @see ImageStorage
    */
   private ImageStorage getImageByName(String name) {
     for (int i = 0; i < imageCount; i++) {
@@ -125,7 +132,7 @@ class GameMapPanel extends JPanel{
         screenPos = camera.isoToScreen(pos);
         imageScale = calculateImageScale();
         // 地形の描画
-        String terrainName = cell.getTerrain().getImageName();
+        String terrainName = cell.getTerrain().getDisplayName();
         ImageStorage terrainImage = getImageByName(terrainName);
         if("error_terrain".equals(terrainImage.name)){
           System.err.println("Warning: Image not found: " + terrainName + ".png at (" + x + ", " + y + ")");

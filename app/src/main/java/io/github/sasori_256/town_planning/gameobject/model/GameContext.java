@@ -1,7 +1,8 @@
-package io.github.sasori_256.town_planning.gameObject.model;
+package io.github.sasori_256.town_planning.gameobject.model;
 
 import io.github.sasori_256.town_planning.common.event.EventBus;
-import io.github.sasori_256.town_planning.gameObject.model.GameObject;
+import io.github.sasori_256.town_planning.gameobject.building.Building;
+import io.github.sasori_256.town_planning.gameobject.resident.Resident;
 import io.github.sasori_256.town_planning.map.model.GameMap;
 
 // Streamとは
@@ -27,14 +28,16 @@ public interface GameContext {
 
   GameMap getMap();
 
-  Stream<GameObject> getEntities();
+  Stream<Building> getBuildingEntities();
+
+  Stream<Resident> getResidentEntities();
 
   double getDeltaTime(); // 前フレームからの経過時間（秒）
 
   // Entity Lifecycle
 
-  void spawnEntity(GameObject entity);
+  <T extends BaseGameEntity> void spawnEntity(T entity);
 
-  void destroyEntity(GameObject entity);
+  <T extends BaseGameEntity> void removeEntity(T entity);
 
 }

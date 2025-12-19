@@ -12,144 +12,155 @@ import java.io.File;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import io.github.sasori_256.town_planning.gameobject.Camera;
+import io.github.sasori_256.town_planning.gameObject.Camera;
 import io.github.sasori_256.town_planning.map.model.GameMap;
 import io.github.sasori_256.town_planning.map.model.MapCell;
 
 /**
- * GameMapの内容を描画するクラス
+ * gameMapの内容を描画するクラス
  */
-class GameMapPanel extends JPanel {
+class GameMapPanel extends JPanel{
+  private static class ImageStorage {
+    String name;
+    Image image;
+    Point2D.Double size;
+    ImageStorage(String name, Image image) {
+      this.name = name;
+      this.image = image;
+      this.size = new Point2D.Double(image.getWidth(null), image.getHeight(null));
+    }
+  }
+  private static final int MAX_IMAGES = 100;
+  private final ImageStorage[] imageStorages = new ImageStorage[MAX_IMAGES];
+  private int imageCount = 0;
+
+  /**
+   * 配列に画像を登録する。
+   * 既に同名があれば上書き、容量を超える場合は警告を出す。
+   */
+  private void loadImages() {
+    final String PATH = "src/main/resources/images/"; // 画像のパス
+    File dir = new File(PATH);
+    File[] files = dir.listFiles((d, name) -> name.endsWith(".png"));
+    if (files != null) {
+      for (File file : files) {
+        if (imageCount >= MAX_IMAGES) {
+          System.err.println("Warning: Maximum image storage reached. Some images may not be loaded.");
+          break;
+        }
+        String imageName = file.getName().replaceFirst("[.][^.]+$", ""); // 拡張子を除去
+        Image img = Toolkit.getDefaultToolkit().getImage(file.getPath());
+        imageStorages[imageCount] = new ImageStorage(imageName, img);
+        imageCount++;
+      }
+    }
+  }
+
+  /**
+   * 名前から画像を取得する。見つからなければnullを返す。
+   */
+  private ImageStorage getImageByName(String name) {
+    for (int i = 0; i < imageCount; i++) {
+      if (imageStorages[i].name.equals(name)) {
+        ImageStorage output = new ImageStorage(imageStorages[i].name, imageStorages[i].image);
+        return output;
+      }
+    }
+    if(name.equals("error_building") || name.equals("error_terrain")){
+      System.err.println("Error: Error image not found: " + name + ".png");
+      return null; // エラー画像自体が見つからない場合はエラーとともにnullを返す
+    } else { 
+      return getImageByName("error_terrain"); // 画像が見つからない場合はエラー画像を返す
+    }
+  }
+
   private final GameMap gameMap;
   private final Camera camera;
-
   public GameMapPanel(GameMap gameMap, Camera camera) {
     this.gameMap = gameMap;
     this.camera = camera;
     setBackground(Color.BLACK);
+    loadImages(); // 画像の事前読み込み
   }
-
   /**
    * 垂直方向の高さを持つ画像のシフト量を計算する
-   * 
-   * @param imgPos  画像の元の中心位置
+   * @param imgPos 画像の元の中心位置
    * @param imgSize 画像の元のサイズ
    * @return シフト量
    */
   Point2D.Double calculateShiftImage(Point2D.Double imgPos, Point2D.Double imgSize) {
     double shiftX = imgPos.x;
     double aspectRatio = imgSize.y / imgSize.x;
-    double shiftY = imgPos.y - (aspectRatio * 2 - 1) * camera.getScale() / 2;
+    double shiftY = imgPos.y - (aspectRatio*2 - 1) * 32 / 2;
     return new Point2D.Double(shiftX, shiftY);
   }
-
   /**
    * 画像のスケールを計算する
-   * 
    * @return 画像のスケール
    */
   Point2D.Double calculateImageScale() {
-    double imageWidth = camera.getScale() * 2;
-    double imageHeight = camera.getScale();
+    double imageWidth = 32 * 2;
+    double imageHeight = 32;
     return new Point2D.Double(imageWidth, imageHeight);
   }
-
   /**
    * gameMapの内容を描画する
-   * 
    * @param g 描画に使用するGraphicsオブジェクト
    * @implNote 画像ファイルが見つからない場合、"Warning Image not found: imageName.png at (x,y)" という警告が出力されます。
    * @see GameMap
    */
   @Override
+  @SuppressWarnings("UnnecessaryContinue")
   public void paintComponent(Graphics g) {
     super.paintComponent(g);
-    final String PATH = "src/main/resources/images/";
-    final String ERROR_TERRAIN_IMAGE = "error_terrain.png";
-    final String ERROR_BUILDING_IMAGE = "error_building.png";
-
+    Point2D.Double pos;
+    Point2D.Double screenPos;
+    Point2D.Double shiftedScreenPos;
+    Point2D.Double imageScale;
+    Point2D.Double imageSize;
     for (int y = 0; y < gameMap.getHeight(); y++) {
       for (int x = 0; x < gameMap.getWidth(); x++) {
+        pos = new Point2D.Double(x, y);
         MapCell cell = gameMap.getCell(new Point2D.Double(x, y));
-        Point2D.Double pos = new Point2D.Double(x, y);
-        Point2D.Double screenPos;
-        Point2D.Double shiftedScreenPos;
-        Point2D.Double imageScale;
-        Point2D.Double imageSize;
-        Image img;
-
+        screenPos = camera.isoToScreen(pos);
+        imageScale = calculateImageScale();
         // 地形の描画
-        // 画像ファイルが存在する場合はそれを使用し、存在しない場合はエラーメッセージを表示して代替画像を使用する
-        // TODO: 画像のプリロードを検討
-        // TODO: isoToScreenの引数型をPoint2D.Doubleかx, yの形式のどちらかに統一する
-        // TODO: camera.scaleの内容をどうにかする
-        // TODO: layerIndexに従った描画順序の実装
-        String terrainName = cell.getTerrain().getDisplayName();
-        String terrainImageName = terrainName + ".png";
-        if (new File(PATH + terrainImageName).exists()) {
-          img = Toolkit.getDefaultToolkit().getImage(PATH + terrainImageName);
-          screenPos = camera.isoToScreen(pos);
-          g.drawImage(img, (int) screenPos.x, (int) screenPos.y, (int) (camera.getScale() * 2),
-              (int) (camera.getScale()), this);
-        } else {
-          System.err.println("Warning: Image not found: " + terrainImageName + " at (" + x + ", " + y + ")");
-          img = Toolkit.getDefaultToolkit().getImage(PATH + ERROR_TERRAIN_IMAGE);
-          screenPos = camera.isoToScreen(pos);
-          g.drawImage(img, (int) screenPos.x, (int) screenPos.y, (int) (camera.getScale() * 2),
-              (int) (camera.getScale()), this);
+        String terrainName = cell.getTerrain().getImageName();
+        ImageStorage terrainImage = getImageByName(terrainName);
+        if("error_terrain".equals(terrainImage.name)){
+          System.err.println("Warning: Image not found: " + terrainName + ".png at (" + x + ", " + y + ")");
         }
-
+        g.drawImage(terrainImage.image, (int)screenPos.x, (int)screenPos.y, (int)(imageScale.x), (int)(imageScale.y), this);
         // 建物の描画
-        // 建物が存在しない場合はスキップ
-        // 画像ファイルが存在する場合はそれを使用し、存在しない場合はエラーメッセージを表示して代替画像を使用する
-        // TODO: 画像のプリロードを検討
-        // TODO: isoToScreenの引数型をPoint2D.Doubleかx, yの形式のどちらかに統一する
-        // TODO: camera.scaleの内容をどうにかする
-        // TODO: layerIndexに従った描画順序の実装
-        String buildingName = cell.getBuilding().getType().getDisplayName();
-        String buildingImageName = cell.getBuilding().getType().getImageName() + ".png";
-        if (buildingName.equals("none")) {
+        String buildingName = cell.getBuilding().getType().getImageName();
+        if(buildingName.equals("none")){ // 建物がない場合はスキップ
           continue;
-        }
-        if (new File(PATH + buildingImageName).exists()) {
-          img = Toolkit.getDefaultToolkit().getImage(PATH + buildingImageName);
-          screenPos = camera.isoToScreen(pos);
-          imageSize = new Point2D.Double(img.getWidth(this), img.getHeight(this));
-          shiftedScreenPos = calculateShiftImage(screenPos, imageSize);
-          imageScale = calculateImageScale();
-          g.drawImage(img, (int) shiftedScreenPos.x, (int) shiftedScreenPos.y, (int) (imageScale.x),
-              (int) (imageScale.y), this);
         } else {
-          System.err.println("Warning: Image not found: " + buildingImageName + " at (" + x + ", " + y + ")");
-          img = Toolkit.getDefaultToolkit().getImage(ERROR_BUILDING_IMAGE);
-          screenPos = camera.isoToScreen(pos);
-          imageScale = calculateImageScale();
-          g.drawImage(img, (int) screenPos.x, (int) screenPos.y, (int) (imageScale.x), (int) (imageScale.y), this);
+          ImageStorage buildingImage = getImageByName(buildingName);
+          imageSize = buildingImage.size;
+          shiftedScreenPos = calculateShiftImage(screenPos, imageSize);
+          if("error_building".equals(buildingImage.name)){
+            System.err.println("Warning: Image not found: " + buildingName + ".png at (" + x + ", " + y + ")");
+          }
+          g.drawImage(buildingImage.image, (int)shiftedScreenPos.x, (int)shiftedScreenPos.y, (int)(imageScale.x), (int)(imageScale.y), this);
         }
       }
     }
   }
 }
-
 /**
  * ゲームウィンドウを表すクラス
  * ウィンドウサイズ: 640*640
  * タイトル: "Town Planning Game"
- * 
  * @see GameMapPanel
  */
-public class GameWindow extends JFrame {
-  public GameWindow(MouseListener mouseListener, GameMap gameMap, Camera camera, int width, int height) {
+public class GameWindow extends JFrame{
+  public GameWindow(MouseListener listener, GameMap gameMap, Camera camera) {
+    addMouseListener(listener);
     setTitle("Town Planning Game");
-    setSize(width, height);
-    // マウス判定はGameWindowで受け取り、必要に応じてGameMapPanelに伝える
-    // Listenerの登録はGameWindowで行うが、Listener自体は外部から渡す形にする
-    this.addMouseListener(mouseListener);
-
+    setSize(640, 640);
+    //GameMap gameMap = generateTestMap();
     GameMapPanel gameMapPanel = new GameMapPanel(gameMap, camera);
-
-    // BorderLayoutの中央にGameMapPanelを配置
-    // TODO: Layout管理の改善検討
     this.add(gameMapPanel, BorderLayout.CENTER);
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     setVisible(true);

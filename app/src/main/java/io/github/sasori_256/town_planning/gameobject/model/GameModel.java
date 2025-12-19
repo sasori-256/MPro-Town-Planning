@@ -26,7 +26,7 @@ import io.github.sasori_256.town_planning.map.model.GameMap;
 public class GameModel implements GameContext, Updatable {
   private final EventBus eventBus;
   private final GameMap gameMap;
-  private final GameLoop gameLoop; // 現在は未使用だが、startGameLoopで使われることを想定
+  private GameLoop gameLoop; // 現在は未使用だが、startGameLoopで使われることを想定
 
   // スレッドセーフなリストを使用
   private final List<Building> buildingEntities = new CopyOnWriteArrayList<>();
@@ -48,7 +48,7 @@ public class GameModel implements GameContext, Updatable {
     // Event Subscriptions
     // SoulHarvestedEventを購読
     this.eventBus.subscribe(SoulHarvestedEvent.class, event -> {
-        addSouls(event.amount());
+      addSouls(event.amount());
     });
 
     // GameLoopはstartGameLoopでインスタンス化されるためここではnull
@@ -58,8 +58,8 @@ public class GameModel implements GameContext, Updatable {
   public void startGameLoop(Runnable renderCallback) {
     Runnable updateCallback = () -> update(this);
     // GameLoopのインスタンスは新しいものが作られるため、既存のgameLoopフィールドとの整合性は要検討
-    GameLoop loop = new GameLoop(updateCallback, renderCallback);
-    loop.start();
+    this.gameLoop = new GameLoop(updateCallback, renderCallback);
+    this.gameLoop.start();
   }
 
   // --- GameContext Implementation ---
@@ -138,7 +138,7 @@ public class GameModel implements GameContext, Updatable {
    * 指定座標付近の死体から魂を刈り取る。
    */
   public boolean harvestSoulAt(java.awt.geom.Point2D pos) {
-    double harvestRadius = 1.0; 
+    double harvestRadius = 1.0;
 
     java.util.Optional<Resident> target = residentEntities.stream()
         .filter(e -> {
@@ -151,12 +151,10 @@ public class GameModel implements GameContext, Updatable {
     if (target.isPresent()) {
       Resident deadResident = target.get();
 
-      int soulAmount = 10; 
-      Integer faith = deadResident.getFaith();
-      if (faith != null) {
-        soulAmount += faith / 5;
-      }
-      
+      int soulAmount = 10;
+      int faith = deadResident.getFaith();
+      soulAmount += faith / 5;
+
       // 魂回収イベント発行
       eventBus.publish(new SoulHarvestedEvent(soulAmount));
       removeEntity(deadResident);
@@ -170,7 +168,7 @@ public class GameModel implements GameContext, Updatable {
       return false;
     }
 
-    if (!gameMap.isValidPos(pos) || !gameMap.getCell(pos).canBuild()) {
+    if (!gameMap.isValidPosition(pos) || !gameMap.getCell(pos).canBuild()) {
       return false;
     }
 
@@ -188,16 +186,45 @@ public class GameModel implements GameContext, Updatable {
   }
 
   // getters / setters
-  public int getDay() { return day; }
-  public GameMap getGameMap() { return gameMap; }
-  public GameLoop getGameLoop() { return gameLoop; } // 現状、startGameLoopで新しいループが作られるので、このgetterの用途は不明
-  public void setSouls(int souls) { this.souls = souls; }
-  public void setDay(int day) { this.day = day; }
-  public double getDayTimer() { return dayTimer; }
-  public void setDayTimer(double dayTimer) { this.dayTimer = dayTimer; }
-  public static double getDayLength() { return DAY_LENGTH; }
-  public double getLastDeltaTime() { return lastDeltaTime; }
-  public void setLastDeltaTime(double lastDeltaTime) { this.lastDeltaTime = lastDeltaTime; }
+  public int getDay() {
+    return day;
+  }
+
+  public GameMap getGameMap() {
+    return gameMap;
+  }
+
+  public GameLoop getGameLoop() {
+    return gameLoop;
+  } // 現状、startGameLoopで新しいループが作られるので、このgetterの用途は不明
+
+  public void setSouls(int souls) {
+    this.souls = souls;
+  }
+
+  public void setDay(int day) {
+    this.day = day;
+  }
+
+  public double getDayTimer() {
+    return dayTimer;
+  }
+
+  public void setDayTimer(double dayTimer) {
+    this.dayTimer = dayTimer;
+  }
+
+  public static double getDayLength() {
+    return DAY_LENGTH;
+  }
+
+  public double getLastDeltaTime() {
+    return lastDeltaTime;
+  }
+
+  public void setLastDeltaTime(double lastDeltaTime) {
+    this.lastDeltaTime = lastDeltaTime;
+  }
 
   @Override
   public void update(GameContext context) {

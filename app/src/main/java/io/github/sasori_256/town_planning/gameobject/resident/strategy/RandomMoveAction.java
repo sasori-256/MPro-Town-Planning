@@ -32,18 +32,28 @@ public class RandomMoveAction implements GameAction {
 
     // 移動処理
     Point2D.Double current = self.getPosition();
-    double nextX = current.getX() + dx * speed * dt;
-    double nextY = current.getY() + dy * speed * dt;
+    double nextX = current.getX();
+    double nextY = current.getY();
 
-    // マップ境界チェック (簡易)
-    // context.getMap() がnullでないことを前提
+    // マップ境界チェック
     if (context.getMap() != null) {
-      if (context.getMap().isValidPos(new Point2D.Double(nextX, nextY))) {
-        self.setPosition(new Point2D.Double(nextX, nextY));
+      // X軸方向の移動
+      double proposedX = current.getX() + dx * speed * dt;
+      if (context.getMap().isValidPosition(new Point2D.Double(proposedX, current.getY()))) {
+        nextX = proposedX;
+      }
+
+      // Y軸方向の移動
+      double proposedY = current.getY() + dy * speed * dt;
+      if (context.getMap().isValidPosition(new Point2D.Double(nextX, proposedY))) {
+        nextY = proposedY;
       }
     } else {
-       // マップがない場合はチェックせず移動
-       self.setPosition(new Point2D.Double(nextX, nextY));
+      // マップがない場合はチェックせず移動
+      nextX += dx * speed * dt;
+      nextY += dy * speed * dt;
     }
+
+    self.setPosition(new Point2D.Double(nextX, nextY));
   }
 }

@@ -35,8 +35,8 @@ public class ResidentLifeCycleStrategy implements UpdateStrategy {
     resident.setAge(newAge);
 
     // 寿命チェック
-    Double maxAge = resident.getMaxAge();
-    if (maxAge != null && newAge >= maxAge) {
+    double maxAge = resident.getMaxAge();
+    if (newAge >= maxAge) {
       die(context, self);
     }
   }

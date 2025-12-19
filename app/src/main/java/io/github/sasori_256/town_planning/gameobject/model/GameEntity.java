@@ -17,7 +17,7 @@ public interface GameEntity {
 
   void setPosition(Point2D.Double position);
 
-  void setUpdateStrategy(UpdateStrategy upadteStrategy);
+  void setUpdateStrategy(UpdateStrategy updateStrategy);
 
   void removeEntity();
 }

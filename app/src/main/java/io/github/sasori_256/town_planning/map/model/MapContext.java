@@ -5,7 +5,7 @@ import java.awt.geom.Point2D;
 import io.github.sasori_256.town_planning.gameobject.building.Building;
 
 public interface MapContext {
-  public boolean isValidPos(Point2D.Double pos);
+  public boolean isValidPosition(Point2D.Double pos);
 
   public MapCell getCell(Point2D.Double pos);
 

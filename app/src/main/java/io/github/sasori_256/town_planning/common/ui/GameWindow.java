@@ -58,9 +58,7 @@ class GameMapPanel extends JPanel {
    * gameMapの内容を描画する
    * 
    * @param g 描画に使用するGraphicsオブジェクト
-   * @implNote 画像ファイルが見つからない場合、"Warning Image not found: imageName.pn
-   *           at (x,y)"
-   *           という警告が出力されます。
+   * @implNote 画像ファイルが見つからない場合、"Warning Image not found: imageName.png at (x,y)" という警告が出力されます。
    * @see GameMap
    */
   @Override
@@ -113,8 +111,8 @@ class GameMapPanel extends JPanel {
         if (buildingName.equals("none")) {
           continue;
         }
-        if (new File(buildingImageName).exists()) {
-          img = Toolkit.getDefaultToolkit().getImage(buildingImageName);
+        if (new File(PATH + buildingImageName).exists()) {
+          img = Toolkit.getDefaultToolkit().getImage(PATH + buildingImageName);
           screenPos = camera.isoToScreen(pos);
           imageSize = new Point2D.Double(img.getWidth(this), img.getHeight(this));
           shiftedScreenPos = calculateShiftImage(screenPos, imageSize);

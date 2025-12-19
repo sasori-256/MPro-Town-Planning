@@ -2,8 +2,6 @@ package io.github.sasori_256.town_planning;
 
 import java.awt.geom.Point2D;
 
-// import com.google.common.eventbus.EventBus;
-
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.ui.GameWindow;
 import io.github.sasori_256.town_planning.gameobject.Camera;

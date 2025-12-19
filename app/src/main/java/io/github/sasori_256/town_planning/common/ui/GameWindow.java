@@ -113,8 +113,8 @@ class GameMapPanel extends JPanel {
         if (buildingName.equals("none")) {
           continue;
         }
-        if (new File(buildingImageName).exists()) {
-          img = Toolkit.getDefaultToolkit().getImage(buildingImageName);
+        if (new File(PATH + buildingImageName).exists()) {
+          img = Toolkit.getDefaultToolkit().getImage(PATH + buildingImageName);
           screenPos = camera.isoToScreen(pos);
           imageSize = new Point2D.Double(img.getWidth(this), img.getHeight(this));
           shiftedScreenPos = calculateShiftImage(screenPos, imageSize);

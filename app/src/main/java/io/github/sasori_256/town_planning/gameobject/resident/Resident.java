@@ -1,27 +1,27 @@
-package io.github.sasori_256.town_planning.gameObject.resident;
+package io.github.sasori_256.town_planning.gameobject.resident;
 
 import java.awt.geom.Point2D;
 
-import io.github.sasori_256.town_planning.gameObject.model.GameObject;
+import io.github.sasori_256.town_planning.gameobject.model.BaseGameEntity;
 
-public class ResidentObject extends GameObject {
+public class Resident extends BaseGameEntity {
   private final ResidentType type;
   private double age;
   private int faith;
   private int layerIndex;
-  private String state;
+  private ResidentState state;
 
-  public ResidentObject(Point2D position, ResidentType residentType) {
+  public Resident(Point2D.Double position, ResidentType residentType, ResidentState state) {
     super(position);
     this.type = residentType;
     this.age = 0.0;
     this.faith = residentType.getInitialFaith();
     this.layerIndex = 0;
-    this.state = "Idle";
+    this.state = state;
   }
 
-  public void addAge(double years) {
-    this.age = Math.min(this.age + years, this.type.getMaxAge());
+  public void setAge(double age) {
+    this.age = Math.max(0.0, age);
   }
 
   public void setFaith(int faith) {
@@ -32,7 +32,7 @@ public class ResidentObject extends GameObject {
     this.layerIndex = layerIndex;
   }
 
-  public void setState(String state) {
+  public void setState(ResidentState state) {
     this.state = state;
   }
 
@@ -56,7 +56,7 @@ public class ResidentObject extends GameObject {
     return this.layerIndex;
   }
 
-  public String getState() {
+  public ResidentState getState() {
     return this.state;
   }
 }

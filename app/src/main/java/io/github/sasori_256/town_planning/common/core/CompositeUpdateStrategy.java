@@ -1,26 +1,41 @@
 package io.github.sasori_256.town_planning.common.core;
 
 import io.github.sasori_256.town_planning.common.core.strategy.UpdateStrategy;
-import io.github.sasori_256.town_planning.gameObject.model.GameContext;
-import io.github.sasori_256.town_planning.gameObject.model.GameObject;
-
-import java.util.Arrays;
-import java.util.List;
+import io.github.sasori_256.town_planning.gameobject.model.BaseGameEntity;
+import io.github.sasori_256.town_planning.gameobject.model.GameAction;
+import io.github.sasori_256.town_planning.gameobject.model.GameContext;
+import io.github.sasori_256.town_planning.gameobject.model.GameEffect;
 
 /**
- * 複数のUpdateStrategyを順番に実行するコンポジット戦略。
+ * 1つのGameAction（排他）と複数のGameEffect（並行）を管理し実行するStrategy
  */
 public class CompositeUpdateStrategy implements UpdateStrategy {
-  private final List<UpdateStrategy> strategies;
+  private GameAction action;
+  private final CompositeGameEffect compositeEffect = new CompositeGameEffect();
 
-  public CompositeUpdateStrategy(UpdateStrategy... strategies) {
-    this.strategies = Arrays.asList(strategies);
+  public CompositeUpdateStrategy() {
+  }
+
+  public void setAction(GameAction action) {
+    this.action = action;
+  }
+
+  public void addEffect(GameEffect effect) {
+    this.compositeEffect.add(effect);
+  }
+
+  public void removeEffect(GameEffect effect) {
+    this.compositeEffect.remove(effect);
   }
 
   @Override
-  public void update(GameContext context, GameObject self) {
-    for (UpdateStrategy strategy : strategies) {
-      strategy.update(context, self);
+  public void update(GameContext context, BaseGameEntity self) {
+    // 1. 並行エフェクトの実行（常に実行）
+    compositeEffect.execute(context, self);
+
+    // 2. 排他アクションの実行（設定されていれば実行）
+    if (action != null) {
+      action.execute(context, self);
     }
   }
 }

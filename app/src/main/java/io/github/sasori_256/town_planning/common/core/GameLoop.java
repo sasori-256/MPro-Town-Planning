@@ -18,6 +18,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class GameLoop implements Runnable {
   private final AtomicBoolean running = new AtomicBoolean(false);
+
+  /**
+   * CallBackによる更新処理
+   * CallBackを使うことで、GameLoopクラスが特定のゲームロジックに依存しないようにする
+   * ゲームロジックを知っているMainクラスでUpdateとRenderの具体的な処理を提供する
+   */
   private final Runnable updateCallback;
   private final Runnable renderCallback;
   private Thread thread = null;
@@ -84,7 +90,7 @@ public class GameLoop implements Runnable {
       }
 
       // 描画処理
-      renderCallback.run();
+      // renderCallback.run();
 
       // フレームレート制御: 次のフレームまで待機
       long sleepTime = (TIME_STEP_NANO - (System.nanoTime() - now)) / 1_000_000;

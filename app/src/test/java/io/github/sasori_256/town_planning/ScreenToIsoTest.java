@@ -2,7 +2,7 @@ package io.github.sasori_256.town_planning;
 
 import org.junit.jupiter.api.Test;
 
-import io.github.sasori_256.town_planning.gameobject.Camera;
+import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
 
 import static org.junit.jupiter.api.Assertions.*;

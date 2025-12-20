@@ -1,4 +1,4 @@
-package io.github.sasori_256.town_planning.gameobject.disaster.strategy;
+package io.github.sasori_256.town_planning.entity.disaster.strategy;
 
 import java.awt.geom.Point2D;
 import java.util.List;
@@ -8,11 +8,11 @@ import java.util.stream.Stream;
 import io.github.sasori_256.town_planning.common.core.strategy.UpdateStrategy;
 import io.github.sasori_256.town_planning.common.event.events.DisasterOccurredEvent;
 import io.github.sasori_256.town_planning.common.event.events.ResidentDiedEvent;
-import io.github.sasori_256.town_planning.gameobject.disaster.DisasterType;
-import io.github.sasori_256.town_planning.gameobject.model.BaseGameEntity;
-import io.github.sasori_256.town_planning.gameobject.model.GameContext;
-import io.github.sasori_256.town_planning.gameobject.resident.Resident;
-import io.github.sasori_256.town_planning.gameobject.resident.ResidentState;
+import io.github.sasori_256.town_planning.entity.disaster.DisasterType;
+import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
+import io.github.sasori_256.town_planning.entity.model.GameContext;
+import io.github.sasori_256.town_planning.entity.resident.Resident;
+import io.github.sasori_256.town_planning.entity.resident.ResidentState;
 
 /**
  * 隕石などの単発災害のロジック。
@@ -21,13 +21,16 @@ import io.github.sasori_256.town_planning.gameobject.resident.ResidentState;
 public class MeteorDisasterStrategy implements UpdateStrategy {
   private final DisasterType type;
   private final Point2D.Double targetPos;
-  private double timer = 0;
-  private final double impactTime = 2.0; // 2秒後に着弾
-  private boolean impacted = false;
+  private double timer;
+  private final double impactTime;
+  private boolean impacted;
 
   public MeteorDisasterStrategy(DisasterType type, Point2D.Double targetPos) {
     this.type = type;
     this.targetPos = targetPos;
+    this.timer = 0.0;
+    this.impactTime = 2.0;
+    this.impacted = false;
   }
 
   @Override
@@ -61,9 +64,8 @@ public class MeteorDisasterStrategy implements UpdateStrategy {
     // 範囲内のエンティティを検索
     // getEntities() がなくなったため、ResidentとBuildingをそれぞれ取得して結合
     Stream<BaseGameEntity> allEntities = Stream.concat(
-      context.getResidentEntities(),
-      context.getBuildingEntities()
-    );
+        context.getResidentEntities(),
+        context.getBuildingEntities());
 
     List<BaseGameEntity> targets = allEntities
         .filter(e -> e != null && e.getPosition().distance(targetPos) <= type.getRadius())
@@ -77,7 +79,7 @@ public class MeteorDisasterStrategy implements UpdateStrategy {
           // 即死させる
           resident.setState(ResidentState.DEAD);
           // ResidentDiedEventを発行
-          context.getEventBus().publish(new ResidentDiedEvent(resident)); 
+          context.getEventBus().publish(new ResidentDiedEvent(resident));
         }
       }
 

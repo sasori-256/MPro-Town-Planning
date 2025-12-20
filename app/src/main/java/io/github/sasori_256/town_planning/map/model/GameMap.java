@@ -4,8 +4,8 @@ import java.awt.geom.Point2D;
 
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
-import io.github.sasori_256.town_planning.gameobject.building.Building;
-import io.github.sasori_256.town_planning.gameobject.building.BuildingType;
+import io.github.sasori_256.town_planning.entity.building.Building;
+import io.github.sasori_256.town_planning.entity.building.BuildingType;
 
 public class GameMap implements MapContext {
   private final int width;

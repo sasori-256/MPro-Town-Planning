@@ -2,8 +2,8 @@ package io.github.sasori_256.town_planning.map.model;
 
 import java.awt.geom.Point2D;
 
-import io.github.sasori_256.town_planning.gameobject.building.Building;
-import io.github.sasori_256.town_planning.gameobject.building.BuildingType;
+import io.github.sasori_256.town_planning.entity.building.Building;
+import io.github.sasori_256.town_planning.entity.building.BuildingType;
 
 public class MapCell {
   private final Point2D.Double position;
@@ -13,6 +13,7 @@ public class MapCell {
   public MapCell(Point2D.Double position, Terrain initTerrain) {
     this.position = position;
     this.terrain = initTerrain;
+    // TODO: インスタンスプールを導入してメモリ効率を改善する
     this.building = new Building(position, BuildingType.NONE);
   }
 

@@ -1,4 +1,4 @@
-package io.github.sasori_256.town_planning.gameobject.resident;
+package io.github.sasori_256.town_planning.entity.resident;
 
 /**
  * 住民の属性定義。
@@ -16,6 +16,14 @@ public enum ResidentType {
   private final int initialFaith;
   private final float faithMultiplier;
 
+  /**
+   * 住民の種類を初期化
+   *
+   * @param displayName     表示名
+   * @param maxAge          最大年齢
+   * @param initialFaith    初期信仰度
+   * @param faithMultiplier 信仰度の成長倍率
+   */
   ResidentType(String displayName, int maxAge, int initialFaith, float faithMultiplier) {
     this.displayName = displayName;
     this.maxAge = maxAge;

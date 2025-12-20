@@ -1,8 +1,8 @@
-package io.github.sasori_256.town_planning.gameobject.resident;
+package io.github.sasori_256.town_planning.entity.resident;
 
 import java.awt.geom.Point2D;
 
-import io.github.sasori_256.town_planning.gameobject.model.BaseGameEntity;
+import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 
 public class Resident extends BaseGameEntity {
   private final ResidentType type;

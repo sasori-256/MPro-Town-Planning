@@ -18,4 +18,9 @@ public class CategoryNode implements MenuNode {
     @Override
     public ArrayList<MenuNode> getChildren() { return children; }
     
+    @Override
+    public void actionPerformed(java.awt.event.ActionEvent e) {
+        //TODO: Viewと連携する.
+    }
+
 }

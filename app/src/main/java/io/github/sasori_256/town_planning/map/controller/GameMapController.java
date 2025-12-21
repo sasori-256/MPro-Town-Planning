@@ -3,32 +3,42 @@ package io.github.sasori_256.town_planning.map.controller;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.geom.Point2D;
-import java.util.function.Consumer;
-import io.github.sasori_256.town_planning.gameObject.Camera;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
+
+import io.github.sasori_256.town_planning.gameobject.Camera;
+import io.github.sasori_256.town_planning.gameobject.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.map.controller.handler.*;
 
 public class GameMapController implements MouseListener{
     private Camera camera;
-    private Consumer<Point2D.Double> actionOnClick;
+    private BiConsumer<Point2D.Double, Supplier<? extends BaseGameEntity>> actionOnClick;
+    private Supplier<? extends BaseGameEntity> selectedEntity;
 
     public GameMapController(Camera camera) {
         this.camera = camera;
         this.actionOnClick = new ClickGameMapHandler();
+        this.selectedEntity = () -> null;
     }
 
     /**
      * GameMap上でのクリック時の動作を設定する
      * @param action
      */
-    public void setActionOnClick(Consumer<Point2D.Double> action) {
+    public void setActionOnClick(BiConsumer<Point2D.Double, Supplier<? extends BaseGameEntity>> action) {
         this.actionOnClick = action;
     }
+
+    public void setSelectedEntity(Supplier<? extends BaseGameEntity> entity) {
+        this.selectedEntity = entity;
+    }
+
 
     @Override
     public void mouseClicked(MouseEvent e) {
         Point2D.Double isoPoint = camera.screenToIso(new Point2D.Double(e.getX(), e.getY()));
         // System.out.println("Iso Coordinates: (" + isoPoint.x + ", " + isoPoint.y + ")");
-        actionOnClick.accept(isoPoint);
+        actionOnClick.accept(isoPoint, selectedEntity);
     }
 
     @Override public void mouseEntered(MouseEvent e) {}

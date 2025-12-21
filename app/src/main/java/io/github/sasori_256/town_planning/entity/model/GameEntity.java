@@ -42,10 +42,10 @@ public interface GameEntity {
   void setPosition(Point2D.Double position);
 
   /**
-   * エンティティの更新Strategyを取得する。
+   * エンティティの更新Strategyを設定する。
    * 更新Strategyは、エンティティの状態を毎フレーム更新するためのロジックを定義する。
    * 
-   * @return エンティティの更新Strategy
+   * @param updateStrategy エンティティに設定する更新Strategy
    */
   void setUpdateStrategy(UpdateStrategy updateStrategy);
 

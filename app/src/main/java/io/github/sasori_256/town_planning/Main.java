@@ -17,7 +17,7 @@ public class Main {
     EventBus eventBus = new EventBus();
     GameModel gameModel = new GameModel(eventBus);
     GameMap gameMap = gameModel.getGameMap();
-    Camera camera = new Camera(1, new Point2D.Double(0, 0));
+    Camera camera = new Camera(1, new Point2D.Double(WIDTH / 2, HEIGHT / 2));
     GameMapController gameMapController = new GameMapController(camera, gameMap);
     GameWindow gameWindow = new GameWindow(gameMapController, gameMap, camera, WIDTH, HEIGHT);
   }

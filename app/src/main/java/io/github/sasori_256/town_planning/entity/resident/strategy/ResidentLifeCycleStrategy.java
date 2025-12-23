@@ -1,11 +1,11 @@
-package io.github.sasori_256.town_planning.gameobject.resident.strategy;
+package io.github.sasori_256.town_planning.entity.resident.strategy;
 
 import io.github.sasori_256.town_planning.common.core.strategy.UpdateStrategy;
 import io.github.sasori_256.town_planning.common.event.events.ResidentDiedEvent;
-import io.github.sasori_256.town_planning.gameobject.model.GameContext;
-import io.github.sasori_256.town_planning.gameobject.model.BaseGameEntity;
-import io.github.sasori_256.town_planning.gameobject.resident.Resident;
-import io.github.sasori_256.town_planning.gameobject.resident.ResidentState;
+import io.github.sasori_256.town_planning.entity.model.GameContext;
+import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
+import io.github.sasori_256.town_planning.entity.resident.Resident;
+import io.github.sasori_256.town_planning.entity.resident.ResidentState;
 
 /**
  * 住民のライフサイクル（加齢、死亡）を管理するStrategy。

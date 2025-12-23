@@ -1,4 +1,4 @@
-package io.github.sasori_256.town_planning.gameobject;
+package io.github.sasori_256.town_planning.entity;
 
 import java.awt.geom.Point2D;
 

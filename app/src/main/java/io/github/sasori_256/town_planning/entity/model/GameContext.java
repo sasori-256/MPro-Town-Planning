@@ -1,8 +1,8 @@
-package io.github.sasori_256.town_planning.gameobject.model;
+package io.github.sasori_256.town_planning.entity.model;
 
 import io.github.sasori_256.town_planning.common.event.EventBus;
-import io.github.sasori_256.town_planning.gameobject.building.Building;
-import io.github.sasori_256.town_planning.gameobject.resident.Resident;
+import io.github.sasori_256.town_planning.entity.building.Building;
+import io.github.sasori_256.town_planning.entity.resident.Resident;
 import io.github.sasori_256.town_planning.map.model.GameMap;
 
 // Streamとは

@@ -19,21 +19,21 @@ import io.github.sasori_256.town_planning.map.model.MapCell;
 /**
  * gameMapの内容を描画するクラス
  */
-class GameMapPanel extends JPanel{
+class GameMapPanel extends JPanel {
   /**
    * 画像を格納するための内部クラス
    */
   private static class ImageStorage {
-    String name;
-    Image image;
-    Point2D.Double size;
+    final String name;
+    final Image image;
+    final Point2D.Double size;
     ImageStorage(String name, Image image) {
       this.name = name;
       this.image = image;
       this.size = new Point2D.Double(image.getWidth(null), image.getHeight(null));
     }
   }
-  private static final int MAX_IMAGES = 100;
+  private static final int MAX_IMAGES = 500;
   private final ImageStorage[] imageStorages = new ImageStorage[MAX_IMAGES];
   private int imageCount = 0;
 
@@ -69,13 +69,12 @@ class GameMapPanel extends JPanel{
   private ImageStorage getImageByName(String name) {
     for (int i = 0; i < imageCount; i++) {
       if (imageStorages[i].name.equals(name)) {
-        ImageStorage output = new ImageStorage(imageStorages[i].name, imageStorages[i].image);
-        return output;
+        return imageStorages[i];
       }
     }
     if(name.equals("error_building") || name.equals("error_terrain")){
       System.err.println("Error: Error image not found: " + name + ".png");
-      return null; // エラー画像自体が見つからない場合はエラーとともにnullを返す
+      return imageStorages[0]; // エラー画像が見つからない場合は最初の画像を返す
     } else { 
       return getImageByName("error_terrain"); // 画像が見つからない場合はエラー画像を返す
     }
@@ -95,19 +94,19 @@ class GameMapPanel extends JPanel{
    * @param imgSize 画像の元のサイズ
    * @return シフト量
    */
-  Point2D.Double calculateShiftImage(Point2D.Double imgPos, Point2D.Double imgSize) {
+  Point2D.Double calculateShiftImage(Point2D.Double imgPos, Point2D.Double imgSize, double cameraScale) {
     double shiftX = imgPos.x;
     double aspectRatio = imgSize.y / imgSize.x;
-    double shiftY = imgPos.y - (aspectRatio*2 - 1) * 32 / 2;
+    double shiftY = imgPos.y - (aspectRatio*2 - 1) * cameraScale / 2;
     return new Point2D.Double(shiftX, shiftY);
   }
   /**
    * 画像のスケールを計算する
    * @return 画像のスケール
    */
-  Point2D.Double calculateImageScale() {
-    double imageWidth = 32 * 2;
-    double imageHeight = 32;
+  Point2D.Double calculateImageScale(double cameraScale) {
+    double imageWidth = cameraScale * 2;
+    double imageHeight = cameraScale;
     return new Point2D.Double(imageWidth, imageHeight);
   }
   /**
@@ -117,20 +116,14 @@ class GameMapPanel extends JPanel{
    * @see GameMap
    */
   @Override
-  @SuppressWarnings("UnnecessaryContinue")
   public void paintComponent(Graphics g) {
     super.paintComponent(g);
-    Point2D.Double pos;
-    Point2D.Double screenPos;
-    Point2D.Double shiftedScreenPos;
-    Point2D.Double imageScale;
-    Point2D.Double imageSize;
     for (int y = 0; y < gameMap.getHeight(); y++) {
       for (int x = 0; x < gameMap.getWidth(); x++) {
-        pos = new Point2D.Double(x, y);
+        Point2D.Double pos = new Point2D.Double(x, y);
         MapCell cell = gameMap.getCell(new Point2D.Double(x, y));
-        screenPos = camera.isoToScreen(pos);
-        imageScale = calculateImageScale();
+        Point2D.Double screenPos = camera.isoToScreen(pos);
+        Point2D.Double imageScale = calculateImageScale(camera.getScale());
         // 地形の描画
         String terrainName = cell.getTerrain().getDisplayName();
         ImageStorage terrainImage = getImageByName(terrainName);
@@ -142,15 +135,14 @@ class GameMapPanel extends JPanel{
         String buildingName = cell.getBuilding().getType().getImageName();
         if(buildingName.equals("none")){ // 建物がない場合はスキップ
           continue;
-        } else {
-          ImageStorage buildingImage = getImageByName(buildingName);
-          imageSize = buildingImage.size;
-          shiftedScreenPos = calculateShiftImage(screenPos, imageSize);
-          if("error_building".equals(buildingImage.name)){
-            System.err.println("Warning: Image not found: " + buildingName + ".png at (" + x + ", " + y + ")");
-          }
-          g.drawImage(buildingImage.image, (int)shiftedScreenPos.x, (int)shiftedScreenPos.y, (int)(imageScale.x), (int)(imageScale.y), this);
         }
+        ImageStorage buildingImage = getImageByName(buildingName);
+        Point2D.Double imageSize = buildingImage.size;
+        Point2D.Double shiftedScreenPos = calculateShiftImage(screenPos, imageSize, camera.getScale());
+        if("error_building".equals(buildingImage.name)){
+          System.err.println("Warning: Image not found: " + buildingName + ".png at (" + x + ", " + y + ")");
+        }
+        g.drawImage(buildingImage.image, (int)shiftedScreenPos.x, (int)shiftedScreenPos.y, (int)(imageScale.x), (int)(imageScale.y), this);
       }
     }
   }
@@ -161,11 +153,11 @@ class GameMapPanel extends JPanel{
  * タイトル: "Town Planning Game"
  * @see GameMapPanel
  */
-public class GameWindow extends JFrame{
-  public GameWindow(MouseListener listener, GameMap gameMap, Camera camera) {
+public class GameWindow extends JFrame {
+  public GameWindow(MouseListener listener, GameMap gameMap, Camera camera, int width, int height) {
     addMouseListener(listener);
     setTitle("Town Planning Game");
-    setSize(640, 640);
+    setSize(width, height);
     //GameMap gameMap = generateTestMap();
     GameMapPanel gameMapPanel = new GameMapPanel(gameMap, camera);
     this.add(gameMapPanel, BorderLayout.CENTER);

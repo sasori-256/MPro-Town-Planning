@@ -44,8 +44,8 @@ public class NodeMenuInitializer {
         //         return newCategoryNode;
         //     });
 
-        //     BuildingNode buildingNode = new DisasterNode(type, (point) -> new Disaster(point, type), gameMapController, mapContext);
-        //     categoryNode.add(buildingNode);
+        //     DisasterNode disasterNode = new DisasterNode(type, (point) -> new Disaster(point, type), gameMapController, mapContext);
+        //     categoryNode.add(disasterNode);
         // }
         return root;
     }

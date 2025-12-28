@@ -40,7 +40,7 @@ public class NodeMenuInitializer {
         // for(DisasterType type: DisasterType.values()){
         //     CategoryNode categoryNode = categoryNodeMap.computeIfAbsent(type.getCategory(), cat -> {
         //         CategoryNode newCategoryNode = new CategoryNode(cat.getDisplayName());
-        //         creativeRoot.add(newCategoryNode);
+        //         disasterRoot.add(newCategoryNode);
         //         return newCategoryNode;
         //     });
 

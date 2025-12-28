@@ -5,11 +5,11 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.github.sasori_256.town_planning.common.core.strategy.UpdateStrategy;
 import io.github.sasori_256.town_planning.common.event.events.DisasterOccurredEvent;
 import io.github.sasori_256.town_planning.common.event.events.ResidentDiedEvent;
 import io.github.sasori_256.town_planning.entity.disaster.DisasterType;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
+import io.github.sasori_256.town_planning.entity.model.GameAction;
 import io.github.sasori_256.town_planning.entity.model.GameContext;
 import io.github.sasori_256.town_planning.entity.resident.Resident;
 import io.github.sasori_256.town_planning.entity.resident.ResidentState;
@@ -18,23 +18,23 @@ import io.github.sasori_256.town_planning.entity.resident.ResidentState;
  * 隕石などの単発災害のロジック。
  * 生成されてから一定時間後に着弾し、範囲ダメージを与える。
  */
-public class MeteorDisasterStrategy implements UpdateStrategy {
-  private final DisasterType type;
+public class MeteorDisasterAction implements GameAction {
   private final Point2D.Double targetPos;
+  private final DisasterType type;
   private double timer;
   private final double impactTime;
   private boolean impacted;
 
-  public MeteorDisasterStrategy(DisasterType type, Point2D.Double targetPos) {
+  public MeteorDisasterAction(Point2D.Double targetPos, DisasterType type) {
+    this.targetPos = new Point2D.Double(targetPos.x, targetPos.y);
     this.type = type;
-    this.targetPos = targetPos;
     this.timer = 0.0;
     this.impactTime = 2.0;
     this.impacted = false;
   }
 
   @Override
-  public void update(GameContext context, BaseGameEntity self) {
+  public void execute(GameContext context, BaseGameEntity self) {
     if (impacted) {
       // 着弾後の余韻（エフェクト消滅待ちなど）
       timer += context.getDeltaTime();
@@ -46,8 +46,8 @@ public class MeteorDisasterStrategy implements UpdateStrategy {
 
     timer += context.getDeltaTime();
 
-    // 移動アニメーション (空から降ってくる)
-    double progress = timer / impactTime;
+    // 移動 (空から降ってくる)
+    double progress = Math.min(1.0, timer / impactTime);
     double startY = -10.0; // 画面外上空
     double currentY = startY + (targetPos.getY() - startY) * progress;
     self.setPosition(new Point2D.Double(targetPos.getX(), currentY));

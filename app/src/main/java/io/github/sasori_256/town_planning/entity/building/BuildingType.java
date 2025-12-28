@@ -13,7 +13,7 @@ public enum BuildingType {
   HOUSE("住居", "error_building", 50, 4, 100, () -> new PopulationGrowthEffect(4)),
   CHURCH("教会", "error_building", 150, 0, 150),
   GRAVEYARD("墓地", "error_building", 100, 0, 100),
-  NONE("none", "error_building", 0, 0, 0);
+  NONE("none", "none", 0, 0, 0);
 
   private final String displayName;
   private final String imageName;

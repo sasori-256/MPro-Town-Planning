@@ -21,7 +21,8 @@ public class NodeMenuInitializer {
         CategoryNode root = new CategoryNode("root");
         CategoryNode creativeRoot = new CategoryNode("創造");
         CategoryNode disasterRoot = new CategoryNode("天災");
-        root.add(creativeRoot); root.add(disasterRoot);
+        root.add(creativeRoot);
+        root.add(disasterRoot);
 
         Map<CategoryType, CategoryNode> categoryNodeMap = new HashMap<>();
         for(BuildingType type: BuildingType.values()){

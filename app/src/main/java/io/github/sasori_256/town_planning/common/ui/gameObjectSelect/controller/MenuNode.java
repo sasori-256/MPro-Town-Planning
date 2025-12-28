@@ -5,6 +5,6 @@ import java.util.ArrayList;
 
 public interface MenuNode extends ActionListener {
     String getName();
-    Boolean isLeaf();
+    boolean isLeaf();
     ArrayList<MenuNode> getChildren();
 }

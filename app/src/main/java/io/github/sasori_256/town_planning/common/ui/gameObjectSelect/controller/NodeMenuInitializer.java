@@ -13,9 +13,9 @@ import io.github.sasori_256.town_planning.map.model.MapContext;
 public class NodeMenuInitializer {
     /**
      * ノードメニューの初期化を行う。創造モードと天災モードの親のrootノードを返す。
-     * @param gameMapController
-     * @param mapContext
-     * @return
+     * @param gameMapController ゲームマップコントローラー
+     * @param mapContext マップコンテキスト
+     * @return 創造モードと天災モードの親となるrootのCategoryNode
      */
     public static CategoryNode setup(GameMapController gameMapController, MapContext mapContext) {
         CategoryNode root = new CategoryNode("root");

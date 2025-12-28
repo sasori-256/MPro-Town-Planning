@@ -13,7 +13,7 @@ public class CategoryNode implements MenuNode {
     public String getName() { return name; }
 
     @Override
-    public Boolean isLeaf() { return false; }
+    public boolean isLeaf() { return false; }
 
     @Override
     public ArrayList<MenuNode> getChildren() { return children; }

@@ -26,7 +26,7 @@ public class DisasterNode implements MenuNode {
     public String getName() { return type.getDisplayName(); }
 
     @Override
-    public Boolean isLeaf() { return true; }
+    public boolean isLeaf() { return true; }
 
     @Override
     public ArrayList<MenuNode> getChildren() { 

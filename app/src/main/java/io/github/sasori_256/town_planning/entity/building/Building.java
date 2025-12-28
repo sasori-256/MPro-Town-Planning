@@ -1,11 +1,11 @@
-package io.github.sasori_256.town_planning.gameobject.building;
+package io.github.sasori_256.town_planning.entity.building;
 
 import java.awt.geom.Point2D;
 import java.util.function.Supplier;
 
-import io.github.sasori_256.town_planning.gameobject.model.BaseGameEntity;
-import io.github.sasori_256.town_planning.common.core.CompositeUpdateStrategy;
-import io.github.sasori_256.town_planning.gameobject.model.GameEffect;
+import io.github.sasori_256.town_planning.common.core.strategy.CompositeUpdateStrategy;
+import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
+import io.github.sasori_256.town_planning.entity.model.GameEffect;
 
 /**
  * 建物オブジェクトを表すクラス。
@@ -24,16 +24,16 @@ public class Building extends BaseGameEntity {
 
     // CompositeUpdateStrategy を使用して、排他アクションと並行エフェクトを管理可能にする
     CompositeUpdateStrategy strategy = new CompositeUpdateStrategy();
-    
+
     // Typeに定義されたEffectSupplierから、このインスタンス専用のEffectを生成して追加
     Supplier<GameEffect> effectSupplier = buildingType.getEffectSupplier();
     if (effectSupplier != null) {
-        GameEffect effect = effectSupplier.get();
-        if (effect != null) {
-            strategy.addEffect(effect);
-        }
+      GameEffect effect = effectSupplier.get();
+      if (effect != null) {
+        strategy.addEffect(effect);
+      }
     }
-    
+
     this.setUpdateStrategy(strategy);
   }
 

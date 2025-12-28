@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.function.Function;
 import java.awt.geom.Point2D;
 
-import io.github.sasori_256.town_planning.gameobject.building.Building;
-import io.github.sasori_256.town_planning.gameobject.building.BuildingType;
+import io.github.sasori_256.town_planning.entity.building.Building;
+import io.github.sasori_256.town_planning.entity.building.BuildingType;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
 import io.github.sasori_256.town_planning.map.controller.handler.PlaceBuildingHandler;
 import io.github.sasori_256.town_planning.map.model.MapContext;

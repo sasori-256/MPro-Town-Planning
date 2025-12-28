@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.function.Function;
 import java.awt.geom.Point2D;
 
-import io.github.sasori_256.town_planning.gameobject.disaster.DisasterType;
-import io.github.sasori_256.town_planning.gameobject.model.BaseGameEntity;
+import io.github.sasori_256.town_planning.entity.disaster.DisasterType;
+import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
 import io.github.sasori_256.town_planning.map.controller.handler.ActionDisasterHandler;
 
@@ -19,7 +19,7 @@ public class DisasterNode implements MenuNode {
         this.generator = generator;
         this.gameMapController = gameMapController;
     }
-    
+
     public DisasterType getType() { return type; }
 
     @Override

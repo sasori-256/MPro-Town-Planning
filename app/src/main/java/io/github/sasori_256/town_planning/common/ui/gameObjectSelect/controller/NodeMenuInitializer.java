@@ -3,10 +3,10 @@ package io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller
 import java.util.HashMap;
 import java.util.Map;
 
-import io.github.sasori_256.town_planning.gameobject.building.Building;
-import io.github.sasori_256.town_planning.gameobject.building.BuildingType;
-import io.github.sasori_256.town_planning.gameobject.disaster.DisasterType;
-import io.github.sasori_256.town_planning.gameobject.model.CategoryType;
+import io.github.sasori_256.town_planning.entity.building.Building;
+import io.github.sasori_256.town_planning.entity.building.BuildingType;
+import io.github.sasori_256.town_planning.entity.disaster.DisasterType;
+import io.github.sasori_256.town_planning.entity.model.CategoryType;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
 import io.github.sasori_256.town_planning.map.model.MapContext;
 

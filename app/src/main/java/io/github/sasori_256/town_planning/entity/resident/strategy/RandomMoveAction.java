@@ -1,8 +1,8 @@
-package io.github.sasori_256.town_planning.gameobject.resident.strategy;
+package io.github.sasori_256.town_planning.entity.resident.strategy;
 
-import io.github.sasori_256.town_planning.gameobject.model.BaseGameEntity;
-import io.github.sasori_256.town_planning.gameobject.model.GameAction;
-import io.github.sasori_256.town_planning.gameobject.model.GameContext;
+import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
+import io.github.sasori_256.town_planning.entity.model.GameAction;
+import io.github.sasori_256.town_planning.entity.model.GameContext;
 
 import java.awt.geom.Point2D;
 import java.util.concurrent.ThreadLocalRandom;
@@ -12,11 +12,19 @@ import java.util.concurrent.ThreadLocalRandom;
  * GameActionとして実装（排他動作）。
  */
 public class RandomMoveAction implements GameAction {
-  private double moveTimer = 0;
-  private final double moveInterval = 1.0; // 1秒ごとに移動方向を変える
-  private double dx = 0;
-  private double dy = 0;
-  private final double speed = 20.0; // ピクセル/秒 (わかりやすく少し速くしました)
+  private double moveTimer;
+  private final double moveInterval;
+  private double dx;
+  private double dy;
+  private final double speed;
+
+  public RandomMoveAction() {
+    this.moveTimer = 0.0;
+    this.moveInterval = 1.0; // 1秒ごとに方向転
+    this.dx = ThreadLocalRandom.current().nextDouble(-1, 1);
+    this.dy = ThreadLocalRandom.current().nextDouble(-1, 1);
+    this.speed = 50.0; // ピクセル/秒
+  }
 
   @Override
   public void execute(GameContext context, BaseGameEntity self) {

@@ -1,4 +1,4 @@
-package io.github.sasori_256.town_planning.gameobject.model;
+package io.github.sasori_256.town_planning.entity.model;
 
 import java.awt.geom.Point2D;
 import java.util.List;
@@ -13,10 +13,10 @@ import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
 import io.github.sasori_256.town_planning.common.event.events.ResidentBornEvent;
 import io.github.sasori_256.town_planning.common.event.events.SoulChangedEvent;
 import io.github.sasori_256.town_planning.common.event.events.SoulHarvestedEvent;
-import io.github.sasori_256.town_planning.gameobject.building.Building;
-import io.github.sasori_256.town_planning.gameobject.building.BuildingType;
-import io.github.sasori_256.town_planning.gameobject.resident.Resident;
-import io.github.sasori_256.town_planning.gameobject.resident.ResidentState;
+import io.github.sasori_256.town_planning.entity.building.Building;
+import io.github.sasori_256.town_planning.entity.building.BuildingType;
+import io.github.sasori_256.town_planning.entity.resident.Resident;
+import io.github.sasori_256.town_planning.entity.resident.ResidentState;
 import io.github.sasori_256.town_planning.map.model.GameMap;
 
 /**
@@ -101,6 +101,13 @@ public class GameModel implements GameContext, Updatable {
 
   @Override
   public <T extends BaseGameEntity> void removeEntity(T entity) {
+    if (entity == null) {
+      return;
+    }
+
+    // ライフサイクルメソッドの呼び出し
+    entity.onRemoved();
+
     if (entity instanceof Resident) {
       residentEntities.remove(entity);
     } else if (entity instanceof Building) {

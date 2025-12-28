@@ -1,4 +1,4 @@
-package io.github.sasori_256.town_planning.gameobject.model;
+package io.github.sasori_256.town_planning.entity.model;
 
 import java.awt.geom.Point2D;
 
@@ -58,7 +58,8 @@ public abstract class BaseGameEntity implements GameEntity, Updatable {
   }
 
   @Override
-  public void removeEntity() {
+  public void onRemoved() {
+    // デフォルトでは何もしない (必要に応じてオーバーライド)
   }
 
   @Override

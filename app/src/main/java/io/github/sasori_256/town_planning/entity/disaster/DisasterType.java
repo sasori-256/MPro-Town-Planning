@@ -1,6 +1,6 @@
-package io.github.sasori_256.town_planning.gameobject.disaster;
+package io.github.sasori_256.town_planning.entity.disaster;
 
-import io.github.sasori_256.town_planning.gameobject.model.CategoryType;
+import io.github.sasori_256.town_planning.entity.model.CategoryType;
 
 /**
  * 災害の種類定義。
@@ -15,6 +15,15 @@ public enum DisasterType {
   private final int damage;
   private final CategoryType category;
 
+  /**
+   * 天災の種類を初期化
+   *
+   * @param displayName 表示名
+   * @param cost        発生コスト
+   * @param radius      影響範囲の半径
+   * @param damage      与えるダメージ量
+   * @param category    カテゴリ
+   */
   DisasterType(String displayName, int cost, int radius, int damage, CategoryType category) {
     this.displayName = displayName;
     this.cost = cost;

@@ -1,10 +1,10 @@
-package io.github.sasori_256.town_planning.gameobject.building;
+package io.github.sasori_256.town_planning.entity.building;
 
 import java.util.function.Supplier;
 
-import io.github.sasori_256.town_planning.gameobject.model.GameEffect;
-import io.github.sasori_256.town_planning.gameobject.building.strategy.PopulationGrowthEffect;
-import io.github.sasori_256.town_planning.gameobject.model.CategoryType;
+import io.github.sasori_256.town_planning.entity.model.GameEffect;
+import io.github.sasori_256.town_planning.entity.building.strategy.PopulationGrowthEffect;
+import io.github.sasori_256.town_planning.entity.model.CategoryType;
 
 /**
  * 建物の種類定義。

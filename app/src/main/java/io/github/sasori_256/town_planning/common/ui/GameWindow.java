@@ -12,7 +12,7 @@ import java.io.File;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import io.github.sasori_256.town_planning.gameobject.Camera;
+import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.map.model.GameMap;
 import io.github.sasori_256.town_planning.map.model.MapCell;
 
@@ -58,7 +58,8 @@ class GameMapPanel extends JPanel {
    * gameMapの内容を描画する
    * 
    * @param g 描画に使用するGraphicsオブジェクト
-   * @implNote 画像ファイルが見つからない場合、"Warning Image not found: imageName.png at (x,y)" という警告が出力されます。
+   * @implNote 画像ファイルが見つからない場合、"Warning Image not found: imageName.png at (x,y)"
+   *           という警告が出力されます。
    * @see GameMap
    */
   @Override

@@ -4,8 +4,8 @@ import java.awt.geom.Point2D;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
-import io.github.sasori_256.town_planning.gameobject.building.Building;
-import io.github.sasori_256.town_planning.gameobject.model.BaseGameEntity;
+import io.github.sasori_256.town_planning.entity.building.Building;
+import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
 import io.github.sasori_256.town_planning.map.model.MapContext;
 

@@ -1,4 +1,4 @@
-package io.github.sasori_256.town_planning.gameobject.model;
+package io.github.sasori_256.town_planning.entity.model;
 
 public enum CategoryType {
     RESIDENTIAL("住居"),

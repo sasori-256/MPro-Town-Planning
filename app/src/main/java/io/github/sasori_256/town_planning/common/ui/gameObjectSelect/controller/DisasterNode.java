@@ -29,9 +29,8 @@ public class DisasterNode implements MenuNode {
     public boolean isLeaf() { return true; }
 
     @Override
-    public ArrayList<MenuNode> getChildren() { 
-        System.err.println("Error: Attempted to get children from DisasterNode");
-        return new ArrayList<>();
+    public ArrayList<MenuNode> getChildren() {
+        throw new UnsupportedOperationException("DisasterNode is a leaf node and has no children.");
     }
 
     @Override

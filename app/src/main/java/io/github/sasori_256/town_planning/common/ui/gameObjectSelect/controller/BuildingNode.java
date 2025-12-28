@@ -33,11 +33,11 @@ public class BuildingNode implements MenuNode {
 
     @Override
     public ArrayList<MenuNode> getChildren() { 
-        System.err.println("Error: Attempted to get children from BuildingNode");
-        return new ArrayList<>();   
+        throw new UnsupportedOperationException("BuildingNode is a leaf node and does not have children");
     }
 
     @Override
+    public void actionPerformed(java.awt.event.ActionEvent e) {
     public void actionPerformed(java.awt.event.ActionEvent e) {
         //TODO: Viewと連携する.
         gameMapController.setSelectedEntity(generator);

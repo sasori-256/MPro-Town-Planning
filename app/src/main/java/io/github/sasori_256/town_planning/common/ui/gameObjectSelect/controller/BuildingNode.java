@@ -34,7 +34,7 @@ public class BuildingNode implements MenuNode {
     @Override
     public ArrayList<MenuNode> getChildren() { 
         System.err.println("Error: Attempted to get children from BuildingNode");
-        return null;   
+        return new ArrayList<>();   
     }
 
     @Override

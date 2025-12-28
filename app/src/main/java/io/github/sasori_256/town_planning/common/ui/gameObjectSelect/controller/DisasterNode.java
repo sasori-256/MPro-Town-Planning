@@ -1,25 +1,29 @@
 package io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller;
 
 import java.util.ArrayList;
-import java.util.function.Supplier;
+import java.util.function.Function;
+import java.awt.geom.Point2D;
 
+import io.github.sasori_256.town_planning.gameobject.disaster.DisasterType;
 import io.github.sasori_256.town_planning.gameobject.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
 import io.github.sasori_256.town_planning.map.controller.handler.ActionDisasterHandler;
 
 public class DisasterNode implements MenuNode {
-    private final String name;
-    private final Supplier<? extends BaseGameEntity> generator;
+    private final DisasterType type;
+    private final Function<Point2D.Double, ? extends BaseGameEntity> generator;
     private final GameMapController gameMapController;
 
-    public DisasterNode(String name, Supplier<? extends BaseGameEntity> generator, GameMapController gameMapController) {
-        this.name = name;
+    public DisasterNode(DisasterType disasterType, Function<Point2D.Double, ? extends BaseGameEntity> generator, GameMapController gameMapController) {
+        this.type = disasterType;
         this.generator = generator;
         this.gameMapController = gameMapController;
     }
+    
+    public DisasterType getType() { return type; }
 
     @Override
-    public String getName() { return name;}
+    public String getName() { return type.getDisplayName(); }
 
     @Override
     public Boolean isLeaf() { return true; }

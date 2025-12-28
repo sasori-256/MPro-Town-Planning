@@ -1,28 +1,32 @@
 package io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller;
 
 import java.util.ArrayList;
-import java.util.function.Supplier;
+import java.util.function.Function;
+import java.awt.geom.Point2D;
 
 import io.github.sasori_256.town_planning.gameobject.building.Building;
+import io.github.sasori_256.town_planning.gameobject.building.BuildingType;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
 import io.github.sasori_256.town_planning.map.controller.handler.PlaceBuildingHandler;
 import io.github.sasori_256.town_planning.map.model.MapContext;
 
 public class BuildingNode implements MenuNode {
-    private final String name;
-    private final Supplier<Building> generator;
+    private final BuildingType type;
+    private final Function<Point2D.Double, Building> generator;
     private final GameMapController gameMapController;
     private final MapContext mapContext;
 
-    public BuildingNode(String name, Supplier<Building> generator, GameMapController gameMapController, MapContext mapContext) {
-        this.name = name;
+    public BuildingNode(BuildingType buildingType, Function<Point2D.Double, Building> generator, GameMapController gameMapController, MapContext mapContext) {
+        this.type = buildingType;
         this.generator = generator;
         this.gameMapController = gameMapController;
         this.mapContext = mapContext;
     }
 
+    public BuildingType getType() { return type; }
+    
     @Override
-    public String getName() { return name;}
+    public String getName() { return type.getDisplayName(); }
 
     @Override
     public Boolean isLeaf() { return true; }

@@ -13,12 +13,12 @@ import io.github.sasori_256.town_planning.map.controller.handler.*;
 public class GameMapController implements MouseListener{
     private Camera camera;
     private BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> actionOnClick;
-    private Function<Point2D.Double, ? extends BaseGameEntity> selectedEntity;
+    private Function<Point2D.Double, ? extends BaseGameEntity> selectedEntityGenerator;
 
     public GameMapController(Camera camera) {
         this.camera = camera;
         this.actionOnClick = new ClickGameMapHandler();
-        this.selectedEntity = (point) -> null;
+        this.selectedEntityGenerator = (point) -> null;
     }
 
     /**
@@ -29,8 +29,8 @@ public class GameMapController implements MouseListener{
         this.actionOnClick = action;
     }
 
-    public void setSelectedEntity(Function<Point2D.Double, ? extends BaseGameEntity> entity) {
-        this.selectedEntity = entity;
+    public void setSelectedEntityGenerator(Function<Point2D.Double, ? extends BaseGameEntity> entityGenerator) {
+        this.selectedEntityGenerator = entityGenerator;
     }
 
 
@@ -38,7 +38,7 @@ public class GameMapController implements MouseListener{
     public void mouseClicked(MouseEvent e) {
         Point2D.Double isoPoint = camera.screenToIso(new Point2D.Double(e.getX(), e.getY()));
         // System.out.println("Iso Coordinates: (" + isoPoint.x + ", " + isoPoint.y + ")");
-        actionOnClick.accept(isoPoint, selectedEntity);
+        actionOnClick.accept(isoPoint, selectedEntityGenerator);
     }
 
     @Override public void mouseEntered(MouseEvent e) {}

@@ -36,7 +36,7 @@ public class DisasterNode implements MenuNode {
     @Override
     public void actionPerformed(java.awt.event.ActionEvent e) {
         //TODO: Viewと連携する.
-        gameMapController.setSelectedEntity(generator);
+        gameMapController.setSelectedEntityGenerator(generator);
         gameMapController.setActionOnClick(new ActionDisasterHandler());
     }
 }

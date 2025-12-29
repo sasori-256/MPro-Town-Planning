@@ -38,7 +38,8 @@ public enum BuildingType {
   }
 
   // Effectなしのコンストラクタ
-  BuildingType(String displayName, String imageName, int cost, int maxPopulation, int maxDurability, CategoryType category) {
+  BuildingType(String displayName, String imageName, int cost, int maxPopulation, int maxDurability,
+      CategoryType category) {
     this(displayName, imageName, cost, maxPopulation, maxDurability, () -> null, category);
   }
 

@@ -52,6 +52,10 @@ public enum DisasterType {
     return displayName;
   }
 
+  public String getImageName() {
+    return imageName;
+  }
+
   public int getCost() {
     return cost;
   }

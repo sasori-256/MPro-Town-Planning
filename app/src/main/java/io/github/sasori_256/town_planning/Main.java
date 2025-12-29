@@ -5,6 +5,8 @@ import java.awt.geom.Point2D;
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.ui.GameWindow;
 import io.github.sasori_256.town_planning.entity.Camera;
+import io.github.sasori_256.town_planning.entity.building.Building;
+import io.github.sasori_256.town_planning.entity.building.BuildingType;
 import io.github.sasori_256.town_planning.entity.model.GameModel;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
 import io.github.sasori_256.town_planning.map.model.GameMap;
@@ -21,6 +23,7 @@ public class Main {
     Camera camera = new Camera(1, new Point2D.Double(WIDTH / 2, HEIGHT / 2));
     GameMapController gameMapController = new GameMapController(camera);
     gameMapController.setActionOnClick(new PlaceBuildingHandler(gameMap, gameMapController)); //いったん動かすために記載。Entity選択メニューが実装されたら消す。
+    gameMapController.setSelectedEntityGenerator((point) -> new Building(point, BuildingType.HOUSE)); //いったん動かすために記載。Entity選択メニューが実装されたら消す。
     GameWindow gameWindow = new GameWindow(gameMapController, gameMap, camera, WIDTH, HEIGHT);
   }
 }

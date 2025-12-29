@@ -6,6 +6,15 @@ import io.github.sasori_256.town_planning.common.core.strategy.CompositeUpdateSt
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.entity.model.GameAction;
 
+/**
+ * Represents a disaster entity in the game world.
+ * <p>
+ * A {@code Disaster} is a {@link BaseGameEntity} placed at a specific position
+ * on the map. Its concrete behavior and effects are defined by the associated
+ * {@link DisasterType}, which is responsible for creating the {@link GameAction}
+ * that drives the disaster's update logic via a {@link CompositeUpdateStrategy}.
+ * </p>
+ */
 public class Disaster extends BaseGameEntity {
   private final DisasterType type;
 

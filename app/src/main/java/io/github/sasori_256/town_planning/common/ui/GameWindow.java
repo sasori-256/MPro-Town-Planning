@@ -15,7 +15,13 @@ import java.util.Map;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+import io.github.sasori_256.town_planning.common.event.EventBus;
+import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
+import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
+import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.MenuNode;
+import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.NodeMenuInitializer;
 import io.github.sasori_256.town_planning.entity.Camera;
+import io.github.sasori_256.town_planning.map.controller.GameMapController;
 import io.github.sasori_256.town_planning.map.model.GameMap;
 import io.github.sasori_256.town_planning.map.model.MapCell;
 
@@ -94,9 +100,11 @@ class GameMapPanel extends JPanel {
 
   private final GameMap gameMap;
   private final Camera camera;
-  public GameMapPanel(GameMap gameMap, Camera camera) {
+  private final CategoryNode root;
+  public GameMapPanel(GameMap gameMap, Camera camera, CategoryNode root) {
     this.gameMap = gameMap;
     this.camera = camera;
+    this.root = root;
     setBackground(Color.BLACK);
     loadImages(); // 画像の事前読み込み
   }
@@ -121,6 +129,73 @@ class GameMapPanel extends JPanel {
     double imageHeight = 32 * cameraScale;
     return new Point2D.Double(imageWidth, imageHeight);
   }
+  
+  /**
+   * 指定された座標の地形と建物を描画する
+   * @param g
+   * @param x
+   * @param y
+   */
+  void paintTerrainAndBuilding(Graphics g, int x, int y) {
+    Point2D.Double pos = new Point2D.Double(x, y);
+    MapCell cell = gameMap.getCell(new Point2D.Double(x, y));
+    Point2D.Double screenPos = camera.isoToScreen(pos);
+    Point2D.Double imageScale = calculateImageScale(camera.getScale());
+    // 地形の描画
+    String terrainName = cell.getTerrain().getDisplayName();
+    ImageStorage terrainImage = getImageByName(terrainName);
+    if("error_terrain".equals(terrainImage.name)){
+      System.err.println("Warning: Image not found: " + terrainName + ".png at (" + x + ", " + y + ")");
+    }
+    g.drawImage(terrainImage.image, (int)screenPos.x, (int)screenPos.y, (int)(imageScale.x), (int)(imageScale.y), this);
+    // 建物の描画
+    String buildingName = cell.getBuilding().getType().getImageName();
+    if(buildingName.equals("none")){ // 建物がない場合はスキップ
+      return;
+    }
+    ImageStorage buildingImage = getImageByName(buildingName);
+    Point2D.Double imageSize = buildingImage.size;
+    Point2D.Double shiftedScreenPos = calculateShiftImage(screenPos, imageSize, camera.getScale());
+    if("error_building".equals(buildingImage.name)){
+      System.err.println("Warning: Image not found: " + buildingName + ".png at (" + x + ", " + y + ")");
+    }
+    g.drawImage(buildingImage.image, (int)shiftedScreenPos.x, (int)shiftedScreenPos.y, (int)(imageScale.x), (int)(imageScale.y), this);
+  }
+
+  /**
+   * ゲーム上のUIを描画する
+   * @param g 描画に使用するGraphicsオブジェクト
+   * @param mode UIのモード(view, creative, disaster)
+   */
+  void paintUI(Graphics g, String mode, CategoryNode root) {
+    switch (mode) {
+      case "creative":
+        // CreativeモードのUI描画
+        MenuNode creativeRoot = root.getChildren().get(0); // 創造モードのルートノード
+        int i = 1;
+        for (MenuNode building : creativeRoot.getChildren()) {
+          
+          
+
+        }
+        break;
+        case "disaster":
+          // DisasterモードのUI描画
+          MenuNode disasterRoot = root.getChildren().get(1); // 天災モードのルートノード
+        for (MenuNode disasterBuilding : disasterRoot.getChildren()) {
+          g.drawString(disasterBuilding.getName(), 10, 20); // 仮の描画位置
+          for (MenuNode disasterNode : disasterBuilding.getChildren()) {
+            g.drawString(" - " + disasterNode.getName(), 20, 40); // 仮の描画位置
+          }
+        }
+        break;
+      default:
+      case "view":
+        // ViewモードのUI描画
+        break;
+    }
+  }
+
   /**
    * gameMapの内容を描画する
    * @param g 描画に使用するGraphicsオブジェクト
@@ -133,31 +208,12 @@ class GameMapPanel extends JPanel {
     super.paintComponent(g);
     for (int y = 0; y < gameMap.getHeight(); y++) {
       for (int x = 0; x < gameMap.getWidth(); x++) {
-        Point2D.Double pos = new Point2D.Double(x, y);
-        MapCell cell = gameMap.getCell(new Point2D.Double(x, y));
-        Point2D.Double screenPos = camera.isoToScreen(pos);
-        Point2D.Double imageScale = calculateImageScale(camera.getScale());
-        // 地形の描画
-        String terrainName = cell.getTerrain().getDisplayName();
-        ImageStorage terrainImage = getImageByName(terrainName);
-        if("error_terrain".equals(terrainImage.name)){
-          System.err.println("Warning: Image not found: " + terrainName + ".png at (" + x + ", " + y + ")");
-        }
-        g.drawImage(terrainImage.image, (int)screenPos.x, (int)screenPos.y, (int)(imageScale.x), (int)(imageScale.y), this);
-        // 建物の描画
-        String buildingName = cell.getBuilding().getType().getImageName();
-        if(buildingName.equals("none")){ // 建物がない場合はスキップ
-          continue;
-        }
-        ImageStorage buildingImage = getImageByName(buildingName);
-        Point2D.Double imageSize = buildingImage.size;
-        Point2D.Double shiftedScreenPos = calculateShiftImage(screenPos, imageSize, camera.getScale());
-        if("error_building".equals(buildingImage.name)){
-          System.err.println("Warning: Image not found: " + buildingName + ".png at (" + x + ", " + y + ")");
-        }
-        g.drawImage(buildingImage.image, (int)shiftedScreenPos.x, (int)shiftedScreenPos.y, (int)(imageScale.x), (int)(imageScale.y), this);
+        paintTerrainAndBuilding(g, x, y);
       }
     }
+    String mode = "creative"; // TODO: 実際のモードを取得する
+    paintUI(g, mode, root);
+
   }
 }
 /**
@@ -167,12 +223,18 @@ class GameMapPanel extends JPanel {
  * @see GameMapPanel
  */
 public class GameWindow extends JFrame {
-  public GameWindow(MouseListener listener, GameMap gameMap, Camera camera, int width, int height) {
+  public GameWindow(MouseListener listener, GameMap gameMap, Camera camera, int width, int height, EventBus eventBus) {
     addMouseListener(listener);
     setTitle("Town Planning Game");
     setSize(width, height);
     //GameMap gameMap = generateTestMap();
-    GameMapPanel gameMapPanel = new GameMapPanel(gameMap, camera);
+    GameMapController gameMapController = new GameMapController(camera);
+    CategoryNode root = NodeMenuInitializer.setup(gameMapController, gameMap);
+
+    GameMapPanel gameMapPanel = new GameMapPanel(gameMap, camera, root);
+    eventBus.subscribe(MapUpdatedEvent.class, event -> {
+      gameMapPanel.repaint();
+    });
     this.add(gameMapPanel, BorderLayout.CENTER);
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     setVisible(true);

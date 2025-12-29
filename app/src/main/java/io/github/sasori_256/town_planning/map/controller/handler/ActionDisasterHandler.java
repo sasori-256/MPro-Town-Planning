@@ -6,11 +6,11 @@ import java.util.function.Function;
 
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 
-public class ClickGameMapHandler implements BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> {
+public class ActionDisasterHandler implements BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> {
   @Override
   public void accept(Point2D.Double isoPoint, Function<Point2D.Double, ? extends BaseGameEntity> entityGenerator) {
     // TODO:
-    System.out.println("Clicked at Iso Coordinates: (" + isoPoint.x + ", " + isoPoint.y + ")");
+    System.out.println("Action Disaster at: (" + isoPoint.x + ", " + isoPoint.y + ")");
   }
 
 }

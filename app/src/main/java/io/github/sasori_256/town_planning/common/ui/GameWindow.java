@@ -4,10 +4,13 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.MediaTracker;
 import java.awt.Toolkit;
 import java.awt.event.MouseListener;
 import java.awt.geom.Point2D;
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -16,6 +19,7 @@ import io.github.sasori_256.town_planning.gameobject.Camera;
 import io.github.sasori_256.town_planning.map.model.GameMap;
 import io.github.sasori_256.town_planning.map.model.MapCell;
 
+
 /**
  * gameMapの内容を描画するクラス
  */
@@ -23,19 +27,24 @@ class GameMapPanel extends JPanel {
   /**
    * 画像を格納するための内部クラス
    */
-  private static class ImageStorage {
+  private static final class ImageStorage {
     final String name;
     final Image image;
-    final Point2D.Double size;
+    Point2D.Double size;
+    
+    public void loadSize() {
+      this.size.x = image.getWidth(null);
+      this.size.y = image.getHeight(null);
+    }
+    
     ImageStorage(String name, Image image) {
       this.name = name;
       this.image = image;
-      this.size = new Point2D.Double(image.getWidth(null), image.getHeight(null));
+      this.size = new Point2D.Double(32, 32); // 仮の初期値
+      loadSize();
     }
   }
-  private static final int MAX_IMAGES = 500;
-  private final ImageStorage[] imageStorages = new ImageStorage[MAX_IMAGES];
-  private int imageCount = 0;
+  private final Map<String, ImageStorage> imageStorages = new HashMap<>();
 
   /**
    * 配列にすべての画像を読み込み、imageStoragesに格納する
@@ -43,19 +52,25 @@ class GameMapPanel extends JPanel {
    * @see ImageStorage
    */
   private void loadImages() {
-    final String PATH = "src/main/resources/images/"; // 画像のパス
+    String PATH = getClass().getClassLoader().getResource("images").getPath();
+    
     File dir = new File(PATH);
     File[] files = dir.listFiles((d, name) -> name.endsWith(".png"));
+    MediaTracker tracker = new MediaTracker(this);
     if (files != null) {
-      for (File file : files) {
-        if (imageCount >= MAX_IMAGES) {
-          System.err.println("Warning: Maximum image storage reached. Some images may not be loaded.");
-          break;
+      for (int i = 0; i < files.length; i++) {
+        File file = files[i];
+        String imageName = file.getName().replaceFirst("[.][^.]+$", "").toLowerCase(); // 拡張子を除去し、全部小文字にする
+        System.out.println("Loading image: " + file.getName());
+        Image img = Toolkit.getDefaultToolkit().getImage(file.getAbsolutePath());
+        imageStorages.put(imageName, new ImageStorage(imageName, img));
+        tracker.addImage(img, i);
+        try {
+          tracker.waitForID(i);
+        } catch (InterruptedException e) {
+          System.err.println("Error loading image: " + file.getName());
         }
-        String imageName = file.getName().replaceFirst("[.][^.]+$", ""); // 拡張子を除去
-        Image img = Toolkit.getDefaultToolkit().getImage(file.getPath());
-        imageStorages[imageCount] = new ImageStorage(imageName, img);
-        imageCount++;
+
       }
     }
   }
@@ -67,17 +82,14 @@ class GameMapPanel extends JPanel {
    * @see ImageStorage
    */
   private ImageStorage getImageByName(String name) {
-    for (int i = 0; i < imageCount; i++) {
-      if (imageStorages[i].name.equals(name)) {
-        return imageStorages[i];
-      }
+    name = name.toLowerCase(); // 名前を小文字に変換して統一
+    if (imageStorages.get(name) != null) {
+      return imageStorages.get(name);
     }
-    if(name.equals("error_building") || name.equals("error_terrain")){
-      System.err.println("Error: Error image not found: " + name + ".png");
-      return imageStorages[0]; // エラー画像が見つからない場合は最初の画像を返す
-    } else { 
-      return getImageByName("error_terrain"); // 画像が見つからない場合はエラー画像を返す
+    if (name.equals("error_terrain") || name.equals("error_building")) {
+      return null; // エラー画像自体が見つからない場合はnullを返す
     }
+    return getImageByName("error_terrain"); // 画像が見つからない場合はエラー画像を返す
   }
 
   private final GameMap gameMap;
@@ -105,8 +117,8 @@ class GameMapPanel extends JPanel {
    * @return 画像のスケール
    */
   Point2D.Double calculateImageScale(double cameraScale) {
-    double imageWidth = cameraScale * 2;
-    double imageHeight = cameraScale;
+    double imageWidth = 32 * cameraScale * 2;
+    double imageHeight = 32 * cameraScale;
     return new Point2D.Double(imageWidth, imageHeight);
   }
   /**

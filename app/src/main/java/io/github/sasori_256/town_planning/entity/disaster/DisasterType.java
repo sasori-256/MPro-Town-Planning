@@ -30,8 +30,8 @@ public enum DisasterType {
    * @param cost          発生コスト
    * @param radius        影響範囲の半径
    * @param damage        与えるダメージ量
-   * @param actionFactory 発生位置に応じてActionを生成する関数
    * @param category      カテゴリ
+   * @param actionFactory 発生位置に応じてActionを生成する関数
    */
   DisasterType(String displayName, String imageName, int cost, int radius, int damage,
       CategoryType category, BiFunction<Point2D.Double, DisasterType, GameAction> actionFactory) {

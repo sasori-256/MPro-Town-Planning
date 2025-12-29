@@ -8,6 +8,7 @@ import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.entity.model.GameModel;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
 import io.github.sasori_256.town_planning.map.model.GameMap;
+import io.github.sasori_256.town_planning.map.controller.handler.PlaceBuildingHandler; //いったん動かすために記載。Entity選択メニューが実装されたら消す。
 
 public class Main {
   public static void main(String[] args) {
@@ -19,6 +20,7 @@ public class Main {
     GameMap gameMap = gameModel.getGameMap();
     Camera camera = new Camera(1, new Point2D.Double(WIDTH / 2, HEIGHT / 2));
     GameMapController gameMapController = new GameMapController(camera);
+    gameMapController.setActionOnClick(new PlaceBuildingHandler(gameMap, gameMapController)); //いったん動かすために記載。Entity選択メニューが実装されたら消す。
     GameWindow gameWindow = new GameWindow(gameMapController, gameMap, camera, WIDTH, HEIGHT);
   }
 }

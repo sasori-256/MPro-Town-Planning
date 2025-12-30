@@ -1,8 +1,6 @@
 package io.github.sasori_256.town_planning.common.ui;
 
-import java.awt.Component;
 import java.awt.Graphics;
-import java.awt.Menu;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +24,7 @@ public class PaintUI {
   List<List<JButton>> createdButtons = new ArrayList<>(
       List.of(new ArrayList<>(), new ArrayList<>(), new ArrayList<>()));
 
-  void createButtonIfNotExists(JPanel panel, String buttonText, int xPos, int yPos, int width, int height,
+  private void createButtonIfNotExists(JPanel panel, String buttonText, int xPos, int yPos, int width, int height,
       ActionListener actionListener, int level) {
     boolean exists = false;
     for (JButton button : createdButtons.get(level)) {
@@ -46,7 +44,7 @@ public class PaintUI {
     }
   }
 
-  public void UIRepaint(JPanel panel) {
+  public void repaintUI(JPanel panel) {
     for (List<JButton> buttonList : createdButtons) {
       for (JButton button : buttonList) {
         panel.remove(button);
@@ -56,7 +54,7 @@ public class PaintUI {
         List.of(new ArrayList<>(), new ArrayList<>(), new ArrayList<>()));
   }
 
-  void paintUI(Graphics g, CategoryNode root, Double UIScale, ImageManager imageManager, JPanel panel) {
+  public void paintUI(Graphics g, CategoryNode root, Double UIScale, ImageManager imageManager, JPanel panel) {
     // モード選択ボタンの描画
     panel.setLayout(null);
     JButton[] modeButtons = {
@@ -64,32 +62,31 @@ public class PaintUI {
         new JButton("disaster"),
         new JButton("view")
     };
-    if (modeButtons != null) {
-      for (int i = 0; i < modeButtons.length; i++) {
-        JButton modeButton = modeButtons[i];
-        String buttonText = modeButton.getText();
-        int panelWidth = panel.getWidth();
-        int xPos = (int) (panelWidth - 90 * UIScale);
-        int yPos = (int) (100 + 90 * i * UIScale);
-        int width = (int) (80 * UIScale);
-        int height = (int) (80 * UIScale);
-        ActionListener listener = e -> {
-          selectedModeName = buttonText;
-          System.out.println("Mode selected: " + selectedModeName);
-          selectedCategoryName = "";
-          selectedObjectName = "";
-          for (JButton createdButtons : createdButtons.get(1)) {
-            panel.remove(createdButtons);
-          }
-          createdButtons.get(1).clear();
-          for (JButton createdButtons : createdButtons.get(2)) {
-            panel.remove(createdButtons);
-          }
-          createdButtons.get(2).clear();
-          panel.repaint();
-        };
-        createButtonIfNotExists(panel, buttonText, xPos, yPos, width, height, listener, 0);
-      }
+    for (int i = 0; i < modeButtons.length; i++) {
+      JButton modeButton = modeButtons[i];
+      String buttonText = modeButton.getText();
+      int panelWidth = panel.getWidth();
+      int xPos = (int) (panelWidth - 90 * UIScale);
+      int yPos = (int) (100 + 90 * i * UIScale);
+      int width = (int) (80 * UIScale);
+      int height = (int) (80 * UIScale);
+      ActionListener listener = e -> {
+        selectedModeName = buttonText;
+        System.out.println("Mode selected: " + selectedModeName);
+        selectedCategoryName = "";
+        selectedObjectName = "";
+        for (JButton button : createdButtons.get(1)) {
+          panel.remove(button);
+        }
+        createdButtons.get(1).clear();
+        for (JButton button : createdButtons.get(2)) {
+          panel.remove(button);
+        }
+        createdButtons.get(2).clear();
+        panel.repaint();
+      };
+      createButtonIfNotExists(panel, buttonText, xPos, yPos, width, height, listener, 0);
+
     }
 
     // 選択されたモードに応じたカテゴリボタンの描画
@@ -122,8 +119,8 @@ public class PaintUI {
             System.out.println(" - Child: " + child.getName());
           }
           selectedObjectName = "";
-          for (JButton createdButtons : createdButtons.get(2)) {
-            panel.remove(createdButtons);
+          for (JButton button : createdButtons.get(2)) {
+            panel.remove(button);
           }
           createdButtons.get(2).clear();
           panel.repaint();
@@ -134,7 +131,7 @@ public class PaintUI {
       System.err.println("No category root for mode: " + selectedModeName);
     }
     // 選択されたカテゴリに応じたオブジェクトボタンの描画
-    if (!selectedCategoryName.equals("")) {
+    if (!selectedCategoryName.isEmpty()) {
       if (selectedCategoryNode != null) {
         for (int i = 0; i < selectedCategoryNode.getChildren().size(); i++) {
           MenuNode objectNode = selectedCategoryNode.getChildren().get(i);

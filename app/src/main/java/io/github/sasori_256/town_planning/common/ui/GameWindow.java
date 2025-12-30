@@ -71,16 +71,15 @@ class GameMapPanel extends JPanel {
     for (int y = 0; y < gameMap.getHeight(); y++) {
       for (int x = 0; x < gameMap.getWidth(); x++) {
         Point2D.Double pos = new Point2D.Double(x, y);
-        paintGameObject.paintBuilding(g, pos, gameMap, camera, imageManager, null);
+        paintGameObject.paintBuilding(g, pos, gameMap, camera, imageManager, this);
       }
     }
-    String mode = "creative"; // TODO: 実際のモードを取得する
     paintUI.paintUI(g, root, 1.0, imageManager, this);
 
   }
 
   public void repaintUI() {
-    this.paintUI.UIRepaint(this);
+    this.paintUI.repaintUI(this);
   }
 }
 

@@ -45,8 +45,7 @@ public class PaintGameObject {
    * 指定された座標の地形を描画する
    * 
    * @param g              グラフィックスコンテキスト
-   * @param x              X座標
-   * @param y              Y座標
+   * @param pos            座標
    * @param gameMap        ゲームマップ
    * @param camera         カメラ
    * @param getImageByName 画像取得関数
@@ -62,13 +61,12 @@ public class PaintGameObject {
   /**
    * 指定された座標の建物を描画する
    * 
-   * @param g             グラフィックスコンテキスト
-   * @param x             X座標
-   * @param y             Y座標
-   * @param gameMap       ゲームマップ
-   * @param camera        カメラ
-   * @param imageProvider 画像取得プロバイダー
-   * @param panel         描画対象のパネル
+   * @param g            グラフィックスコンテキスト
+   * @param pos          座標
+   * @param gameMap      ゲームマップ
+   * @param camera       カメラ
+   * @param imageManager 画像取得用マネージャー
+   * @param panel        描画対象のパネル
    */
   public void paintBuilding(Graphics g, Point2D.Double pos, GameMap gameMap, Camera camera, ImageManager imageManager,
       JPanel panel) {

@@ -10,9 +10,16 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * 画像を管理するクラス
+ * 画像の読み込みと取得を担当する
+ */
 public class ImageManager extends Component {
   private final Map<String, ImageStorage> imageStorages = new HashMap<>();
 
+  /**
+   * 所定の場所にある全ての画像を読み込む
+   */
   public void loadImages() {
     String PATH = this.getClass().getClassLoader().getResource("images").getPath();
     File dir = new File(PATH);
@@ -42,10 +49,16 @@ public class ImageManager extends Component {
 
   }
 
-  ImageManager() {
+  public ImageManager() {
     this.loadImages();
   }
 
+  /**
+   * 名前から対応する画像を取得する
+   * 
+   * @param name
+   * @return 画像情報
+   */
   public ImageStorage getImageStorage(String name) {
     ImageStorage storage = (ImageStorage) this.imageStorages.get(name.toLowerCase());
     if (storage != null) {
@@ -62,20 +75,32 @@ public class ImageManager extends Component {
     }
   }
 
+  /**
+   * 画像の名前、画像オブジェクト、画像サイズを保持するクラス(構造体)
+   */
   public static final class ImageStorage {
     final String name;
     final Image image;
     Point2D.Double size;
 
     public void loadSize() {
-      this.size.x = (double) this.image.getWidth((ImageObserver) null);
-      this.size.y = (double) this.image.getHeight((ImageObserver) null);
+      if (this.image == null) {
+        System.err.println("Cannot load size for null image: " + this.name);
+        return;
+      }
+      this.size.x = this.image.getWidth(null);
+      this.size.y = this.image.getHeight(null);
+      if (this.size.x == -1 || this.size.y == -1) {
+        System.err.println("Failed to get image size for: " + this.name);
+        this.size = new Point2D.Double(64.0, 32.0);
+        return;
+      }
     }
 
-    ImageStorage(String name, Image image) {
+    public ImageStorage(String name, Image image) {
       this.name = name;
       this.image = image;
-      this.size = new Point2D.Double(32.0, 32.0);
+      this.size = new Point2D.Double(64.0, 32.0);
       this.loadSize();
     }
   }

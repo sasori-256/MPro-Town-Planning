@@ -82,9 +82,9 @@ public class Camera {
    */
   public Point2D.Double screenToIso(Point2D.Double screenPos) {
     double adjX = screenPos.x - this.center.x - this.offsetX;
-    double adjY = screenPos.y - this.offsetY; // Iso座標の (0,0)はX軸上の中央にあるため、center.yは引かない
-    double isoX = (adjX / this.cellWidth + adjY / this.cellHeight) - 1; // 原点を調整するために-1を引く
-    double isoY = (adjY / this.cellHeight - adjX / this.cellWidth) - 1; // 原点を調整するために-1を引く
+    double adjY = screenPos.y - this.center.y - this.offsetY; 
+    double isoX = (adjX / this.cellWidth + adjY / this.cellHeight); 
+    double isoY = (adjY / this.cellHeight - adjX / this.cellWidth);
     return new Point2D.Double(isoX, isoY);
   }
 
@@ -95,8 +95,8 @@ public class Camera {
    * @return スクリーン座標
    */
   public Point2D.Double isoToScreen(Point2D.Double isoPos) {
-    double screenX = (isoPos.x - isoPos.y - 1) * (this.cellWidth / 2.0) + this.center.x + this.offsetX;
-    double screenY = (isoPos.x + isoPos.y) * (this.cellHeight / 2.0) + this.offsetY;
+    double screenX = (isoPos.x - isoPos.y) * (this.cellWidth / 2.0) + this.center.x + this.offsetX;
+    double screenY = (isoPos.x + isoPos.y) * (this.cellHeight / 2.0) + this.center.y + this.offsetY;
     return new Point2D.Double(screenX, screenY);
   }
 

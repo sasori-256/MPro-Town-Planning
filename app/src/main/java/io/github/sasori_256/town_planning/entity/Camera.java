@@ -2,6 +2,9 @@ package io.github.sasori_256.town_planning.entity;
 
 import java.awt.geom.Point2D;
 
+import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
+import io.github.sasori_256.town_planning.common.event.EventBus;
+
 /**
  * カメラクラス
  * 引数は全てView基準?
@@ -14,6 +17,7 @@ public class Camera {
   private int offsetX;
   private int offsetY;
   private Point2D.Double center;
+  private final EventBus eventBus;
 
   /**
    * defaultScaleが1のとき、セルの幅が64ピクセル、高さが32ピクセルになる。
@@ -21,13 +25,14 @@ public class Camera {
    * @param defaultScale
    * @param center
    */
-  public Camera(double defaultScale, Point2D.Double center) {
+  public Camera(double defaultScale, Point2D.Double center, EventBus eventBus) {
     this.scale = defaultScale;
     this.cellHeight = (int) (32 * defaultScale);
     this.cellWidth = (int) (32 * 2 * defaultScale);
     this.offsetX = 0;
     this.offsetY = 0;
     this.center = center;
+    this.eventBus = eventBus;
   }
 
   public double getScale() {
@@ -93,5 +98,28 @@ public class Camera {
     double screenX = (isoPos.x - isoPos.y - 1) * (this.cellWidth / 2.0) + this.center.x + this.offsetX;
     double screenY = (isoPos.x + isoPos.y) * (this.cellHeight / 2.0) + this.offsetY;
     return new Point2D.Double(screenX, screenY);
+  }
+
+  public void pan(int dx, int dy) {
+    this.offsetX += dx;
+    this.offsetY += dy;
+    eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
+  }
+
+  // TODO: カメラ移動を滑らかにする
+  public void moveUp() {
+    pan(0, 10);
+  }
+
+  public void moveDown() {
+    pan(0, -10);
+  }
+
+  public void moveLeft() {
+    pan(10, 0);
+  }
+
+  public void moveRight() {
+    pan(-10, 0);
   }
 }

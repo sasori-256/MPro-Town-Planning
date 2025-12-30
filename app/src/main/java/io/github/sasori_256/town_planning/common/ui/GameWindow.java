@@ -6,7 +6,9 @@ import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.MediaTracker;
 import java.awt.Toolkit;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.awt.geom.Point2D;
 import java.io.File;
 import java.util.HashMap;
@@ -223,8 +225,10 @@ class GameMapPanel extends JPanel {
  * @see GameMapPanel
  */
 public class GameWindow extends JFrame {
-  public GameWindow(MouseListener listener, GameMap gameMap, Camera camera, int width, int height, EventBus eventBus) {
+  public <T extends MouseListener & MouseMotionListener & KeyListener> GameWindow(T listener, GameMap gameMap, Camera camera, int width, int height, EventBus eventBus) {
     addMouseListener(listener);
+    addKeyListener(listener);
+    addMouseMotionListener(listener);
     setTitle("Town Planning Game");
     setSize(width, height);
     //GameMap gameMap = generateTestMap();

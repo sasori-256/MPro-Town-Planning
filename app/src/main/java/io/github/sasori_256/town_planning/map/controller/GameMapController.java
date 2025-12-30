@@ -20,7 +20,7 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
     private Camera camera;
     private BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> actionOnClick;
     private Function<Point2D.Double, ? extends BaseGameEntity> selectedEntityGenerator;
-    private Point leastMiddleMousePos;
+    private Point previousMiddleMousePos;
 
     public GameMapController(Camera camera) {
         this.camera = camera;
@@ -52,24 +52,31 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
     @Override
     public void mousePressed(MouseEvent e) {
         if(SwingUtilities.isMiddleMouseButton(e)){
-            leastMiddleMousePos = new Point(e.getX(), e.getY());
+            previousMiddleMousePos = new Point(e.getX(), e.getY());
+        }
+    }
+
+    @Override 
+    public void mouseReleased(MouseEvent e) {
+        if(SwingUtilities.isMiddleMouseButton(e)){
+            previousMiddleMousePos = null;
         }
     }
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        if(SwingUtilities.isMiddleMouseButton(e) && leastMiddleMousePos != null){
-            int dx = e.getX() - leastMiddleMousePos.x;
-            int dy = e.getY() - leastMiddleMousePos.y;
+        if(SwingUtilities.isMiddleMouseButton(e) && previousMiddleMousePos != null){
+            int dx = e.getX() - previousMiddleMousePos.x;
+            int dy = e.getY() - previousMiddleMousePos.y;
 
             camera.pan(dx, dy);
-            leastMiddleMousePos = new Point(e.getX(), e.getY());
+            previousMiddleMousePos = new Point(e.getX(), e.getY());
         }
     }
 
     @Override public void mouseEntered(MouseEvent e) {}
     @Override public void mouseExited(MouseEvent e) {}
-    @Override public void mouseReleased(MouseEvent e) {}
+    
     @Override public void mouseMoved(MouseEvent e) {}
 
     @Override 

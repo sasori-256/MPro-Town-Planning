@@ -5,7 +5,6 @@ import java.awt.Image;
 import java.awt.MediaTracker;
 import java.awt.Toolkit;
 import java.awt.geom.Point2D;
-import java.awt.image.ImageObserver;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;

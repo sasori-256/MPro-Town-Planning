@@ -34,8 +34,10 @@ public class GameMap implements MapContext {
 
   @Override
   public boolean isValidPosition(Point2D.Double pos) {
-    return pos.getX() >= 0 && pos.getX() < this.width
-        && pos.getY() >= 0 && pos.getY() < this.height;
+    double x = pos.getX(); // 中心基準
+    double y = pos.getY();
+    return x >= -0.5 && x < this.width - 0.5
+        && y >= -0.5 && y < this.height - 0.5;
   }
 
   @Override

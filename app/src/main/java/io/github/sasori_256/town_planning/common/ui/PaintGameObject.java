@@ -81,12 +81,12 @@ public class PaintGameObject {
   /**
    * 指定された座標に指定された画像を描画する
    * 
-   * @param g             グラフィックスコンテキスト
-   * @param pos           座標
-   * @param name          建物の名前
-   * @param camera        カメラ
-   * @param imageProvider 画像取得プロバイダー
-   * @param panel         描画対象のパネル
+   * @param g            グラフィックスコンテキスト
+   * @param pos          座標
+   * @param name         建物の名前
+   * @param camera       カメラ
+   * @param imageManager 画像取得用マネージャー
+   * @param panel        描画対象のパネル
    */
   public void paint(Graphics g, Point2D.Double pos, String name, Camera camera, ImageManager imageManager,
       JPanel panel) {

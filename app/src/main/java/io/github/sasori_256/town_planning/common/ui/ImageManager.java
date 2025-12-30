@@ -27,6 +27,8 @@ public class ImageManager extends Component {
       return name.endsWith(".png");
     });
     MediaTracker tracker = new MediaTracker(this);
+    // 一時的に画像名とImageオブジェクトを保持する
+    Map<String, Image> loadedImages = new HashMap<>();
     if (files != null) {
       for (int i = 0; i < files.length; i++) {
         File file = files[i];
@@ -34,14 +36,18 @@ public class ImageManager extends Component {
         System.out.println("Loading image: " + imageName);
         Image img = Toolkit.getDefaultToolkit().getImage(file.getPath());
         tracker.addImage(img, 0);
+        loadedImages.put(imageName, img);
+      }
+      try {
+        tracker.waitForAll();
+      } catch (InterruptedException e) {
+        System.err.println("Error loading images");
+        e.printStackTrace();
+      }
 
-        try {
-          tracker.waitForAll();
-        } catch (InterruptedException e) {
-          System.err.println("Error loading image: " + imageName);
-          e.printStackTrace();
-        }
-
+      for (Map.Entry<String, Image> entry : loadedImages.entrySet()) {
+        String imageName = entry.getKey();
+        Image img = entry.getValue();
         ImageStorage storage = new ImageStorage(imageName, img);
         this.imageStorages.put(imageName, storage);
       }
@@ -60,11 +66,11 @@ public class ImageManager extends Component {
    * @return 画像情報
    */
   public ImageStorage getImageStorage(String name) {
-    ImageStorage storage = (ImageStorage) this.imageStorages.get(name.toLowerCase());
+    ImageStorage storage = this.imageStorages.get(name.toLowerCase());
     if (storage != null) {
       return storage;
     } else {
-      storage = (ImageStorage) this.imageStorages.get("error");
+      storage = this.imageStorages.get("error");
       if (storage != null) {
         System.out.println("Warning: Image not found: " + name + ".png, returning error image.");
         return storage;

@@ -17,11 +17,11 @@ import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.
  * 更に、選択されたカテゴリに応じたオブジェクトボタンを描画する
  */
 public class PaintUI {
-  String selectedModeName = "creative"; // UIのモード(view, creative, disaster)
-  String selectedCategoryName = "";
-  String selectedObjectName = "";
-  MenuNode selectedCategoryNode = null;
-  List<List<JButton>> createdButtons = new ArrayList<>(
+  private String selectedModeName = "creative"; // UIのモード(view, creative, disaster)
+  private String selectedCategoryName = "";
+  private String selectedObjectName = "";
+  private MenuNode selectedCategoryNode = null;
+  private List<List<JButton>> createdButtons = new ArrayList<>(
       List.of(new ArrayList<>(), new ArrayList<>(), new ArrayList<>()));
 
   private void createButtonIfNotExists(JPanel panel, String buttonText, int xPos, int yPos, int width, int height,
@@ -57,14 +57,13 @@ public class PaintUI {
   public void paintUI(Graphics g, CategoryNode root, Double UIScale, ImageManager imageManager, JPanel panel) {
     // モード選択ボタンの描画
     panel.setLayout(null);
-    JButton[] modeButtons = {
-        new JButton("creative"),
-        new JButton("disaster"),
-        new JButton("view")
+    String[] modeButtons = {
+        "creative",
+        "disaster",
+        "view"
     };
     for (int i = 0; i < modeButtons.length; i++) {
-      JButton modeButton = modeButtons[i];
-      String buttonText = modeButton.getText();
+      String buttonText = modeButtons[i];
       int panelWidth = panel.getWidth();
       int xPos = (int) (panelWidth - 90 * UIScale);
       int yPos = (int) (100 + 90 * i * UIScale);

@@ -62,7 +62,7 @@ public class ImageManager extends Component {
   /**
    * 名前から対応する画像を取得する
    * 
-   * @param name
+   * @param name 取得したい画像の名前 (拡張子なし、小文字・大文字区別なし)
    * @return 画像情報
    */
   public ImageStorage getImageStorage(String name) {
@@ -87,7 +87,7 @@ public class ImageManager extends Component {
   public static final class ImageStorage {
     final String name;
     final Image image;
-    Point2D.Double size;
+    Point2D.Double size = new Point2D.Double(); // サイズは読み取り直しが必要な場合があるため、finalにしない
 
     public void loadSize() {
       if (this.image == null) {
@@ -106,7 +106,6 @@ public class ImageManager extends Component {
     public ImageStorage(String name, Image image) {
       this.name = name;
       this.image = image;
-      this.size = new Point2D.Double(64.0, 32.0);
       this.loadSize();
     }
   }

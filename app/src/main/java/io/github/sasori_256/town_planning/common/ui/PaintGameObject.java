@@ -30,18 +30,6 @@ public class PaintGameObject {
   }
 
   /**
-   * 画像のスケールを計算する
-   * 
-   * @param cameraScale カメラのスケール
-   * @return 画像のスケール
-   */
-  public Point2D.Double calculateImageScale(double cameraScale) {
-    double imageWidth = 32 * cameraScale * 2;
-    double imageHeight = 32 * cameraScale;
-    return new Point2D.Double(imageWidth, imageHeight);
-  }
-
-  /**
    * 指定された座標の地形を描画する
    * 
    * @param g              グラフィックスコンテキスト
@@ -99,8 +87,8 @@ public class PaintGameObject {
       Point2D.Double imageScale = imageStorage.size;
       int xPos = (int) (screenPos.x + posShift.x);
       int yPos = (int) (screenPos.y + posShift.y * -2);
-      int width = (int) (imageScale.x);
-      int height = (int) (imageScale.y);
+      int width = (int) (imageScale.x * cameraScale);
+      int height = (int) (imageScale.y * cameraScale);
       g.drawImage(imageStorage.image, xPos, yPos, width, height, panel);
     }
   }

@@ -3,17 +3,11 @@ package io.github.sasori_256.town_planning.common.ui;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics;
-import java.awt.Image;
-import java.awt.MediaTracker;
-import java.awt.Toolkit;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Point2D;
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -21,12 +15,10 @@ import javax.swing.JPanel;
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
-import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.MenuNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.NodeMenuInitializer;
 import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
 import io.github.sasori_256.town_planning.map.model.GameMap;
-import io.github.sasori_256.town_planning.map.model.MapCell;
 
 /**
  * gameMapの内容を描画するクラス
@@ -46,6 +38,7 @@ class GameMapPanel extends JPanel {
     this.root = root;
     this.imageManager = new ImageManager();
     this.paintGameObject = new PaintGameObject();
+    this.setLayout(null);
     this.paintUI = new PaintUI();
 
     setBackground(Color.BLACK);
@@ -74,7 +67,7 @@ class GameMapPanel extends JPanel {
         paintGameObject.paintBuilding(g, pos, gameMap, camera, imageManager, this);
       }
     }
-    paintUI.paintUI(g, root, 1.0, imageManager, this);
+    paintUI.paint(g, root, 1.0, imageManager, this);
 
   }
 

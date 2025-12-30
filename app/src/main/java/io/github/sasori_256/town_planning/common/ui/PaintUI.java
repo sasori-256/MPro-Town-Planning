@@ -39,8 +39,6 @@ public class PaintUI {
       button.addActionListener(actionListener);
       createdButtons.get(level).add(button);
       panel.add(button);
-      panel.revalidate();
-      panel.repaint();
     }
   }
 
@@ -52,11 +50,19 @@ public class PaintUI {
     }
     createdButtons = new ArrayList<>(
         List.of(new ArrayList<>(), new ArrayList<>(), new ArrayList<>()));
+    panel.revalidate();
+    panel.repaint();
   }
 
-  public void paintUI(Graphics g, CategoryNode root, Double UIScale, ImageManager imageManager, JPanel panel) {
+  public void clearButtonLevel(JPanel panel, int level) {
+    for (JButton button : createdButtons.get(level)) {
+      panel.remove(button);
+    }
+    createdButtons.get(level).clear();
+  }
+
+  public void paint(Graphics g, CategoryNode root, Double UIScale, ImageManager imageManager, JPanel panel) {
     // モード選択ボタンの描画
-    panel.setLayout(null);
     String[] modeButtons = {
         "creative",
         "disaster",
@@ -74,14 +80,8 @@ public class PaintUI {
         System.out.println("Mode selected: " + selectedModeName);
         selectedCategoryName = "";
         selectedObjectName = "";
-        for (JButton button : createdButtons.get(1)) {
-          panel.remove(button);
-        }
-        createdButtons.get(1).clear();
-        for (JButton button : createdButtons.get(2)) {
-          panel.remove(button);
-        }
-        createdButtons.get(2).clear();
+        clearButtonLevel(panel, 1);
+        clearButtonLevel(panel, 2);
         panel.repaint();
       };
       createButtonIfNotExists(panel, buttonText, xPos, yPos, width, height, listener, 0);
@@ -118,10 +118,7 @@ public class PaintUI {
             System.out.println(" - Child: " + child.getName());
           }
           selectedObjectName = "";
-          for (JButton button : createdButtons.get(2)) {
-            panel.remove(button);
-          }
-          createdButtons.get(2).clear();
+          clearButtonLevel(panel, 2);
           panel.repaint();
         };
         createButtonIfNotExists(panel, buttonText, xPos, yPos, width, height, listener, 1);

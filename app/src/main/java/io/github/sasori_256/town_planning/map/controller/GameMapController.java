@@ -76,7 +76,6 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
 
     @Override public void mouseEntered(MouseEvent e) {}
     @Override public void mouseExited(MouseEvent e) {}
-    
     @Override public void mouseMoved(MouseEvent e) {}
 
     @Override 

@@ -1,19 +1,26 @@
 package io.github.sasori_256.town_planning.map.controller;
 
+import java.awt.Point;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.awt.geom.Point2D;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+
+import javax.swing.SwingUtilities;
 
 import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.map.controller.handler.*;
 
-public class GameMapController implements MouseListener{
+public class GameMapController implements MouseListener, MouseMotionListener, KeyListener{
     private Camera camera;
     private BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> actionOnClick;
     private Function<Point2D.Double, ? extends BaseGameEntity> selectedEntityGenerator;
+    private Point leastMiddleMousePos;
 
     public GameMapController(Camera camera) {
         this.camera = camera;
@@ -36,14 +43,56 @@ public class GameMapController implements MouseListener{
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        Point2D.Double isoPoint = camera.screenToIso(new Point2D.Double(e.getX(), e.getY()));
-        // System.out.println("Iso Coordinates: (" + isoPoint.x + ", " + isoPoint.y + ")");
-        actionOnClick.accept(isoPoint, selectedEntityGenerator);
+        if(SwingUtilities.isLeftMouseButton(e)){
+            Point2D.Double isoPoint = camera.screenToIso(new Point2D.Double(e.getX(), e.getY()));
+            actionOnClick.accept(isoPoint, selectedEntityGenerator);
+        }
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+        if(SwingUtilities.isMiddleMouseButton(e)){
+            leastMiddleMousePos = new Point(e.getX(), e.getY());
+        }
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        if(SwingUtilities.isMiddleMouseButton(e) && leastMiddleMousePos != null){
+            int dx = e.getX() - leastMiddleMousePos.x;
+            int dy = e.getY() - leastMiddleMousePos.y;
+
+            camera.pan(dx, dy);
+            leastMiddleMousePos = new Point(e.getX(), e.getY());
+        }
     }
 
     @Override public void mouseEntered(MouseEvent e) {}
     @Override public void mouseExited(MouseEvent e) {}
-    @Override public void mousePressed(MouseEvent e) {}
     @Override public void mouseReleased(MouseEvent e) {}
+    @Override public void mouseMoved(MouseEvent e) {}
+
+    @Override 
+    public void keyPressed(KeyEvent e) {
+        int k = e.getKeyCode();
+        switch (k) {
+            case KeyEvent.VK_W:
+                camera.moveUp();
+                break;
+            case KeyEvent.VK_S:
+                camera.moveDown();
+                break;
+            case KeyEvent.VK_A:
+                camera.moveLeft();
+                break;
+            case KeyEvent.VK_D:
+                camera.moveRight();
+                break;
+            default:
+                break;
+        }
+    }
+    @Override public void keyReleased(KeyEvent e) {}
+    @Override public void keyTyped(KeyEvent e) {}
 
 }

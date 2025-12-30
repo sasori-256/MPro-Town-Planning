@@ -83,8 +83,8 @@ public class Camera {
   public Point2D.Double screenToIso(Point2D.Double screenPos) {
     double adjX = screenPos.x - this.center.x - this.offsetX;
     double adjY = screenPos.y - this.center.y - this.offsetY; 
-    double isoX = (adjX / this.cellWidth + adjY / this.cellHeight); 
-    double isoY = (adjY / this.cellHeight - adjX / this.cellWidth);
+    double isoX = adjX / this.cellWidth + adjY / this.cellHeight + 0.5; 
+    double isoY = adjY / this.cellHeight - adjX / this.cellWidth + 0.5;
     return new Point2D.Double(isoX, isoY);
   }
 
@@ -96,7 +96,7 @@ public class Camera {
    */
   public Point2D.Double isoToScreen(Point2D.Double isoPos) {
     double screenX = (isoPos.x - isoPos.y) * (this.cellWidth / 2.0) + this.center.x + this.offsetX;
-    double screenY = (isoPos.x + isoPos.y) * (this.cellHeight / 2.0) + this.center.y + this.offsetY;
+    double screenY = (isoPos.x + isoPos.y) * (this.cellHeight / 2.0) + this.center.y + this.offsetY - this.cellHeight / 2.0;
     return new Point2D.Double(screenX, screenY);
   }
 

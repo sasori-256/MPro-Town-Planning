@@ -70,8 +70,12 @@ public class Camera {
     this.offsetY = offsetY;
   }
 
-  public void setCenter(Point2D.Double center) {
-    this.center = center;
+  public void updateCenter(int mapWidth, int mapHeight, int screenWidth, int screenHeight) {
+    double centerIsoX = (mapWidth - 1) / 2.0;
+    double centerIsoY = (mapHeight - 1) / 2.0;
+    double centerScreenX = (centerIsoX - centerIsoY) * (this.cellWidth / 2.0);
+    double centerScreenY = (centerIsoX + centerIsoY) * (this.cellHeight / 2.0);
+    this.center = new Point2D.Double(screenWidth - centerScreenX, screenHeight - centerScreenY);
   }
 
   /**
@@ -83,8 +87,8 @@ public class Camera {
   public Point2D.Double screenToIso(Point2D.Double screenPos) {
     double adjX = screenPos.x - this.center.x - this.offsetX;
     double adjY = screenPos.y - this.center.y - this.offsetY; 
-    double isoX = adjX / this.cellWidth + adjY / this.cellHeight + 0.5; 
-    double isoY = adjY / this.cellHeight - adjX / this.cellWidth + 0.5;
+    double isoX = adjX / this.cellWidth + adjY / this.cellHeight; 
+    double isoY = adjY / this.cellHeight - adjX / this.cellWidth;
     return new Point2D.Double(isoX, isoY);
   }
 
@@ -96,7 +100,7 @@ public class Camera {
    */
   public Point2D.Double isoToScreen(Point2D.Double isoPos) {
     double screenX = (isoPos.x - isoPos.y) * (this.cellWidth / 2.0) + this.center.x + this.offsetX;
-    double screenY = (isoPos.x + isoPos.y) * (this.cellHeight / 2.0) + this.center.y + this.offsetY - this.cellHeight / 2.0;
+    double screenY = (isoPos.x + isoPos.y) * (this.cellHeight / 2.0) + this.center.y + this.offsetY;
     return new Point2D.Double(screenX, screenY);
   }
 

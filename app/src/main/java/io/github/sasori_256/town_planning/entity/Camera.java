@@ -97,8 +97,7 @@ public class Camera {
     double adjY = screenPos.y - this.screenOrigin.y - this.offsetY;
     double isoX = adjX / this.cellWidth + adjY / this.cellHeight;
     double isoY = adjY / this.cellHeight - adjX / this.cellWidth;
-    return new Point2D.Double(isoX - 1, isoY);
-    // javaでは画像の左上が原点になるが、直感的な中心はそこから画像サイズの半分だけ左下に移動した点であるため、その分を補正する
+    return new Point2D.Double(isoX, isoY);
   }
 
   /**
@@ -137,16 +136,16 @@ public class Camera {
   }
 
   public void zoomIn() {
-    if(this.scale * 1.1 < 3.0){
+    if (this.scale * 1.1 < 3.0) {
       setScale(this.scale * 1.1);
       System.out.println("Zoomed In: New Scale = " + this.scale);
       eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
     }
-    
+
   }
 
   public void zoomOut() {
-    if(this.scale / 1.1 > 0.75){
+    if (this.scale / 1.1 > 0.75) {
       setScale(this.scale / 1.1);
       System.out.println("Zoomed Out: New Scale = " + this.scale);
       eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));

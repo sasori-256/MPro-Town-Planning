@@ -21,7 +21,7 @@ public class PaintUI {
   private final ImageManager imageManager;
   private final JPanel panel;
   private CategoryNode root;
-  private static double UIScale = 1;
+  private double UIScale = 1;
 
   public PaintUI(ImageManager imageManager, JPanel panel, CategoryNode root) {
     this.imageManager = imageManager;
@@ -64,7 +64,7 @@ public class PaintUI {
       String imageName = prefix + buttonText.toLowerCase();
       CustomButton button = new CustomButton(buttonText); // 画像が見つからない場合はテキストだけのボタンを使用
       ImageStorage imageStorage = imageManager.getImageStorage(imageName);
-      if (imageStorage == null || imageStorage.name.equals("error")) {
+      if (imageStorage == null || imageStorage.name == null || imageStorage.name.equals("error")) {
         // System.err.println("Warning: Image not found: " + imageName);
       } else {
         button.setImage(imageStorage.image, width, height);
@@ -187,11 +187,11 @@ public class PaintUI {
       int width = height;
       double margin = 10 * UIScale;
       int xPos = (int) (panelWidth - (width + margin) * UIScale);
-      double yPos_begin = 100;
-      double yPos_delta = (height + margin) * UIScale;
+      double yPosBegin = 100;
+      double yPosDelta = (height + margin) * UIScale;
       for (int i = 0; i < modeButtons.length; i++) {
         String buttonText = modeButtons[i];
-        int yPos = (int) (yPos_begin + i * yPos_delta);
+        int yPos = (int) (yPosBegin + i * yPosDelta);
         ActionListener listener = e -> {
           setSelectedMode(buttonText);
         };
@@ -222,12 +222,12 @@ public class PaintUI {
       int width = height;
       double margin = 10 * UIScale;
       int xPos = (int) (10);
-      double yPos_begin = 100;
-      double yPos_delta = (height + margin) * UIScale;
+      double yPosBegin = 100;
+      double yPosDelta = (height + margin) * UIScale;
       for (int i = 0; i < categoryRoot.getChildren().size(); i++) {
         MenuNode categoryNode = categoryRoot.getChildren().get(i);
         String buttonText = categoryNode.getName();
-        int yPos = (int) (yPos_begin + i * yPos_delta);
+        int yPos = (int) (yPosBegin + i * yPosDelta);
         ActionListener listener = e -> {
           setSelectedCategory(buttonText, categoryNode);
         };
@@ -251,12 +251,12 @@ public class PaintUI {
         int height = width;
         double margin = 10 * UIScale;
         int yPos = (int) (panelHeight - (height + margin) * UIScale);
-        double xPos_begin = panelWidth / 2 - (buttonAmount * (width + margin) * UIScale) / 2 + margin / 2 * UIScale;
-        double xPos_delta = (width + margin) * UIScale;
+        double xPosBegin = panelWidth / 2 - (buttonAmount * (width + margin) * UIScale) / 2 + margin / 2 * UIScale;
+        double xPosDelta = (width + margin) * UIScale;
         for (int i = 0; i < buttonAmount; i++) {
           MenuNode objectNode = selectedCategoryNode.getChildren().get(i);
           String buttonText = objectNode.getName();
-          int xPos = (int) (xPos_begin + i * xPos_delta);
+          int xPos = (int) (xPosBegin + i * xPosDelta);
           ActionListener listener = e -> {
             setSelectedObject(buttonText);
           };

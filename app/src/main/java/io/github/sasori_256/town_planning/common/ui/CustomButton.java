@@ -64,8 +64,8 @@ class CustomButton extends JButton {
   /**
    * 画像を暗くします
    * 
-   * @param image 元の画像
-   * @param scale スケール値（0.0～1.0、小さいほど暗くなります）
+   * @param image    元の画像
+   * @param strength スケール値（0.0～1.0、小さいほど暗くなります）
    * @return 暗くされた画像
    */
   private Image darkenImage(Image image, int width, int height, float strength) {
@@ -79,8 +79,8 @@ class CustomButton extends JButton {
   /**
    * 画像を明るくします
    * 
-   * @param image 元の画像
-   * @param scale スケール値（1.0より大きい値で明るくなります）
+   * @param image    元の画像
+   * @param strength スケール値（1.0より大きい値で明るくなります）
    * @return 明るくされた画像
    */
   private Image brightenImage(Image image, int width, int height, float strength) {

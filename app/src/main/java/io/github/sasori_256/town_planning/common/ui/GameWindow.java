@@ -26,10 +26,6 @@ import io.github.sasori_256.town_planning.map.model.GameMap;
  */
 class GameMapPanel extends JPanel {
 
-  public static final boolean ENABLE_UI = true; // UI描画を有効にするかどうかのフラグ 推奨: true
-  public static final boolean INFINITE_RELOAD = false; // 無限リロードモードを有効にするかどうかのフラグ 推奨: false
-  public static final boolean SHOW_REPAINT_COUNT_AND_FPS = true; // 再描画回数と平均fpsをコンソールに表示するかどうかのフラグ 推奨: false
-
   private final GameMap gameMap;
   private final Camera camera;
   private final CategoryNode root;
@@ -45,27 +41,8 @@ class GameMapPanel extends JPanel {
     this.paintGameObject = new PaintGameObject();
     this.setLayout(null);
     setBackground(Color.BLACK);
-    if (ENABLE_UI) {
-      this.paintUI = new PaintUI(imageManager, this, root);
-      paintUI.paint(this.getGraphics());
-    } else { // 以下デバッグ用
-      this.paintUI = null;
-    }
-    
-    if (INFINITE_RELOAD) {
-      Thread reloadThread = new Thread(() -> {
-        while (true) {
-          try {
-            Thread.sleep(1); // 1msごとにリロード
-          } catch (InterruptedException e) {
-            e.printStackTrace();
-          }
-          repaint();
-        }
-      });
-      reloadThread.setDaemon(true);
-      reloadThread.start();
-    }
+    this.paintUI = new PaintUI(imageManager, this, root);
+    paintUI.paint(this.getGraphics());
   }
 
   /**
@@ -76,30 +53,15 @@ class GameMapPanel extends JPanel {
    *           という警告が出力されます。
    * @see GameMap
    */
-  int repaintCount = 0;
-  int last1SecRepaintCount = 0;
-  double lastFps = 0;
-  long lastSecondTime = System.currentTimeMillis();
-
   @Override
   public void paintComponent(Graphics g) {
-    if (SHOW_REPAINT_COUNT_AND_FPS) {
-      repaintCount++;
-      last1SecRepaintCount++;
-      long currentTime = System.currentTimeMillis();
-      if (currentTime - lastSecondTime >= 1000) {
-        lastFps = last1SecRepaintCount;
-        lastSecondTime = currentTime;
-        last1SecRepaintCount = 0;
-        System.out.printf("Repaint Count: %d, Approx FPS: %.2f\n", repaintCount, lastFps);
-      }
-    }
+
     super.paintComponent(g);
     // マップの奥(上)から手前(下)に向かって描画する
     for (int z = 0; z < gameMap.getWidth() + gameMap.getHeight(); z++) {
       for (int x = 0; x <= z; x++) {
         int y = z - x;
-        if (x >= 0 && x < gameMap.getWidth() && y >= 0 && y < gameMap.getHeight() && isInsideCameraView(x, y)) {
+        if (x < gameMap.getWidth() && y < gameMap.getHeight() && isInsideCameraView(x, y)) {
           Point2D.Double pos = new Point2D.Double(x, y);
           paintGameObject.paintTerrain(g, pos, gameMap, camera, imageManager, this);
           paintGameObject.paintBuilding(g, pos, gameMap, camera, imageManager, this);

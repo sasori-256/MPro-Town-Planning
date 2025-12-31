@@ -25,13 +25,13 @@ public class Camera {
    * @param defaultScale
    * @param eventBus
    */
-  public Camera(double defaultScale, EventBus eventBus) {
+  public Camera(double defaultScale, int screenWidth, int screenHeight, EventBus eventBus) {
     this.scale = defaultScale;
     this.cellHeight = (int) (32 * defaultScale);
     this.cellWidth = (int) (32 * 2 * defaultScale);
     this.offsetX = 0;
     this.offsetY = 0;
-    this.updateOrigin(cellWidth, cellHeight, cellWidth, cellHeight);
+    this.updateOrigin(100, 100, screenWidth, screenHeight);
     this.eventBus = eventBus;
   }
 
@@ -75,7 +75,7 @@ public class Camera {
     double centerIsoY = (mapHeight - 1) / 2.0;
     double centerScreenX = (centerIsoX - centerIsoY) * (this.cellWidth / 2.0);
     double centerScreenY = (centerIsoX + centerIsoY) * (this.cellHeight / 2.0);
-    this.screenOrigin = new Point2D.Double(screenWidth - centerScreenX, screenHeight - centerScreenY);
+    this.screenOrigin = new Point2D.Double(screenWidth/ 2 - centerScreenX, screenHeight/ 2 - centerScreenY);
   }
 
   /**

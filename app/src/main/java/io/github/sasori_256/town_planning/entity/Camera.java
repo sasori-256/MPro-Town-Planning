@@ -75,7 +75,7 @@ public class Camera {
     double centerIsoY = (mapHeight - 1) / 2.0;
     double centerScreenX = (centerIsoX - centerIsoY) * (this.cellWidth / 2.0);
     double centerScreenY = (centerIsoX + centerIsoY) * (this.cellHeight / 2.0);
-    this.screenOrigin = new Point2D.Double(screenWidth/ 2 - centerScreenX, screenHeight/ 2 - centerScreenY);
+    this.screenOrigin = new Point2D.Double(screenWidth / 2 - centerScreenX, screenHeight / 2 - centerScreenY);
   }
 
   /**

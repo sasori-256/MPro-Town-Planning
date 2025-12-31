@@ -44,7 +44,6 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
     @Override
     public void mouseClicked(MouseEvent e) {
         if(SwingUtilities.isLeftMouseButton(e)){
-            System.out.println("Mouse clicked at: (" + e.getX() + ", " + e.getY() + ")");
             Point2D.Double isoPoint = camera.screenToIso(new Point2D.Double(e.getX(), e.getY()));
             actionOnClick.accept(isoPoint, selectedEntityGenerator);
         }

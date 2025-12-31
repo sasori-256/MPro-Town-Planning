@@ -16,7 +16,7 @@ public class Camera {
   private int cellWidth;
   private int offsetX;
   private int offsetY;
-  private Point2D.Double screenOrigin; // 画面の原点 中央上
+  private Point2D.Double screenOrigin; // Iso座標系の原点をScreen座標系で表したときの位置
   private final EventBus eventBus;
 
   /**
@@ -70,6 +70,13 @@ public class Camera {
     this.offsetY = offsetY;
   }
 
+  /**
+   * Iso座標系の原点をscreen座標系で表したときの位置を更新する
+   * @param mapWidth
+   * @param mapHeight
+   * @param screenWidth
+   * @param screenHeight
+   */
   public void updateOrigin(int mapWidth, int mapHeight, int screenWidth, int screenHeight) {
     double centerIsoX = (mapWidth - 1) / 2.0;
     double centerIsoY = (mapHeight - 1) / 2.0;

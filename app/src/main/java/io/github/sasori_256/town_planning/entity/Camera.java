@@ -72,6 +72,7 @@ public class Camera {
 
   /**
    * Iso座標系の原点をscreen座標系で表したときの位置を更新する
+   * 
    * @param mapWidth
    * @param mapHeight
    * @param screenWidth
@@ -93,10 +94,11 @@ public class Camera {
    */
   public Point2D.Double screenToIso(Point2D.Double screenPos) {
     double adjX = screenPos.x - this.screenOrigin.x - this.offsetX;
-    double adjY = screenPos.y - this.screenOrigin.y - this.offsetY; 
-    double isoX = adjX / this.cellWidth + adjY / this.cellHeight; 
+    double adjY = screenPos.y - this.screenOrigin.y - this.offsetY;
+    double isoX = adjX / this.cellWidth + adjY / this.cellHeight;
     double isoY = adjY / this.cellHeight - adjX / this.cellWidth;
-    return new Point2D.Double(isoX, isoY);
+    return new Point2D.Double(isoX - 1, isoY);
+    // javaでは画像の左上が原点になるが、直感的な中心はそこから画像サイズの半分だけ左下に移動した点であるため、その分を補正する
   }
 
   /**
@@ -132,5 +134,15 @@ public class Camera {
 
   public void moveRight() {
     pan(-10, 0);
+  }
+
+  public void zoomIn() {
+    setScale(this.scale * 1.1);
+    eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
+  }
+
+  public void zoomOut() {
+    setScale(this.scale / 1.1);
+    eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
   }
 }

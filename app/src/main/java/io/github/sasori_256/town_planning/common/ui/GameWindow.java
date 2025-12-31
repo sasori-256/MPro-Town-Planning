@@ -7,6 +7,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
 
 import javax.swing.JFrame;
@@ -106,11 +107,14 @@ class GameMapPanel extends JPanel {
   }
 
   boolean isInsideCameraView(int x, int y) {
-    Point2D.Double screenPos = camera.isoToScreen(new Point2D.Double(x, y));
+    Point2D.Double screenPos = camera.isoToScreen(new Point2D.Double(x + 1, y));
     int panelWidth = this.getWidth();
     int panelHeight = this.getHeight();
+    double cameraScale = camera.getScale();
+    int margin = (int) (100 / (cameraScale * 1.5)) + 50;
     // 画面外にある場合は描画しない
-    if (screenPos.x < -100 || screenPos.x > panelWidth + 100 || screenPos.y < -100 || screenPos.y > panelHeight + 100) {
+    if (screenPos.x < -margin || screenPos.x > panelWidth + margin || screenPos.y < -margin
+        || screenPos.y > panelHeight + margin) {
       return false;
     }
     return true;
@@ -129,11 +133,12 @@ class GameMapPanel extends JPanel {
  * @see GameMapPanel
  */
 public class GameWindow extends JFrame {
-  public <T extends MouseListener & MouseMotionListener & KeyListener> GameWindow(T listener, GameMap gameMap,
-      Camera camera, int width, int height, EventBus eventBus) {
+  public <T extends MouseListener & MouseMotionListener & MouseWheelListener & KeyListener> GameWindow(T listener,
+      GameMap gameMap, Camera camera, int width, int height, EventBus eventBus) {
     addMouseListener(listener);
     addKeyListener(listener);
     addMouseMotionListener(listener);
+    addMouseWheelListener(listener);
     setTitle("Town Planning Game");
     setSize(width, height);
     // GameMap gameMap = generateTestMap();

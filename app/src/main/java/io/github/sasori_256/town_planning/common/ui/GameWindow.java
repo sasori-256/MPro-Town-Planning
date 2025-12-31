@@ -146,6 +146,10 @@ public class GameWindow extends JFrame {
     CategoryNode root = NodeMenuInitializer.setup(gameMapController, gameMap);
 
     GameMapPanel gameMapPanel = new GameMapPanel(gameMap, camera, root);
+    gameMapPanel.addMouseListener(listener);
+    gameMapPanel.addMouseMotionListener(listener);
+    gameMapPanel.addKeyListener(listener);
+    gameMapPanel.setFocusable(true);
     eventBus.subscribe(MapUpdatedEvent.class, event -> {
       gameMapPanel.repaint();
     });

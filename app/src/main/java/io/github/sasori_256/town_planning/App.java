@@ -20,7 +20,7 @@ public class App {
     EventBus eventBus = new EventBus();
     GameModel gameModel = new GameModel(eventBus);
     GameMap gameMap = gameModel.getGameMap();
-    Camera camera = new Camera(1, new Point2D.Double(WIDTH / 2, HEIGHT / 2), eventBus);
+    Camera camera = new Camera(1, eventBus);
     GameMapController gameMapController = new GameMapController(camera);
     gameMapController.setActionOnClick(new PlaceBuildingHandler(gameMap, gameMapController)); //いったん動かすために記載。Entity選択メニューが実装されたら消す。
     gameMapController.setSelectedEntityGenerator((point) -> new Building(point, BuildingType.HOUSE)); //いったん動かすために記載。Entity選択メニューが実装されたら消す。

@@ -16,22 +16,22 @@ public class Camera {
   private int cellWidth;
   private int offsetX;
   private int offsetY;
-  private Point2D.Double center;
+  private Point2D.Double screenOrigin; // 画面の原点 中央上
   private final EventBus eventBus;
 
   /**
    * defaultScaleが1のとき、セルの幅が64ピクセル、高さが32ピクセルになる。
    * 
    * @param defaultScale
-   * @param center
+   * @param eventBus
    */
-  public Camera(double defaultScale, Point2D.Double center, EventBus eventBus) {
+  public Camera(double defaultScale, EventBus eventBus) {
     this.scale = defaultScale;
     this.cellHeight = (int) (32 * defaultScale);
     this.cellWidth = (int) (32 * 2 * defaultScale);
     this.offsetX = 0;
     this.offsetY = 0;
-    this.center = center;
+    this.updateOrigin(cellWidth, cellHeight, cellWidth, cellHeight);
     this.eventBus = eventBus;
   }
 
@@ -55,8 +55,8 @@ public class Camera {
     return offsetY;
   }
 
-  public Point2D.Double getCenter() {
-    return center;
+  public Point2D.Double getScreenOrigin() {
+    return screenOrigin;
   }
 
   public void setScale(double scale) {
@@ -70,12 +70,12 @@ public class Camera {
     this.offsetY = offsetY;
   }
 
-  public void updateCenter(int mapWidth, int mapHeight, int screenWidth, int screenHeight) {
+  public void updateOrigin(int mapWidth, int mapHeight, int screenWidth, int screenHeight) {
     double centerIsoX = (mapWidth - 1) / 2.0;
     double centerIsoY = (mapHeight - 1) / 2.0;
     double centerScreenX = (centerIsoX - centerIsoY) * (this.cellWidth / 2.0);
     double centerScreenY = (centerIsoX + centerIsoY) * (this.cellHeight / 2.0);
-    this.center = new Point2D.Double(screenWidth - centerScreenX, screenHeight - centerScreenY);
+    this.screenOrigin = new Point2D.Double(screenWidth - centerScreenX, screenHeight - centerScreenY);
   }
 
   /**
@@ -85,8 +85,8 @@ public class Camera {
    * @return アイソメトリック座標
    */
   public Point2D.Double screenToIso(Point2D.Double screenPos) {
-    double adjX = screenPos.x - this.center.x - this.offsetX;
-    double adjY = screenPos.y - this.center.y - this.offsetY; 
+    double adjX = screenPos.x - this.screenOrigin.x - this.offsetX;
+    double adjY = screenPos.y - this.screenOrigin.y - this.offsetY; 
     double isoX = adjX / this.cellWidth + adjY / this.cellHeight; 
     double isoY = adjY / this.cellHeight - adjX / this.cellWidth;
     return new Point2D.Double(isoX, isoY);
@@ -99,8 +99,8 @@ public class Camera {
    * @return スクリーン座標
    */
   public Point2D.Double isoToScreen(Point2D.Double isoPos) {
-    double screenX = (isoPos.x - isoPos.y) * (this.cellWidth / 2.0) + this.center.x + this.offsetX;
-    double screenY = (isoPos.x + isoPos.y) * (this.cellHeight / 2.0) + this.center.y + this.offsetY;
+    double screenX = (isoPos.x - isoPos.y) * (this.cellWidth / 2.0) + this.screenOrigin.x + this.offsetX;
+    double screenY = (isoPos.x + isoPos.y) * (this.cellHeight / 2.0) + this.screenOrigin.y + this.offsetY;
     return new Point2D.Double(screenX, screenY);
   }
 

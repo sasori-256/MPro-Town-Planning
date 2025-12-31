@@ -20,13 +20,14 @@ public class PlaceBuildingHandler implements BiConsumer<Point2D.Double, Function
 
   @Override
   public void accept(Point2D.Double isoPoint, Function<Point2D.Double, ? extends BaseGameEntity> entityGenerator) {
+    System.out.println("Placing building at: " + isoPoint);
     if(mapContext.isValidPosition(isoPoint)){
       Point2D.Double flooredPoint = new Point2D.Double(Math.floor(isoPoint.x), Math.floor(isoPoint.y));
       BaseGameEntity entity = entityGenerator.apply(flooredPoint);
       if (entity instanceof Building building) { mapContext.placeBuilding(flooredPoint, building); }  
       else{ System.err.println("Error: Trying to place a building that is not a Building."); }
     }
-    gameMapController.setSelectedEntityGenerator((point) -> null); //TODO:Buildingの連続配置をしたい場合、これじゃだめ
-    gameMapController.setActionOnClick(new ClickGameMapHandler());
+    // gameMapController.setSelectedEntityGenerator((point) -> null); //TODO:Buildingの連続配置をしたい場合、これじゃだめ
+    // gameMapController.setActionOnClick(new ClickGameMapHandler());
   }
 }

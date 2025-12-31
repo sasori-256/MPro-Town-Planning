@@ -143,13 +143,16 @@ class GameMapPanel extends JPanel {
     MapCell cell = gameMap.getCell(new Point2D.Double(x, y));
     Point2D.Double screenPos = camera.isoToScreen(pos);
     Point2D.Double imageScale = calculateImageScale(camera.getScale());
+
+    int drawX = (int) (screenPos.x - imageScale.x / 2);
+    int drawY = (int) (screenPos.y - imageScale.y / 2);
     // 地形の描画
     String terrainName = cell.getTerrain().getDisplayName();
     ImageStorage terrainImage = getImageByName(terrainName);
     if("error_terrain".equals(terrainImage.name)){
       System.err.println("Warning: Image not found: " + terrainName + ".png at (" + x + ", " + y + ")");
     }
-    g.drawImage(terrainImage.image, (int)screenPos.x, (int)screenPos.y, (int)(imageScale.x), (int)(imageScale.y), this);
+    g.drawImage(terrainImage.image, drawX, drawY, (int)(imageScale.x), (int)(imageScale.y), this);
     // 建物の描画
     String buildingName = cell.getBuilding().getType().getImageName();
     if(buildingName.equals("none")){ // 建物がない場合はスキップ
@@ -158,10 +161,12 @@ class GameMapPanel extends JPanel {
     ImageStorage buildingImage = getImageByName(buildingName);
     Point2D.Double imageSize = buildingImage.size;
     Point2D.Double shiftedScreenPos = calculateShiftImage(screenPos, imageSize, camera.getScale());
+    int buildDrawX = (int) (shiftedScreenPos.x - imageScale.x / 2);
+    int buildDrawY = (int) (shiftedScreenPos.y - imageScale.y / 2);
     if("error_building".equals(buildingImage.name)){
       System.err.println("Warning: Image not found: " + buildingName + ".png at (" + x + ", " + y + ")");
     }
-    g.drawImage(buildingImage.image, (int)shiftedScreenPos.x, (int)shiftedScreenPos.y, (int)(imageScale.x), (int)(imageScale.y), this);
+    g.drawImage(buildingImage.image, buildDrawX, buildDrawY, (int)(imageScale.x), (int)(imageScale.y), this);
   }
 
   /**
@@ -226,9 +231,9 @@ class GameMapPanel extends JPanel {
  */
 public class GameWindow extends JFrame {
   public <T extends MouseListener & MouseMotionListener & KeyListener> GameWindow(T listener, GameMap gameMap, Camera camera, int width, int height, EventBus eventBus) {
-    addMouseListener(listener);
-    addKeyListener(listener);
-    addMouseMotionListener(listener);
+    // addMouseListener(listener);
+    // addKeyListener(listener);
+    // addMouseMotionListener(listener);
     setTitle("Town Planning Game");
     setSize(width, height);
     //GameMap gameMap = generateTestMap();
@@ -236,6 +241,10 @@ public class GameWindow extends JFrame {
     CategoryNode root = NodeMenuInitializer.setup(gameMapController, gameMap);
 
     GameMapPanel gameMapPanel = new GameMapPanel(gameMap, camera, root);
+    gameMapPanel.addMouseListener(listener);
+    gameMapPanel.addMouseMotionListener(listener);
+    gameMapPanel.addKeyListener(listener);
+    gameMapPanel.setFocusable(true);
     eventBus.subscribe(MapUpdatedEvent.class, event -> {
       gameMapPanel.repaint();
     });

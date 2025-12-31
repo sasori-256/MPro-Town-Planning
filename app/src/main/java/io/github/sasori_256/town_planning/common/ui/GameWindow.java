@@ -231,9 +231,6 @@ class GameMapPanel extends JPanel {
  */
 public class GameWindow extends JFrame {
   public <T extends MouseListener & MouseMotionListener & KeyListener> GameWindow(T listener, GameMap gameMap, Camera camera, int width, int height, EventBus eventBus) {
-    // addMouseListener(listener);
-    // addKeyListener(listener);
-    // addMouseMotionListener(listener);
     setTitle("Town Planning Game");
     setSize(width, height);
     //GameMap gameMap = generateTestMap();

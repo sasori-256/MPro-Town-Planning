@@ -226,7 +226,7 @@ class GameMapPanel extends JPanel {
  * @see GameMapPanel
  */
 public class GameWindow extends JFrame {
-  public <T extends MouseListener & MouseMotionListener & MouseWheelListener& KeyListener> GameWindow(T listener, GameMap gameMap, Camera camera, int width, int height, EventBus eventBus) {
+  public <T extends MouseListener & MouseMotionListener & MouseWheelListener & KeyListener> GameWindow(T listener, GameMap gameMap, Camera camera, int width, int height, EventBus eventBus) {
     addMouseListener(listener);
     addKeyListener(listener);
     addMouseMotionListener(listener);

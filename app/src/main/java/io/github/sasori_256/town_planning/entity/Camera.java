@@ -135,12 +135,20 @@ public class Camera {
   }
 
   public void zoomIn() {
-    setScale(this.scale * 1.1);
-    eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
+    if(this.scale * 1.1 < 3.0){
+      setScale(this.scale * 1.1);
+      System.out.println("Zoomed In: New Scale = " + this.scale);
+      eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
+    }
+    
   }
 
   public void zoomOut() {
-    setScale(this.scale / 1.1);
-    eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
+    if(this.scale / 1.1 > 0.75){
+      setScale(this.scale / 1.1);
+      System.out.println("Zoomed Out: New Scale = " + this.scale);
+      eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
+    }
+
   }
 }

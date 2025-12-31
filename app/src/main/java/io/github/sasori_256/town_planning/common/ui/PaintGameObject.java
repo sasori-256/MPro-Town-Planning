@@ -23,7 +23,7 @@ public class PaintGameObject {
    * @return シフト量
    */
   public static Point2D.Double calculateShiftImage(Point2D.Double imgSize, double cameraScale) {
-    double shiftX = imgSize.x / 2 * cameraScale * 0;
+    double shiftX = 0;
     double shiftY = -(imgSize.y / imgSize.x * 2 - 1) * cameraScale / 2 + imgSize.y / 2 * cameraScale;
     return new Point2D.Double(shiftX, shiftY);
   }

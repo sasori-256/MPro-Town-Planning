@@ -25,6 +25,7 @@ import io.github.sasori_256.town_planning.map.model.GameMap;
  * gameMapの内容を描画するクラス
  */
 class GameMapPanel extends JPanel {
+
   public static final boolean ENABLE_UI = true; // UI描画を有効にするかどうかのフラグ 推奨: true
   public static final boolean INFINITE_RELOAD = false; // 無限リロードモードを有効にするかどうかのフラグ 推奨: false
   public static final boolean SHOW_REPAINT_COUNT_AND_FPS = true; // 再描画回数と平均fpsをコンソールに表示するかどうかのフラグ 推奨: false
@@ -43,13 +44,14 @@ class GameMapPanel extends JPanel {
     this.imageManager = new ImageManager();
     this.paintGameObject = new PaintGameObject();
     this.setLayout(null);
+    setBackground(Color.BLACK);
     if (ENABLE_UI) {
       this.paintUI = new PaintUI(imageManager, this, root);
       paintUI.paint(this.getGraphics());
     } else { // 以下デバッグ用
       this.paintUI = null;
     }
-    setBackground(Color.BLACK);
+    
     if (INFINITE_RELOAD) {
       Thread reloadThread = new Thread(() -> {
         while (true) {

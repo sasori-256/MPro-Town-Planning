@@ -23,6 +23,10 @@ public class PaintGameObject {
    * @return シフト量
    */
   public static Point2D.Double calculateShiftImage(Point2D.Double imgSize, double cameraScale) {
+    if (imgSize == null || imgSize.x == 0 || imgSize.y == 0) { // 0除算防止
+      System.err.println("Warning: Invalid image size for shift calculation.");
+      return new Point2D.Double(0, 0);
+    }
     double shiftX = -imgSize.x / 2 * cameraScale;
     double shiftY = -imgSize.y / 2 * cameraScale - (imgSize.y / imgSize.x - 0.5) * cameraScale * imgSize.x / 2;
     // imageSize / 2 * cameraScale は画像の中心を基準にするためのシフト量

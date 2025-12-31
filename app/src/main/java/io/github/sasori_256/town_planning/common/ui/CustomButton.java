@@ -176,4 +176,11 @@ class CustomButton extends JButton {
     animationThread.start();
   }
 
+  @Override
+  public void removeNotify() { // コンポーネントが破棄されるときにアニメーションを停止
+    if (animationThread != null && animationThread.isAlive()) {
+      animationThread.interrupt();
+    }
+    super.removeNotify();
+  }
 }

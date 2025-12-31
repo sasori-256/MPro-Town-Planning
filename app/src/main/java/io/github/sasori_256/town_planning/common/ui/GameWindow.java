@@ -7,6 +7,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
 
 import javax.swing.JFrame;
@@ -84,11 +85,11 @@ class GameMapPanel extends JPanel {
  * @see GameMapPanel
  */
 public class GameWindow extends JFrame {
-  public <T extends MouseListener & MouseMotionListener & KeyListener> GameWindow(T listener, GameMap gameMap,
-      Camera camera, int width, int height, EventBus eventBus) {
+  public <T extends MouseListener & M
     addMouseListener(listener);
     addKeyListener(listener);
     addMouseMotionListener(listener);
+    addMouseWheelListener(listener);
     setTitle("Town Planning Game");
     setSize(width, height);
     // GameMap gameMap = generateTestMap();

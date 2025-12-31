@@ -133,4 +133,22 @@ public class Camera {
   public void moveRight() {
     pan(-10, 0);
   }
+
+  public void zoomIn() {
+    if(this.scale * 1.1 < 3.0){
+      setScale(this.scale * 1.1);
+      System.out.println("Zoomed In: New Scale = " + this.scale);
+      eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
+    }
+    
+  }
+
+  public void zoomOut() {
+    if(this.scale / 1.1 > 0.75){
+      setScale(this.scale / 1.1);
+      System.out.println("Zoomed Out: New Scale = " + this.scale);
+      eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
+    }
+
+  }
 }

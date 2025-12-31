@@ -6,6 +6,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -16,7 +18,7 @@ import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.map.controller.handler.*;
 
-public class GameMapController implements MouseListener, MouseMotionListener, KeyListener{
+public class GameMapController implements MouseListener, MouseMotionListener, KeyListener, MouseWheelListener{
     private Camera camera;
     private BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> actionOnClick;
     private Function<Point2D.Double, ? extends BaseGameEntity> selectedEntityGenerator;
@@ -71,6 +73,16 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
 
             camera.pan(dx, dy);
             previousMiddleMousePos = new Point(e.getX(), e.getY());
+        }
+    }
+
+    @Override
+    public void mouseWheelMoved(MouseWheelEvent e) {
+        int notches = e.getWheelRotation();
+        if (notches < 0) {
+            camera.zoomIn();
+        } else {
+            camera.zoomOut();
         }
     }
 

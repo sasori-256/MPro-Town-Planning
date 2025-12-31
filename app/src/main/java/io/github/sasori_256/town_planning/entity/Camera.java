@@ -122,4 +122,14 @@ public class Camera {
   public void moveRight() {
     pan(-10, 0);
   }
+
+  public void zoomIn() {
+    setScale(this.scale * 1.1);
+    eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
+  }
+
+  public void zoomOut() {
+    setScale(this.scale / 1.1);
+    eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
+  }
 }

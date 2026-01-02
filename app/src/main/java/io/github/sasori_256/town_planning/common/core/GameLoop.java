@@ -77,9 +77,11 @@ public class GameLoop implements Runnable {
       synchronized (this) {
         toJoin = thread;
       }
-      // EDTから呼び出された場合は待機しない（デッドロックを防ぐため）
-      // ゲームループスレッドはデーモンスレッドなので、アプリ終了時に自動で終了する
-      if (toJoin != null && toJoin != Thread.currentThread() && !SwingUtilities.isEventDispatchThread()) {
+      boolean isCalledFromEDT = SwingUtilities.isEventDispatchThread();
+      boolean shouldWaitForCompletion = toJoin != null 
+          && toJoin != Thread.currentThread() 
+          && !isCalledFromEDT;
+      if (shouldWaitForCompletion) {
         toJoin.join(); // ゲームループスレッドの終了を待機
       }
     } catch (InterruptedException e) {

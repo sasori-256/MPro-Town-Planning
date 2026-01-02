@@ -52,6 +52,13 @@ public class GameModel implements GameContext, Updatable {
 
   private double lastDeltaTime = 0;
 
+  // Thread-local flag to track if we're currently in an update cycle
+  private final ThreadLocal<Boolean> inUpdateCycle = ThreadLocal.withInitial(() -> false);
+  
+  // Lists to defer entity lifecycle operations during update to prevent nested locking
+  private final List<BaseGameEntity> entitiesToSpawn = new CopyOnWriteArrayList<>();
+  private final List<BaseGameEntity> entitiesToRemove = new CopyOnWriteArrayList<>();
+
   public GameModel(EventBus eventBus) {
     this.eventBus = eventBus;
 
@@ -110,6 +117,12 @@ public class GameModel implements GameContext, Updatable {
 
   @Override
   public <T extends BaseGameEntity> void spawnEntity(T entity) {
+    // If called during an update cycle, defer the operation to avoid nested locking
+    if (inUpdateCycle.get()) {
+      entitiesToSpawn.add(entity);
+      return;
+    }
+    
     if (entity instanceof Resident) {
       addResidentEntity((Resident) entity);
     } else if (entity instanceof Building) {
@@ -138,6 +151,13 @@ public class GameModel implements GameContext, Updatable {
     if (entity == null) {
       return;
     }
+    
+    // If called during an update cycle, defer the operation to avoid nested locking
+    if (inUpdateCycle.get()) {
+      entitiesToRemove.add(entity);
+      return;
+    }
+    
     withWriteLock(() -> {
       // ライフサイクルメソッドの呼び出し
       entity.onRemoved();
@@ -365,27 +385,42 @@ public class GameModel implements GameContext, Updatable {
 
   public void update(GameContext context, double dt) {
     withWriteLock(() -> {
-      this.lastDeltaTime = dt;
+      // Set flag to indicate we're in an update cycle
+      inUpdateCycle.set(true);
+      
+      try {
+        this.lastDeltaTime = dt;
 
-      dayTimer += dt;
-      if (dayTimer >= DAY_LENGTH) {
-        dayTimer = 0;
-        day++;
-        eventBus.publish(new DayPassedEvent(day));
-      }
+        dayTimer += dt;
+        if (dayTimer >= DAY_LENGTH) {
+          dayTimer = 0;
+          day++;
+          eventBus.publish(new DayPassedEvent(day));
+        }
 
-      for (Resident resident : residentEntities) {
-        resident.update(context);
-      }
+        for (Resident resident : residentEntities) {
+          resident.update(context);
+        }
 
-      for (Building building : buildingEntities) {
-        building.update(context);
-      }
+        for (Building building : buildingEntities) {
+          building.update(context);
+        }
+        
+        for (Disaster disaster : disasterEntities) {
+          disaster.update(context);
+        }
 
-      animationAccumulator += dt;
-      while (animationAccumulator >= ANIMATION_STEP) {
-        animationAccumulator -= ANIMATION_STEP;
-        advanceAnimations();
+        animationAccumulator += dt;
+        while (animationAccumulator >= ANIMATION_STEP) {
+          animationAccumulator -= ANIMATION_STEP;
+          advanceAnimations();
+        }
+        
+        // Process deferred entity lifecycle operations
+        processDeferredOperations();
+      } finally {
+        // Clear flag when exiting update cycle
+        inUpdateCycle.set(false);
       }
     });
   }
@@ -402,5 +437,33 @@ public class GameModel implements GameContext, Updatable {
     for (Disaster disaster : disasterEntities) {
       disaster.advanceAnimation();
     }
+  }
+  
+  /**
+   * Process deferred entity lifecycle operations that were queued during the update cycle.
+   * This method should only be called while holding the write lock.
+   */
+  private void processDeferredOperations() {
+    // Process entities to remove first
+    for (BaseGameEntity entity : entitiesToRemove) {
+      // Call lifecycle method
+      entity.onRemoved();
+      
+      // Remove from appropriate list
+      if (entity instanceof Resident) {
+        residentEntities.remove(entity);
+      } else if (entity instanceof Building) {
+        buildingEntities.remove(entity);
+      } else if (entity instanceof Disaster) {
+        disasterEntities.remove(entity);
+      }
+    }
+    entitiesToRemove.clear();
+    
+    // Process entities to spawn
+    for (BaseGameEntity entity : entitiesToSpawn) {
+      spawnEntityInternal(entity);
+    }
+    entitiesToSpawn.clear();
   }
 }

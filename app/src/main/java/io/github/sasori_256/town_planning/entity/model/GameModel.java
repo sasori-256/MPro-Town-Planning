@@ -119,6 +119,8 @@ public class GameModel implements GameContext, Updatable {
       residentEntities.remove(entity);
     } else if (entity instanceof Building) {
       buildingEntities.remove(entity);
+    } else if (entity instanceof Disaster) {
+      disasterEntities.remove(entity);
     }
   }
 

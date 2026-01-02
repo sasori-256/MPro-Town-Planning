@@ -1,13 +1,14 @@
 package io.github.sasori_256.town_planning.common.ui;
 
 import java.awt.Component;
-import java.awt.Image;
 import java.awt.MediaTracker;
-import java.awt.Toolkit;
 import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.imageio.ImageIO;
 
 /**
  * 画像を管理するクラス
@@ -27,15 +28,21 @@ public class ImageManager extends Component {
     });
     MediaTracker tracker = new MediaTracker(this);
     // 一時的に画像名とImageオブジェクトを保持する
-    Map<String, Image> loadedImages = new HashMap<>();
+    Map<String, BufferedImage> loadedImages = new HashMap<>();
     if (files != null) {
       for (int i = 0; i < files.length; i++) {
         File file = files[i];
         String imageName = file.getName().replaceFirst("[.][^.]+$", "").toLowerCase();
         System.out.println("Loading image: " + imageName);
-        Image img = Toolkit.getDefaultToolkit().getImage(file.getPath());
-        tracker.addImage(img, 0);
-        loadedImages.put(imageName, img);
+        try {
+          BufferedImage img = ImageIO.read(file);
+          tracker.addImage(img, 0);
+          loadedImages.put(imageName, img);
+        } catch (Exception e) {
+          System.err.println("Error loading image: " + file.getName());
+          e.printStackTrace();
+          continue;
+        }
       }
       try {
         tracker.waitForAll();
@@ -44,9 +51,9 @@ public class ImageManager extends Component {
         e.printStackTrace();
       }
 
-      for (Map.Entry<String, Image> entry : loadedImages.entrySet()) {
+      for (Map.Entry<String, BufferedImage> entry : loadedImages.entrySet()) {
         String imageName = entry.getKey();
-        Image img = entry.getValue();
+        BufferedImage img = entry.getValue();
         ImageStorage storage = new ImageStorage(imageName, img);
         this.imageStorages.put(imageName, storage);
       }
@@ -85,7 +92,7 @@ public class ImageManager extends Component {
    */
   public static final class ImageStorage {
     final String name;
-    final Image image;
+    final BufferedImage image;
     Point2D.Double size = new Point2D.Double(); // サイズは読み取り直しが必要な場合があるため、finalにしない
 
     public void loadSize() {
@@ -102,7 +109,7 @@ public class ImageManager extends Component {
       }
     }
 
-    public ImageStorage(String name, Image image) {
+    public ImageStorage(String name, BufferedImage image) {
       this.name = name;
       this.image = image;
       this.loadSize();

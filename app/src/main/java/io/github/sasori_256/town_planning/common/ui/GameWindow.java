@@ -42,7 +42,7 @@ class GameMapPanel extends JPanel {
     this.setLayout(null);
     setBackground(Color.BLACK);
     this.paintUI = new PaintUI(imageManager, this, root);
-    paintUI.paint(this.getGraphics());
+    paintUI.paint();
   }
 
   /**
@@ -98,11 +98,10 @@ class GameMapPanel extends JPanel {
  */
 public class GameWindow extends JFrame {
   public <T extends MouseListener & MouseMotionListener & MouseWheelListener & KeyListener> GameWindow(T listener,
-      GameMap gameMap, Camera camera, int width, int height, EventBus eventBus) {
+      GameMap gameMap, Camera camera, int width, int height, EventBus eventBus, GameMapController gameMapController) {
     setTitle("Town Planning Game");
     setSize(width, height);
-    // GameMap gameMap = generateTestMap();
-    GameMapController gameMapController = new GameMapController(camera);
+    // GameMap gameMap = generateTestMap();;
     CategoryNode root = NodeMenuInitializer.setup(gameMapController, gameMap);
 
     GameMapPanel gameMapPanel = new GameMapPanel(gameMap, camera, root);

@@ -16,22 +16,22 @@ public class Camera {
   private int cellWidth;
   private int offsetX;
   private int offsetY;
-  private Point2D.Double center;
+  private Point2D.Double screenOrigin; // Iso座標系の原点をScreen座標系で表したときの位置
   private final EventBus eventBus;
 
   /**
    * defaultScaleが1のとき、セルの幅が64ピクセル、高さが32ピクセルになる。
    * 
    * @param defaultScale
-   * @param center
+   * @param eventBus
    */
-  public Camera(double defaultScale, Point2D.Double center, EventBus eventBus) {
+  public Camera(double defaultScale, int screenWidth, int screenHeight, EventBus eventBus) {
     this.scale = defaultScale;
     this.cellHeight = (int) (32 * defaultScale);
     this.cellWidth = (int) (32 * 2 * defaultScale);
     this.offsetX = 0;
     this.offsetY = 0;
-    this.center = center;
+    this.updateOrigin(100, 100, screenWidth, screenHeight);
     this.eventBus = eventBus;
   }
 
@@ -55,8 +55,8 @@ public class Camera {
     return offsetY;
   }
 
-  public Point2D.Double getCenter() {
-    return center;
+  public Point2D.Double getScreenOrigin() {
+    return screenOrigin;
   }
 
   public void setScale(double scale) {
@@ -70,8 +70,19 @@ public class Camera {
     this.offsetY = offsetY;
   }
 
-  public void setCenter(Point2D.Double center) {
-    this.center = center;
+  /**
+   * Iso座標系の原点をscreen座標系で表したときの位置を更新する
+   * @param mapWidth
+   * @param mapHeight
+   * @param screenWidth
+   * @param screenHeight
+   */
+  public void updateOrigin(int mapWidth, int mapHeight, int screenWidth, int screenHeight) {
+    double centerIsoX = (mapWidth - 1) / 2.0;
+    double centerIsoY = (mapHeight - 1) / 2.0;
+    double centerScreenX = (centerIsoX - centerIsoY) * (this.cellWidth / 2.0);
+    double centerScreenY = (centerIsoX + centerIsoY) * (this.cellHeight / 2.0);
+    this.screenOrigin = new Point2D.Double(screenWidth / 2 - centerScreenX, screenHeight / 2 - centerScreenY);
   }
 
   /**
@@ -81,10 +92,10 @@ public class Camera {
    * @return アイソメトリック座標
    */
   public Point2D.Double screenToIso(Point2D.Double screenPos) {
-    double adjX = screenPos.x - this.center.x - this.offsetX;
-    double adjY = screenPos.y - this.offsetY; // Iso座標の (0,0)はX軸上の中央にあるため、center.yは引かない
-    double isoX = (adjX / this.cellWidth + adjY / this.cellHeight) - 1; // 原点を調整するために-1を引く
-    double isoY = (adjY / this.cellHeight - adjX / this.cellWidth) - 1; // 原点を調整するために-1を引く
+    double adjX = screenPos.x - this.screenOrigin.x - this.offsetX;
+    double adjY = screenPos.y - this.screenOrigin.y - this.offsetY; 
+    double isoX = adjX / this.cellWidth + adjY / this.cellHeight; 
+    double isoY = adjY / this.cellHeight - adjX / this.cellWidth;
     return new Point2D.Double(isoX, isoY);
   }
 
@@ -95,8 +106,8 @@ public class Camera {
    * @return スクリーン座標
    */
   public Point2D.Double isoToScreen(Point2D.Double isoPos) {
-    double screenX = (isoPos.x - isoPos.y - 1) * (this.cellWidth / 2.0) + this.center.x + this.offsetX;
-    double screenY = (isoPos.x + isoPos.y) * (this.cellHeight / 2.0) + this.offsetY;
+    double screenX = (isoPos.x - isoPos.y) * (this.cellWidth / 2.0) + this.screenOrigin.x + this.offsetX;
+    double screenY = (isoPos.x + isoPos.y) * (this.cellHeight / 2.0) + this.screenOrigin.y + this.offsetY;
     return new Point2D.Double(screenX, screenY);
   }
 
@@ -121,5 +132,23 @@ public class Camera {
 
   public void moveRight() {
     pan(-10, 0);
+  }
+
+  public void zoomIn() {
+    if(this.scale * 1.1 < 3.0){
+      setScale(this.scale * 1.1);
+      System.out.println("Zoomed In: New Scale = " + this.scale);
+      eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
+    }
+    
+  }
+
+  public void zoomOut() {
+    if(this.scale / 1.1 > 0.75){
+      setScale(this.scale / 1.1);
+      System.out.println("Zoomed Out: New Scale = " + this.scale);
+      eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
+    }
+
   }
 }

@@ -24,6 +24,7 @@ public class App {
     GameMapController gameMapController = new GameMapController(camera);
     gameMapController.setActionOnClick(new PlaceBuildingHandler(gameMap, gameMapController)); // いったん動かすために記載。Entity選択メニューが実装されたら消す。
     gameMapController.setSelectedEntityGenerator((point) -> new Building(point, BuildingType.HOUSE)); // いったん動かすために記載。Entity選択メニューが実装されたら消す。
-    GameWindow gameWindow = new GameWindow(gameMapController, gameMap, camera, WIDTH, HEIGHT, eventBus);
+    GameWindow gameWindow = new GameWindow(gameMapController, gameMap, camera, WIDTH, HEIGHT, eventBus,
+        gameMapController);
   }
 }

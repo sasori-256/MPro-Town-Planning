@@ -23,8 +23,15 @@ public class PaintGameObject {
    * @return シフト量
    */
   public static Point2D.Double calculateShiftImage(Point2D.Double imgSize, double cameraScale) {
-    double shiftX = 0;
-    double shiftY = (imgSize.y - imgSize.x / 2) / 2 * cameraScale;
+    if (imgSize == null || imgSize.x == 0 || imgSize.y == 0) { // 0除算防止
+      System.err.println("Warning: Invalid image size for shift calculation.");
+      return new Point2D.Double(0, 0);
+    }
+    double shiftX = -imgSize.x / 2 * cameraScale;
+    double shiftY = -imgSize.y / 2 * cameraScale - (imgSize.y / imgSize.x - 0.5) * cameraScale * imgSize.x / 2;
+    // imageSize / 2 * cameraScale は画像の中心を基準にするためのシフト量
+    // (imageSize.y / imageSize.x - 0.5) * cameraScale * imageSize.x / 2
+    // は垂直方向の高さを考慮したシフト量 これにより、画像の(視覚的な)底面の重心が基準点に一致するようになる
     return new Point2D.Double(shiftX, shiftY);
   }
 
@@ -80,12 +87,14 @@ public class PaintGameObject {
     // 建物または地形の描画
     ImageStorage imageStorage = imageManager.getImageStorage(name);
     if (imageStorage != null) {
+      pos.x = Math.round(pos.x);
+      pos.y = Math.round(pos.y);
       Point2D.Double screenPos = camera.isoToScreen(pos);
       double cameraScale = camera.getScale();
       Point2D.Double posShift = calculateShiftImage(imageStorage.size, cameraScale);
       Point2D.Double imageScale = imageStorage.size;
-      int xPos = (int) (screenPos.x + posShift.x);
-      int yPos = (int) (screenPos.y + posShift.y * -2);
+      int xPos = (int) Math.round(screenPos.x + posShift.x);
+      int yPos = (int) Math.round(screenPos.y + posShift.y);
       int width = (int) (imageScale.x * cameraScale);
       int height = (int) (imageScale.y * cameraScale);
       g.drawImage(imageStorage.image, xPos, yPos, width, height, panel);

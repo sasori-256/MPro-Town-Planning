@@ -1,6 +1,5 @@
 package io.github.sasori_256.town_planning.common.ui;
 
-import java.awt.Graphics;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +31,7 @@ public class PaintUI {
     // this.gameMapController = gameMapController;
   }
 
-  private String selectedModeName = "creative"; // UIのモード(view, creative, disaster)
+  private String selectedModeName = "view"; // UIのモード(view, creative, disaster)
   private String selectedCategoryName = "";
   private String selectedObjectName = "";
   private MenuNode selectedCategoryNode = null;
@@ -43,7 +42,7 @@ public class PaintUI {
   // レベル2: オブジェクト選択ボタン
 
   private void createButtonIfNotExists(String buttonText, int xPos, int yPos, int width, int height,
-      ActionListener actionListener, int level) {
+      ActionListener actionListener, MenuNode objectNode, int level) {
     boolean exists = false;
     for (JButton button : createdButtons.get(level)) {
       if (button.getText().equals(buttonText)) {
@@ -75,6 +74,7 @@ public class PaintUI {
       button.setCustomBounds(xPos, yPos, width, height);
       // ボタンの画像を指定
       button.addActionListener(actionListener);
+      button.addActionListener(objectNode);
       createdButtons.get(level).add(button);
       panel.add(button);
     }
@@ -87,7 +87,7 @@ public class PaintUI {
     clearButtonLevel(0);
     clearButtonLevel(1);
     clearButtonLevel(2);
-    paint(panel.getGraphics());
+    paint();
   }
 
   /**
@@ -114,7 +114,7 @@ public class PaintUI {
     this.selectedObjectName = "";
     clearButtonLevel(1);
     clearButtonLevel(2);
-    paint(panel.getGraphics());
+    paint();
   }
 
   /**
@@ -138,7 +138,7 @@ public class PaintUI {
     this.selectedCategoryNode = categoryNode;
     this.selectedObjectName = "";
     clearButtonLevel(2);
-    paint(panel.getGraphics());
+    paint();
   }
 
   /**
@@ -162,13 +162,6 @@ public class PaintUI {
       return;
     }
     objectNode.actionPerformed(null);
-    // BuildingNode buildingNode = (BuildingNode) objectNode;
-    // BuildingType newBuildingType = buildingNode.getType();
-    // gameMapController.setSelectedEntityGenerator((point) -> new Building(point,
-    // newBuildingType));
-    // System.out
-    // .println("Set selected entity generator for building type: " +
-    // newBuildingType.getDisplayName());
     this.selectedObjectName = objectName;
   }
 
@@ -186,7 +179,7 @@ public class PaintUI {
    * 
    * @param g
    */
-  public void paint(Graphics g) {
+  public void paint() {
     // モード選択ボタンの描画
     String[] modeButtons = {
         "creative",
@@ -210,8 +203,7 @@ public class PaintUI {
         ActionListener listener = e -> {
           setSelectedMode(buttonText);
         };
-        createButtonIfNotExists(buttonText, xPos, yPos, width, height, listener, 0);
-
+        createButtonIfNotExists(buttonText, xPos, yPos, width, height, listener, null, 0);
       }
     }
 
@@ -246,7 +238,7 @@ public class PaintUI {
         ActionListener listener = e -> {
           setSelectedCategory(buttonText, categoryNode);
         };
-        createButtonIfNotExists(buttonText, xPos, yPos, width, height, listener, 1);
+        createButtonIfNotExists(buttonText, xPos, yPos, width, height, listener, categoryNode, 1);
       }
     } else {
       if (categoryRoot == null) {
@@ -275,7 +267,7 @@ public class PaintUI {
           ActionListener listener = e -> {
             setSelectedObject(buttonText, objectNode);
           };
-          createButtonIfNotExists(buttonText, xPos, yPos, width, height, listener, 2);
+          createButtonIfNotExists(buttonText, xPos, yPos, width, height, listener, objectNode, 2);
         }
       } else {
         if (selectedCategoryNode == null) {

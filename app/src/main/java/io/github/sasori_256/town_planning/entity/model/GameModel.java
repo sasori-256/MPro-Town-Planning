@@ -45,6 +45,7 @@ public class GameModel implements GameContext, Updatable {
   private int day = 1;
   private double dayTimer = 0;
   private static final double DAY_LENGTH = 10.0; // 10秒で1日
+  // UPDATE_STEP is 1/30s and ANIMATION_STEP is 1/6s, so animations advance every 5 update steps.
   private static final double UPDATE_STEP = 1.0 / 30.0;
   private static final double ANIMATION_STEP = 1.0 / 6.0;
   private double animationAccumulator = 0.0;

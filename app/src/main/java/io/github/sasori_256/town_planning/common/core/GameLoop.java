@@ -57,6 +57,19 @@ public class GameLoop implements Runnable {
     }
   }
 
+  /**
+   * ゲームループを停止する。
+   * 
+   * <p>このメソッドは、EDT（Event Dispatch Thread）から呼び出された場合でも安全に動作します。
+   * EDTから呼び出された場合、ゲームループスレッドの終了を待機せず、すぐに戻ります。
+   * これは、ゲームループがSwingUtilities.invokeLater()を使用してEDTにレンダリングタスクを
+   * ディスパッチしている可能性があるため、EDTでの待機はデッドロックを引き起こす可能性があるためです。
+   * 
+   * <p>ゲームループスレッドはデーモンスレッドとして実行されるため、アプリケーションの終了時に
+   * 自動的に終了します。
+   * 
+   * <p>EDT以外のスレッドから呼び出された場合は、ゲームループスレッドの終了を待機します。
+   */
   public void stop() {
     running.set(false);
     try {
@@ -64,7 +77,9 @@ public class GameLoop implements Runnable {
       synchronized (this) {
         toJoin = thread;
       }
-      if (toJoin != null && toJoin != Thread.currentThread()) {
+      // EDTから呼び出された場合は待機しない（デッドロックを防ぐため）
+      // ゲームループスレッドはデーモンスレッドなので、アプリ終了時に自動で終了する
+      if (toJoin != null && toJoin != Thread.currentThread() && !SwingUtilities.isEventDispatchThread()) {
         toJoin.join(); // ゲームループスレッドの終了を待機
       }
     } catch (InterruptedException e) {

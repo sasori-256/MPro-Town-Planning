@@ -22,7 +22,9 @@ public class App {
     Camera camera = new Camera(1, WIDTH, HEIGHT, eventBus);
     GameMapController gameMapController = new GameMapController(camera, stateLock);
     SwingUtilities.invokeLater(() -> {
-      new GameWindow(gameMapController, gameMap, camera, WIDTH, HEIGHT, eventBus, gameMapController, stateLock);
+      GameWindow gameWindow = new GameWindow(
+          gameMapController, gameMap, camera, WIDTH, HEIGHT, eventBus, gameMapController, stateLock);
+      gameModel.startGameLoop(gameWindow::repaint);
     });
   }
 }

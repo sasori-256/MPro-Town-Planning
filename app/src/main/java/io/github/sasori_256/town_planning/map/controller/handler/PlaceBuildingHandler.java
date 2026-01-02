@@ -31,8 +31,7 @@ public class PlaceBuildingHandler
         System.err.println("Error: Trying to place a building that is not a Building.");
       }
     }
-    // gameMapController.setSelectedEntityGenerator((point) -> null);
-    // //TODO:Buildingの連続配置をしたい場合、これじゃだめ
-    // gameMapController.setActionOnClick(new ClickGameMapHandler());
+    gameMapController.setSelectedEntityGenerator((point) -> null); //TODO:Buildingの連続配置をしたい場合、これじゃだめ
+    gameMapController.setActionOnClick(new ClickGameMapHandler());
   }
 }

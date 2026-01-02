@@ -119,6 +119,20 @@ public class GameModel implements GameContext, Updatable {
     }
   }
 
+  /**
+   * Internal method to spawn an entity without acquiring locks.
+   * Should only be called when a write lock is already held.
+   */
+  private <T extends BaseGameEntity> void spawnEntityInternal(T entity) {
+    if (entity instanceof Resident) {
+      addResidentEntityInternal((Resident) entity);
+    } else if (entity instanceof Building) {
+      addBuildingEntityInternal((Building) entity);
+    } else if (entity instanceof Disaster) {
+      addDisasterEntityInternal((Disaster) entity);
+    }
+  }
+
   @Override
   public <T extends BaseGameEntity> void removeEntity(T entity) {
     if (entity == null) {
@@ -142,23 +156,47 @@ public class GameModel implements GameContext, Updatable {
 
   public void addResidentEntity(Resident entity) {
     withWriteLock(() -> {
-      residentEntities.add(entity);
-      eventBus.publish(new ResidentBornEvent(entity.getPosition()));
+      addResidentEntityInternal(entity);
     });
+  }
+
+  /**
+   * Internal method to add a resident entity without acquiring locks.
+   * Should only be called when a write lock is already held.
+   */
+  private void addResidentEntityInternal(Resident entity) {
+    residentEntities.add(entity);
+    eventBus.publish(new ResidentBornEvent(entity.getPosition()));
   }
 
   public void addBuildingEntity(Building entity) {
     withWriteLock(() -> {
-      buildingEntities.add(entity);
-      eventBus.publish(new MapUpdatedEvent(entity.getPosition()));
+      addBuildingEntityInternal(entity);
     });
+  }
+
+  /**
+   * Internal method to add a building entity without acquiring locks.
+   * Should only be called when a write lock is already held.
+   */
+  private void addBuildingEntityInternal(Building entity) {
+    buildingEntities.add(entity);
+    eventBus.publish(new MapUpdatedEvent(entity.getPosition()));
   }
 
   public void addDisasterEntity(Disaster entity) {
     withWriteLock(() -> {
-      disasterEntities.add(entity);
-      eventBus.publish(new DisasterOccurredEvent(entity.getType()));
+      addDisasterEntityInternal(entity);
     });
+  }
+
+  /**
+   * Internal method to add a disaster entity without acquiring locks.
+   * Should only be called when a write lock is already held.
+   */
+  private void addDisasterEntityInternal(Disaster entity) {
+    disasterEntities.add(entity);
+    eventBus.publish(new DisasterOccurredEvent(entity.getType()));
   }
 
   public void removeBuildingEntity(Building entity) {
@@ -174,9 +212,17 @@ public class GameModel implements GameContext, Updatable {
 
   public void addSouls(int amount) {
     withWriteLock(() -> {
-      this.souls += amount;
-      eventBus.publish(new SoulChangedEvent(souls));
+      addSoulsInternal(amount);
     });
+  }
+
+  /**
+   * Internal method to add souls without acquiring locks.
+   * Should only be called when a write lock is already held.
+   */
+  private void addSoulsInternal(int amount) {
+    this.souls += amount;
+    eventBus.publish(new SoulChangedEvent(souls));
   }
 
   /**
@@ -218,15 +264,15 @@ public class GameModel implements GameContext, Updatable {
         return false;
       }
 
-      addSouls(-type.getCost());
+      addSoulsInternal(-type.getCost());
 
       Building building = new Building(pos, type);
 
       if (gameMap.placeBuilding(pos, building)) {
-        spawnEntity(building);
+        spawnEntityInternal(building);
         return true;
       } else {
-        addSouls(type.getCost());
+        addSoulsInternal(type.getCost());
         return false;
       }
     });

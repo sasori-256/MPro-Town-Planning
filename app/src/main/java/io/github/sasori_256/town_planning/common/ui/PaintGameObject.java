@@ -1,6 +1,7 @@
 package io.github.sasori_256.town_planning.common.ui;
 
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
 
 import javax.swing.JPanel;
@@ -84,6 +85,7 @@ public class PaintGameObject {
    */
   public void paint(Graphics g, Point2D.Double pos, String name, Camera camera, ImageManager imageManager,
       JPanel panel) {
+    Graphics2D g2d = (Graphics2D) g;
     // 建物または地形の描画
     ImageStorage imageStorage = imageManager.getImageStorage(name);
     if (imageStorage != null) {
@@ -97,7 +99,7 @@ public class PaintGameObject {
       int yPos = (int) Math.round(screenPos.y + posShift.y);
       int width = (int) (imageScale.x * cameraScale);
       int height = (int) (imageScale.y * cameraScale);
-      g.drawImage(imageStorage.image, xPos, yPos, width, height, panel);
+      g2d.drawImage(imageStorage.image, xPos, yPos, width, height, panel);
     }
   }
 }

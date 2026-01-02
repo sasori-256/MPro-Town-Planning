@@ -6,6 +6,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.DoubleConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
@@ -44,6 +45,9 @@ public class GameModel implements GameContext, Updatable {
   private int day = 1;
   private double dayTimer = 0;
   private static final double DAY_LENGTH = 10.0; // 10秒で1日
+  private static final double UPDATE_STEP = 1.0 / 30.0;
+  private static final double ANIMATION_STEP = 1.0 / 6.0;
+  private double animationAccumulator = 0.0;
 
   private double lastDeltaTime = 0;
 
@@ -64,7 +68,7 @@ public class GameModel implements GameContext, Updatable {
   }
 
   public void startGameLoop(Runnable renderCallback) {
-    Runnable updateCallback = () -> update(this);
+    DoubleConsumer updateCallback = dt -> update(this, dt);
     // GameLoopのインスタンスは新しいものが作られるため、既存のgameLoopフィールドとの整合性は要検討
     this.gameLoop = new GameLoop(updateCallback, renderCallback);
     this.gameLoop.start();
@@ -314,8 +318,11 @@ public class GameModel implements GameContext, Updatable {
 
   @Override
   public void update(GameContext context) {
+    update(context, UPDATE_STEP);
+  }
+
+  public void update(GameContext context, double dt) {
     withWriteLock(() -> {
-      double dt = 1.0 / 60.0;
       this.lastDeltaTime = dt;
 
       dayTimer += dt;
@@ -332,6 +339,26 @@ public class GameModel implements GameContext, Updatable {
       for (Building building : buildingEntities) {
         building.update(context);
       }
+
+      animationAccumulator += dt;
+      while (animationAccumulator >= ANIMATION_STEP) {
+        animationAccumulator -= ANIMATION_STEP;
+        advanceAnimations();
+      }
     });
+  }
+
+  private void advanceAnimations() {
+    for (Resident resident : residentEntities) {
+      resident.advanceAnimation();
+    }
+
+    for (Building building : buildingEntities) {
+      building.advanceAnimation();
+    }
+
+    for (Disaster disaster : disasterEntities) {
+      disaster.advanceAnimation();
+    }
   }
 }

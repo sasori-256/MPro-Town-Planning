@@ -11,6 +11,7 @@ package io.github.sasori_256.town_planning.common.core;
 // 例えば、複数のスレッドが同時にフラグを設定またはクリアしようとする場合に、
 // AtomicBooleanを使用することで、競合状態を防ぎ、正しい結果を得ることができます。
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.DoubleConsumer;
 import javax.swing.SwingUtilities;
 
 /**
@@ -26,16 +27,16 @@ public class GameLoop implements Runnable {
    * CallBackを使うことで、GameLoopクラスが特定のゲームロジックに依存しないようにする
    * ゲームロジックを知っているMainクラスでUpdateとRenderの具体的な処理を提供する
    */
-  private final Runnable updateCallback;
+  private final DoubleConsumer updateCallback;
   private final Runnable renderCallback;
   private Thread thread = null;
 
-  // 60 FPS target
+  // 30 FPS target
   // TODO: マジックナンバーを定数化して外部から変更できるようにする
-  private static final double TIME_STEP = 1.0 / 60.0;
+  private static final double TIME_STEP = 1.0 / 30.0;
   private static final long TIME_STEP_NANO = (long) (TIME_STEP * 1_000_000_000);
 
-  public GameLoop(Runnable updateCallback, Runnable renderCallback) {
+  public GameLoop(DoubleConsumer updateCallback, Runnable renderCallback) {
     this.updateCallback = updateCallback;
     this.renderCallback = renderCallback;
   }
@@ -93,7 +94,7 @@ public class GameLoop implements Runnable {
 
         // 修正ループ: 固定タイムステップで更新を行う
         while (accumulator >= TIME_STEP_NANO) {
-          updateCallback.run();
+          updateCallback.accept(TIME_STEP);
           accumulator -= TIME_STEP_NANO;
         }
 

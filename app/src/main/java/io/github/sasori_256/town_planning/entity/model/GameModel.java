@@ -29,6 +29,21 @@ import io.github.sasori_256.town_planning.map.model.GameMap;
 /**
  * ゲームの環境情報を管理するモデルクラス。
  * GameContextの実装であり、GameLoopのホストでもある。
+ * 
+ * <h2>Thread Safety and Locking</h2>
+ * This class uses a ReadWriteLock to ensure thread-safe access to game state.
+ * To prevent nested locking issues and potential deadlocks, entity lifecycle operations
+ * (spawnEntity/removeEntity) are automatically deferred when called during the update cycle.
+ * 
+ * <p>During the update cycle:
+ * <ul>
+ *   <li>Calls to spawnEntity() are queued and processed after all entity updates complete</li>
+ *   <li>Calls to removeEntity() are queued and processed after all entity updates complete</li>
+ *   <li>This prevents entity update methods from attempting to acquire locks that are already held</li>
+ * </ul>
+ * 
+ * <p>This design allows entity update strategies to safely call GameContext methods like
+ * removeEntity() without causing deadlocks or nested lock acquisitions.
  */
 public class GameModel implements GameContext, Updatable {
   private final EventBus eventBus;
@@ -115,6 +130,18 @@ public class GameModel implements GameContext, Updatable {
     return withReadLock(() -> lastDeltaTime);
   }
 
+  /**
+   * Spawns a new entity into the game world.
+   * 
+   * <p>If called during an update cycle (i.e., from within an entity's update method),
+   * the spawn operation is automatically deferred and will be processed after all
+   * entity updates complete. This prevents nested lock acquisition and potential deadlocks.
+   * 
+   * <p>If called outside an update cycle, the entity is spawned immediately.
+   * 
+   * @param entity The entity to spawn
+   * @param <T> The entity type
+   */
   @Override
   public <T extends BaseGameEntity> void spawnEntity(T entity) {
     // If called during an update cycle, defer the operation to avoid nested locking
@@ -146,6 +173,20 @@ public class GameModel implements GameContext, Updatable {
     }
   }
 
+  /**
+   * Removes an entity from the game world.
+   * 
+   * <p>If called during an update cycle (i.e., from within an entity's update method),
+   * the remove operation is automatically deferred and will be processed after all
+   * entity updates complete. This prevents nested lock acquisition and potential deadlocks.
+   * 
+   * <p>If called outside an update cycle, the entity is removed immediately.
+   * 
+   * <p>The entity's onRemoved() lifecycle method will be called before removal.
+   * 
+   * @param entity The entity to remove
+   * @param <T> The entity type
+   */
   @Override
   public <T extends BaseGameEntity> void removeEntity(T entity) {
     if (entity == null) {
@@ -383,6 +424,26 @@ public class GameModel implements GameContext, Updatable {
     update(context, UPDATE_STEP);
   }
 
+  /**
+   * Updates the game state for the current frame.
+   * 
+   * <p>This method acquires a write lock and updates all entities. To prevent nested
+   * locking issues, any calls to spawnEntity() or removeEntity() made during entity
+   * updates are automatically deferred and processed after all updates complete.
+   * 
+   * <p>The update process:
+   * <ol>
+   *   <li>Acquire write lock</li>
+   *   <li>Update day timer and game state</li>
+   *   <li>Update all residents, buildings, and disasters (which may queue spawn/remove operations)</li>
+   *   <li>Advance animations</li>
+   *   <li>Process all deferred spawn/remove operations</li>
+   *   <li>Release write lock</li>
+   * </ol>
+   * 
+   * @param context The game context
+   * @param dt Delta time in seconds since the last update
+   */
   public void update(GameContext context, double dt) {
     withWriteLock(() -> {
       // Set flag to indicate we're in an update cycle

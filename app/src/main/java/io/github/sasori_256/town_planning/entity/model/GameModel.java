@@ -9,12 +9,14 @@ import io.github.sasori_256.town_planning.common.core.GameLoop;
 import io.github.sasori_256.town_planning.common.core.Updatable;
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.DayPassedEvent;
+import io.github.sasori_256.town_planning.common.event.events.DisasterOccurredEvent;
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
 import io.github.sasori_256.town_planning.common.event.events.ResidentBornEvent;
 import io.github.sasori_256.town_planning.common.event.events.SoulChangedEvent;
 import io.github.sasori_256.town_planning.common.event.events.SoulHarvestedEvent;
 import io.github.sasori_256.town_planning.entity.building.Building;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
+import io.github.sasori_256.town_planning.entity.disaster.Disaster;
 import io.github.sasori_256.town_planning.entity.resident.Resident;
 import io.github.sasori_256.town_planning.entity.resident.ResidentState;
 import io.github.sasori_256.town_planning.map.model.GameMap;
@@ -31,6 +33,7 @@ public class GameModel implements GameContext, Updatable {
   // スレッドセーフなリストを使用
   private final List<Building> buildingEntities = new CopyOnWriteArrayList<>();
   private final List<Resident> residentEntities = new CopyOnWriteArrayList<>();
+  private final List<Disaster> disasterEntities = new CopyOnWriteArrayList<>();
 
   private int souls = 100;
   private int day = 1;
@@ -86,6 +89,11 @@ public class GameModel implements GameContext, Updatable {
   }
 
   @Override
+  public Stream<Disaster> getDisasterEntities() {
+    return disasterEntities.stream();
+  }
+
+  @Override
   public double getDeltaTime() {
     return lastDeltaTime;
   }
@@ -96,6 +104,8 @@ public class GameModel implements GameContext, Updatable {
       addResidentEntity((Resident) entity);
     } else if (entity instanceof Building) {
       addBuildingEntity((Building) entity);
+    } else if (entity instanceof Disaster) {
+      addDisasterEntity((Disaster) entity);
     }
   }
 
@@ -112,6 +122,8 @@ public class GameModel implements GameContext, Updatable {
       residentEntities.remove(entity);
     } else if (entity instanceof Building) {
       buildingEntities.remove(entity);
+    } else if (entity instanceof Disaster) {
+      disasterEntities.remove(entity);
     }
   }
 
@@ -125,6 +137,11 @@ public class GameModel implements GameContext, Updatable {
   public void addBuildingEntity(Building entity) {
     buildingEntities.add(entity);
     eventBus.publish(new MapUpdatedEvent(entity.getPosition()));
+  }
+
+  public void addDisasterEntity(Disaster entity) {
+    disasterEntities.add(entity);
+    eventBus.publish(new DisasterOccurredEvent(entity.getType()));
   }
 
   public void removeBuildingEntity(Building entity) {

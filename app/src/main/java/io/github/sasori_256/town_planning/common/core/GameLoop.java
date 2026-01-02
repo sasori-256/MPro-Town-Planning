@@ -25,7 +25,7 @@ public class GameLoop implements Runnable {
    * ゲームロジックを知っているMainクラスでUpdateとRenderの具体的な処理を提供する
    */
   private final Runnable updateCallback;
-  private final Runnable renderCallback;
+  // private final Runnable renderCallback;
   private Thread thread = null;
 
   // 60 FPS target
@@ -35,7 +35,7 @@ public class GameLoop implements Runnable {
 
   public GameLoop(Runnable updateCallback, Runnable renderCallback) {
     this.updateCallback = updateCallback;
-    this.renderCallback = renderCallback;
+    // this.renderCallback = renderCallback;
   }
 
   public void start() {
@@ -48,6 +48,7 @@ public class GameLoop implements Runnable {
         }
       } catch (Exception e) {
         running.set(false);
+        System.err.println("Failed to start GameLoop.");
         e.printStackTrace();
       }
     }

@@ -9,16 +9,19 @@ import io.github.sasori_256.town_planning.entity.disaster.DisasterType;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
 import io.github.sasori_256.town_planning.map.controller.handler.ActionDisasterHandler;
+import io.github.sasori_256.town_planning.map.model.MapContext;
 
 public class DisasterNode implements MenuNode {
     private final DisasterType type;
     private final Function<Point2D.Double, ? extends BaseGameEntity> generator;
     private final GameMapController gameMapController;
+    private final MapContext mapContext;
 
-    public DisasterNode(DisasterType disasterType, Function<Point2D.Double, Disaster> generator, GameMapController gameMapController) {
+    public DisasterNode(DisasterType disasterType, Function<Point2D.Double, Disaster> generator, GameMapController gameMapController, MapContext mapContext) {
         this.type = disasterType;
         this.generator = generator;
         this.gameMapController = gameMapController;
+        this.mapContext = mapContext;
     }
 
     public DisasterType getType() { return type; }

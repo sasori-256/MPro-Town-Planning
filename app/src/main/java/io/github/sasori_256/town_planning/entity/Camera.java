@@ -72,6 +72,7 @@ public class Camera {
 
   /**
    * Iso座標系の原点をscreen座標系で表したときの位置を更新する
+   * 
    * @param mapWidth
    * @param mapHeight
    * @param screenWidth
@@ -93,8 +94,8 @@ public class Camera {
    */
   public Point2D.Double screenToIso(Point2D.Double screenPos) {
     double adjX = screenPos.x - this.screenOrigin.x - this.offsetX;
-    double adjY = screenPos.y - this.screenOrigin.y - this.offsetY; 
-    double isoX = adjX / this.cellWidth + adjY / this.cellHeight; 
+    double adjY = screenPos.y - this.screenOrigin.y - this.offsetY;
+    double isoX = adjX / this.cellWidth + adjY / this.cellHeight;
     double isoY = adjY / this.cellHeight - adjX / this.cellWidth;
     return new Point2D.Double(isoX, isoY);
   }
@@ -135,16 +136,16 @@ public class Camera {
   }
 
   public void zoomIn() {
-    if(this.scale * 1.1 < 3.0){
+    if (this.scale * 1.1 < 3.0) {
       setScale(this.scale * 1.1);
       System.out.println("Zoomed In: New Scale = " + this.scale);
       eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
     }
-    
+
   }
 
   public void zoomOut() {
-    if(this.scale / 1.1 > 0.75){
+    if (this.scale / 1.1 > 0.75) {
       setScale(this.scale / 1.1);
       System.out.println("Zoomed Out: New Scale = " + this.scale);
       eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));

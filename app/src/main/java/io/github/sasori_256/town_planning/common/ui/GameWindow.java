@@ -40,9 +40,9 @@ class GameMapPanel extends JPanel {
     this.imageManager = new ImageManager();
     this.paintGameObject = new PaintGameObject();
     this.setLayout(null);
-    this.paintUI = new PaintUI();
-
     setBackground(Color.BLACK);
+    this.paintUI = new PaintUI(imageManager, this, root);
+    paintUI.paint(this.getGraphics());
   }
 
   /**
@@ -55,25 +55,37 @@ class GameMapPanel extends JPanel {
    */
   @Override
   public void paintComponent(Graphics g) {
-    super.paintComponent(g);
-    for (int y = 0; y < gameMap.getHeight(); y++) {
-      for (int x = 0; x < gameMap.getWidth(); x++) {
-        Point2D.Double pos = new Point2D.Double(x, y);
-        paintGameObject.paintTerrain(g, pos, gameMap, camera, imageManager, this);
-      }
-    }
-    for (int y = 0; y < gameMap.getHeight(); y++) {
-      for (int x = 0; x < gameMap.getWidth(); x++) {
-        Point2D.Double pos = new Point2D.Double(x, y);
-        paintGameObject.paintBuilding(g, pos, gameMap, camera, imageManager, this);
-      }
-    }
-    paintUI.paint(g, root, 1.0, imageManager, this);
 
+    super.paintComponent(g);
+    // マップの奥(上)から手前(下)に向かって描画する
+    for (int z = 0; z < gameMap.getWidth() + gameMap.getHeight(); z++) {
+      for (int x = 0; x <= z; x++) {
+        int y = z - x;
+        if (x < gameMap.getWidth() && y < gameMap.getHeight() && isInsideCameraView(x, y)) {
+          Point2D.Double pos = new Point2D.Double(x, y);
+          paintGameObject.paintTerrain(g, pos, gameMap, camera, imageManager, this);
+          paintGameObject.paintBuilding(g, pos, gameMap, camera, imageManager, this);
+        }
+      }
+    }
+  }
+
+  boolean isInsideCameraView(int x, int y) {
+    Point2D.Double screenPos = camera.isoToScreen(new Point2D.Double(x + 1, y));
+    int panelWidth = this.getWidth();
+    int panelHeight = this.getHeight();
+    double cameraScale = camera.getScale();
+    int margin = (int) (100 / (cameraScale * 1.5)) + 50;
+    // 画面外にある場合は描画しない
+    if (screenPos.x < -margin || screenPos.x > panelWidth + margin || screenPos.y < -margin
+        || screenPos.y > panelHeight + margin) {
+      return false;
+    }
+    return true;
   }
 
   public void repaintUI() {
-    this.paintUI.repaintUI(this);
+    this.paintUI.repaintUI();
   }
 }
 
@@ -85,11 +97,8 @@ class GameMapPanel extends JPanel {
  * @see GameMapPanel
  */
 public class GameWindow extends JFrame {
-  public <T extends MouseListener & M
-    addMouseListener(listener);
-    addKeyListener(listener);
-    addMouseMotionListener(listener);
-    addMouseWheelListener(listener);
+  public <T extends MouseListener & MouseMotionListener & MouseWheelListener & KeyListener> GameWindow(T listener,
+      GameMap gameMap, Camera camera, int width, int height, EventBus eventBus) {
     setTitle("Town Planning Game");
     setSize(width, height);
     // GameMap gameMap = generateTestMap();
@@ -97,6 +106,11 @@ public class GameWindow extends JFrame {
     CategoryNode root = NodeMenuInitializer.setup(gameMapController, gameMap);
 
     GameMapPanel gameMapPanel = new GameMapPanel(gameMap, camera, root);
+    gameMapPanel.addMouseListener(listener);
+    gameMapPanel.addMouseMotionListener(listener);
+    gameMapPanel.addMouseWheelListener(listener);
+    gameMapPanel.addKeyListener(listener);
+    gameMapPanel.setFocusable(true);
     eventBus.subscribe(MapUpdatedEvent.class, event -> {
       gameMapPanel.repaint();
     });

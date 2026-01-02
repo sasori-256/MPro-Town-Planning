@@ -11,11 +11,13 @@ public class App {
   public static void main(String[] args) {
     final int WIDTH = 640;
     final int HEIGHT = 640;
+    final int MAP_WIDTH = 100;
+    final int MAP_HEIGHT = 100;
 
     EventBus eventBus = new EventBus();
-    GameModel gameModel = new GameModel(eventBus);
+    GameModel gameModel = new GameModel(MAP_WIDTH, MAP_HEIGHT, eventBus);
     GameMap gameMap = gameModel.getGameMap();
-    Camera camera = new Camera(1, WIDTH, HEIGHT, eventBus);
+    Camera camera = new Camera(1, WIDTH, HEIGHT, MAP_WIDTH, MAP_HEIGHT, eventBus);
     GameMapController gameMapController = new GameMapController(camera);
     GameWindow gameWindow = new GameWindow(gameMapController, gameMap, camera, WIDTH, HEIGHT, eventBus, gameMapController);
   }

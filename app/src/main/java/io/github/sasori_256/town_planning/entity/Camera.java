@@ -17,6 +17,8 @@ public class Camera {
   private int offsetX;
   private int offsetY;
   private Point2D.Double screenOrigin; // Iso座標系の原点をScreen座標系で表したときの位置
+  private int mapWidth;
+  private int mapHeight;
   private final EventBus eventBus;
 
   /**
@@ -25,13 +27,15 @@ public class Camera {
    * @param defaultScale
    * @param eventBus
    */
-  public Camera(double defaultScale, int screenWidth, int screenHeight, EventBus eventBus) {
+  public Camera(double defaultScale, int screenWidth, int screenHeight, int mapWidth, int mapHeight, EventBus eventBus) {
     this.scale = defaultScale;
     this.cellHeight = (int) (32 * defaultScale);
     this.cellWidth = (int) (32 * 2 * defaultScale);
     this.offsetX = 0;
     this.offsetY = 0;
-    this.updateOrigin(100, 100, screenWidth, screenHeight);
+    this.mapWidth = mapWidth;
+    this.mapHeight = mapHeight;
+    this.updateOrigin(screenWidth, screenHeight);
     this.eventBus = eventBus;
   }
 
@@ -63,6 +67,7 @@ public class Camera {
     this.scale = scale;
     this.cellHeight = (int) (32 * scale);
     this.cellWidth = (int) (32 * 2 * scale);
+    updateOrigin(this.cellWidth, this.cellHeight);
   }
 
   public void setOffset(int offsetX, int offsetY) {
@@ -73,14 +78,12 @@ public class Camera {
   /**
    * Iso座標系の原点をscreen座標系で表したときの位置を更新する
    * 
-   * @param mapWidth
-   * @param mapHeight
    * @param screenWidth
    * @param screenHeight
    */
-  public void updateOrigin(int mapWidth, int mapHeight, int screenWidth, int screenHeight) {
-    double centerIsoX = (mapWidth - 1) / 2.0;
-    double centerIsoY = (mapHeight - 1) / 2.0;
+  public void updateOrigin(int screenWidth, int screenHeight) {
+    double centerIsoX = (this.mapWidth - 1) / 2.0;
+    double centerIsoY = (this.mapHeight - 1) / 2.0;
     double centerScreenX = (centerIsoX - centerIsoY) * (this.cellWidth / 2.0);
     double centerScreenY = (centerIsoX + centerIsoY) * (this.cellHeight / 2.0);
     this.screenOrigin = new Point2D.Double(screenWidth / 2 - centerScreenX, screenHeight / 2 - centerScreenY);
@@ -113,8 +116,10 @@ public class Camera {
   }
 
   public void pan(int dx, int dy) {
-    this.offsetX += dx;
-    this.offsetY += dy;
+    if( this.offsetX + dx < (this.mapWidth + this.mapHeight - 1) * this.cellWidth / 2 + this.cellWidth / 2  && this.offsetX + dx > - (this.mapWidth + this.mapHeight - 1) * this.cellWidth / 2 - this.cellWidth / 2 ){
+      this.offsetX = dx;
+    }
+    
     eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
   }
 

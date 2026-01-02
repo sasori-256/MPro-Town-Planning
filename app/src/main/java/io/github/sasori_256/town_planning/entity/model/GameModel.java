@@ -42,12 +42,11 @@ public class GameModel implements GameContext, Updatable {
 
   private double lastDeltaTime = 0;
 
-  public GameModel(EventBus eventBus) {
+  public GameModel(int mapWidth, int mapHeight, EventBus eventBus) {
     this.eventBus = eventBus;
 
     // マップサイズ 100x100
-    this.gameMap = new GameMap(100, 100, eventBus);
-
+    this.gameMap = new GameMap(mapWidth, mapHeight, eventBus);
     // Event Subscriptions
     // SoulHarvestedEventを購読
     this.eventBus.subscribe(SoulHarvestedEvent.class, event -> {

@@ -48,7 +48,7 @@ public class GameLoop implements Runnable {
         }
       } catch (Exception e) {
         running.set(false);
-        System.err.println("GameLoop has not started.");
+        System.err.println("Failed to start GameLoop.");
         e.printStackTrace();
       }
     }

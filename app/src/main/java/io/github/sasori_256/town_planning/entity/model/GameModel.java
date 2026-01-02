@@ -296,13 +296,10 @@ public class GameModel implements GameContext, Updatable {
   }
 
   private void withWriteLock(Runnable action) {
-    Lock writeLock = stateLock.writeLock();
-    writeLock.lock();
-    try {
+    withWriteLock(() -> {
       action.run();
-    } finally {
-      writeLock.unlock();
-    }
+      return null;
+    });
   }
 
   private <T> T withWriteLock(Supplier<T> supplier) {

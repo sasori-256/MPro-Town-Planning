@@ -9,6 +9,7 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 
 import io.github.sasori_256.town_planning.common.ui.ImageManager.ImageStorage;
+import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.BuildingNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.MenuNode;
 
@@ -21,12 +22,14 @@ public class PaintUI {
   private final ImageManager imageManager;
   private final JPanel panel;
   private CategoryNode root;
+  // private GameMapController gameMapController;
   private double UIScale = 1;
 
   public PaintUI(ImageManager imageManager, JPanel panel, CategoryNode root) {
     this.imageManager = imageManager;
     this.panel = panel;
     this.root = root;
+    // this.gameMapController = gameMapController;
   }
 
   private String selectedModeName = "creative"; // UIのモード(view, creative, disaster)
@@ -117,7 +120,7 @@ public class PaintUI {
   /**
    * 現在選択されているモード名を取得する
    * 
-   * @return
+   * @return selectedModeName
    */
   public String getSelectedModeName() {
     return this.selectedModeName;
@@ -141,7 +144,7 @@ public class PaintUI {
   /**
    * 現在選択されているカテゴリ名を取得する
    * 
-   * @return
+   * @return selectedCategoryName
    */
   public String getSelectedCategoryName() {
     return this.selectedCategoryName;
@@ -152,15 +155,27 @@ public class PaintUI {
    * 
    * @param objectName
    */
-  public void setSelectedObject(String objectName) {
-    System.out.println("Object selected: " + objectName);
+  public void setSelectedObject(String objectName, MenuNode objectNode) {
+    // TODO: 選択されたオブジェクトをゲームマップコントローラーに通知する
+    if (!(objectNode instanceof BuildingNode)) {
+      System.err.println("Selected object node is not a BuildingNode: " + objectName);
+      return;
+    }
+    objectNode.actionPerformed(null);
+    // BuildingNode buildingNode = (BuildingNode) objectNode;
+    // BuildingType newBuildingType = buildingNode.getType();
+    // gameMapController.setSelectedEntityGenerator((point) -> new Building(point,
+    // newBuildingType));
+    // System.out
+    // .println("Set selected entity generator for building type: " +
+    // newBuildingType.getDisplayName());
     this.selectedObjectName = objectName;
   }
 
   /**
    * 現在選択されているオブジェクト名を取得する
    * 
-   * @return
+   * @return selectedObjectName
    */
   public String getSelectedObjectName() {
     return this.selectedObjectName;
@@ -258,7 +273,7 @@ public class PaintUI {
           String buttonText = objectNode.getName();
           int xPos = (int) (xPosBegin + i * xPosDelta);
           ActionListener listener = e -> {
-            setSelectedObject(buttonText);
+            setSelectedObject(buttonText, objectNode);
           };
           createButtonIfNotExists(buttonText, xPos, yPos, width, height, listener, 2);
         }

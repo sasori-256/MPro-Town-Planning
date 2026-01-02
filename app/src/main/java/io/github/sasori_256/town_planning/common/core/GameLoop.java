@@ -79,8 +79,8 @@ public class GameLoop implements Runnable {
       }
       boolean isCalledFromEDT = SwingUtilities.isEventDispatchThread();
       boolean shouldWaitForCompletion = toJoin != null 
-          && toJoin != Thread.currentThread() 
-          && !isCalledFromEDT;
+                                        && toJoin != Thread.currentThread() 
+                                        && !isCalledFromEDT;
       if (shouldWaitForCompletion) {
         toJoin.join(); // ゲームループスレッドの終了を待機
       }

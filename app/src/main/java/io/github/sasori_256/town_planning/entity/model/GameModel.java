@@ -15,6 +15,7 @@ import io.github.sasori_256.town_planning.common.event.events.SoulChangedEvent;
 import io.github.sasori_256.town_planning.common.event.events.SoulHarvestedEvent;
 import io.github.sasori_256.town_planning.entity.building.Building;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
+import io.github.sasori_256.town_planning.entity.disaster.Disaster;
 import io.github.sasori_256.town_planning.entity.resident.Resident;
 import io.github.sasori_256.town_planning.entity.resident.ResidentState;
 import io.github.sasori_256.town_planning.map.model.GameMap;
@@ -31,6 +32,7 @@ public class GameModel implements GameContext, Updatable {
   // スレッドセーフなリストを使用
   private final List<Building> buildingEntities = new CopyOnWriteArrayList<>();
   private final List<Resident> residentEntities = new CopyOnWriteArrayList<>();
+  private final List<Disaster> disasterEntities = new CopyOnWriteArrayList<>();
 
   private int souls = 100;
   private int day = 1;
@@ -83,6 +85,11 @@ public class GameModel implements GameContext, Updatable {
   @Override
   public Stream<Resident> getResidentEntities() {
     return residentEntities.stream();
+  }
+
+  @Override
+  public Stream<Disaster> getDisasterEntities() {
+    return disasterEntities.stream();
   }
 
   @Override

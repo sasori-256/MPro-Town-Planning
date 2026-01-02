@@ -5,6 +5,7 @@ import java.util.Map;
 
 import io.github.sasori_256.town_planning.entity.building.Building;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
+import io.github.sasori_256.town_planning.entity.disaster.Disaster;
 import io.github.sasori_256.town_planning.entity.disaster.DisasterType;
 import io.github.sasori_256.town_planning.entity.model.CategoryType;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
@@ -23,7 +24,8 @@ public class NodeMenuInitializer {
         CategoryNode disasterRoot = new CategoryNode("天災");
         root.add(creativeRoot);
         root.add(disasterRoot);
-
+        
+        // Buildingのノード追加
         Map<CategoryType, CategoryNode> categoryNodeMap = new HashMap<>();
         for(BuildingType type: BuildingType.values()){
             if(type == BuildingType.NONE) {
@@ -39,18 +41,18 @@ public class NodeMenuInitializer {
             categoryNode.add(buildingNode);
         }
         
-        // Disasterが未実装のためコメントアウト
-        // categoryNodeMap = new HashMap<>();
-        // for(DisasterType type: DisasterType.values()){
-        //     CategoryNode categoryNode = categoryNodeMap.computeIfAbsent(type.getCategory(), cat -> {
-        //         CategoryNode newCategoryNode = new CategoryNode(cat.getDisplayName());
-        //         disasterRoot.add(newCategoryNode);
-        //         return newCategoryNode;
-        //     });
+        // Disasterのノード追加
+        categoryNodeMap = new HashMap<>();
+        for(DisasterType type: DisasterType.values()){
+            CategoryNode categoryNode = categoryNodeMap.computeIfAbsent(type.getCategory(), cat -> {
+                CategoryNode newCategoryNode = new CategoryNode(cat.getDisplayName());
+                disasterRoot.add(newCategoryNode);
+                return newCategoryNode;
+            });
 
-        //     DisasterNode disasterNode = new DisasterNode(type, (point) -> new Disaster(point, type), gameMapController, mapContext);
-        //     categoryNode.add(disasterNode);
-        // }
+            DisasterNode disasterNode = new DisasterNode(type, (point) -> new Disaster(point, type), gameMapController);
+            categoryNode.add(disasterNode);
+        }
         return root;
     }
 }

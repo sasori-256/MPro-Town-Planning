@@ -11,6 +11,7 @@ package io.github.sasori_256.town_planning.common.core;
 // 例えば、複数のスレッドが同時にフラグを設定またはクリアしようとする場合に、
 // AtomicBooleanを使用することで、競合状態を防ぎ、正しい結果を得ることができます。
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.swing.SwingUtilities;
 
 /**
  * 固定タイムステップのゲームループを提供するクラス。
@@ -18,6 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class GameLoop implements Runnable {
   private final AtomicBoolean running = new AtomicBoolean(false);
+  private final AtomicBoolean renderPending = new AtomicBoolean(false);
 
   /**
    * CallBackによる更新処理
@@ -25,7 +27,7 @@ public class GameLoop implements Runnable {
    * ゲームロジックを知っているMainクラスでUpdateとRenderの具体的な処理を提供する
    */
   private final Runnable updateCallback;
-  // private final Runnable renderCallback;
+  private final Runnable renderCallback;
   private Thread thread = null;
 
   // 60 FPS target
@@ -35,10 +37,10 @@ public class GameLoop implements Runnable {
 
   public GameLoop(Runnable updateCallback, Runnable renderCallback) {
     this.updateCallback = updateCallback;
-    // this.renderCallback = renderCallback;
+    this.renderCallback = renderCallback;
   }
 
-  public void start() {
+  public synchronized void start() {
     if (thread == null) {
       try {
         if (running.compareAndSet(false, true)) {
@@ -57,8 +59,12 @@ public class GameLoop implements Runnable {
   public void stop() {
     running.set(false);
     try {
-      if (thread != null) {
-        thread.join(); // ゲームループスレッドの終了を待機
+      Thread toJoin;
+      synchronized (this) {
+        toJoin = thread;
+      }
+      if (toJoin != null && toJoin != Thread.currentThread()) {
+        toJoin.join(); // ゲームループスレッドの終了を待機
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -71,37 +77,59 @@ public class GameLoop implements Runnable {
     long lastTime = System.nanoTime(); // 前フレームの時刻
     double accumulator = 0.0; // 経過時間
 
-    while (running.get()) {
-      long now = System.nanoTime();
-      long frameTime = now - lastTime;
-      lastTime = now;
+    try {
+      while (running.get()) {
+        long now = System.nanoTime();
+        long frameTime = now - lastTime;
+        lastTime = now;
 
-      // あまりに大きな遅延が発生した場合の補正
-      // フレーム時間が0.25秒を超える場合、0.25秒に制限する
-      if (frameTime > 250_000_000) { // Max frame time to avoid spiral of death (0.25s)
-        frameTime = 250_000_000;
-      }
+        // あまりに大きな遅延が発生した場合の補正
+        // フレーム時間が0.25秒を超える場合、0.25秒に制限する
+        if (frameTime > 250_000_000) { // Max frame time to avoid spiral of death (0.25s)
+          frameTime = 250_000_000;
+        }
 
-      accumulator += frameTime;
+        accumulator += frameTime;
 
-      // 修正ループ: 固定タイムステップで更新を行う
-      while (accumulator >= TIME_STEP_NANO) {
-        updateCallback.run();
-        accumulator -= TIME_STEP_NANO;
-      }
+        // 修正ループ: 固定タイムステップで更新を行う
+        while (accumulator >= TIME_STEP_NANO) {
+          updateCallback.run();
+          accumulator -= TIME_STEP_NANO;
+        }
 
-      // 描画処理
-      // renderCallback.run();
+        // 描画処理はEDTに委譲する
+        requestRender();
 
-      // フレームレート制御: 次のフレームまで待機
-      long sleepTime = (TIME_STEP_NANO - (System.nanoTime() - now)) / 1_000_000;
-      if (sleepTime > 1) {
-        try {
-          Thread.sleep(sleepTime);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
+        // フレームレート制御: 次のフレームまで待機
+        long sleepTime = (TIME_STEP_NANO - (System.nanoTime() - now)) / 1_000_000;
+        if (sleepTime > 1) {
+          try {
+            Thread.sleep(sleepTime);
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+          }
         }
       }
+    } finally {
+      synchronized (this) {
+        thread = null;
+      }
     }
+  }
+
+  private void requestRender() {
+    if (renderCallback == null) {
+      return;
+    }
+    if (!renderPending.compareAndSet(false, true)) {
+      return;
+    }
+    SwingUtilities.invokeLater(() -> {
+      try {
+        renderCallback.run();
+      } finally {
+        renderPending.set(false);
+      }
+    });
   }
 }

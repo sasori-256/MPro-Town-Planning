@@ -6,14 +6,13 @@ import java.awt.geom.Point2D;
 
 import io.github.sasori_256.town_planning.entity.disaster.Disaster;
 import io.github.sasori_256.town_planning.entity.disaster.DisasterType;
-import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
 import io.github.sasori_256.town_planning.map.controller.handler.ActionDisasterHandler;
 import io.github.sasori_256.town_planning.map.model.MapContext;
 
 public class DisasterNode implements MenuNode {
     private final DisasterType type;
-    private final Function<Point2D.Double, ? extends BaseGameEntity> generator;
+    private final Function<Point2D.Double, Disaster> generator;
     private final GameMapController gameMapController;
     private final MapContext mapContext;
 

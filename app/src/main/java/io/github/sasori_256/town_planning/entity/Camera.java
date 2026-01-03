@@ -115,12 +115,20 @@ public class Camera {
   }
 
   public void pan(int dx, int dy) {
-    int offsetValitX = ((this.mapWidth + this.mapHeight - 1) * this.cellWidth / 2 + this.cellWidth / 2 ) / 2;
-    int offsetValitY = (this.mapWidth + this.mapHeight - 1) * this.cellHeight / 2 + this.cellHeight / 2;
-    this.offsetX += dx;
-    this.offsetY += dy;
-    
-    eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
+    boolean moved=false;
+    if(-cellWidth * mapHeight <= this.offsetX + dx && this.offsetX + dx <= cellWidth * mapWidth){
+      this.offsetX += dx;
+      moved=true;
+    }
+
+    int largerY = Math.max(mapHeight, mapWidth);
+    if(-cellHeight * largerY <= this.offsetY + dy && this.offsetY + dy <= cellHeight * largerY){
+      this.offsetY += dy;
+      moved=true;
+    }
+    if(moved){
+      eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
+    }
   }
 
   // TODO: カメラ移動を滑らかにする

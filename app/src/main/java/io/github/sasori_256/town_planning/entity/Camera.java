@@ -14,6 +14,8 @@ public class Camera {
   private Point2D.Double screenOrigin; // Iso座標系の原点をScreen座標系で表したときの位置
   private int mapWidth;
   private int mapHeight;
+  private int screenWidth;
+  private int screenHeight;
   private final EventBus eventBus;
 
   /**
@@ -34,6 +36,8 @@ public class Camera {
     this.offsetY = 0;
     this.mapWidth = mapWidth;
     this.mapHeight = mapHeight;
+    this.screenWidth = screenWidth;
+    this.screenHeight = screenHeight;
     this.updateOrigin(screenWidth, screenHeight);
     this.eventBus = eventBus;
   }
@@ -66,7 +70,8 @@ public class Camera {
     this.scale = scale;
     this.cellHeight = (int) (32 * scale);
     this.cellWidth = (int) (32 * 2 * scale);
-    updateOrigin(this.cellWidth, this.cellHeight);
+    System.out.println("Cell Size Updated: (" + this.cellWidth + ", " + this.cellHeight + ")");
+    updateOrigin(this.screenWidth, this.screenHeight);
   }
 
   public void setOffset(int offsetX, int offsetY) {
@@ -86,6 +91,7 @@ public class Camera {
     double centerScreenX = (centerIsoX - centerIsoY) * (this.cellWidth / 2.0);
     double centerScreenY = (centerIsoX + centerIsoY) * (this.cellHeight / 2.0);
     this.screenOrigin = new Point2D.Double(screenWidth / 2 - centerScreenX, screenHeight / 2 - centerScreenY);
+    System.out.println("Screen Origin Updated: (" + this.screenOrigin.x + ", " + this.screenOrigin.y + ")");
   }
 
   /**
@@ -116,17 +122,18 @@ public class Camera {
 
   public void pan(int dx, int dy) {
     boolean moved=false;
-    if(-cellWidth * mapHeight <= this.offsetX + dx && this.offsetX + dx <= cellWidth * mapWidth){
+    if(-cellWidth/2 * mapHeight <= this.offsetX + dx && this.offsetX + dx <= cellWidth/2 * mapWidth){
       this.offsetX += dx;
       moved=true;
     }
 
     int largerY = Math.max(mapHeight, mapWidth);
-    if(-cellHeight * largerY <= this.offsetY + dy && this.offsetY + dy <= cellHeight * largerY){
+    if(-cellHeight/2 * largerY <= this.offsetY + dy && this.offsetY + dy <= cellHeight/2 * largerY){
       this.offsetY += dy;
       moved=true;
     }
     if(moved){
+      System.out.println("Panned to Offset: (" + this.offsetX + ", " + this.offsetY + ")");
       eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
     }
   }

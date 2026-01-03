@@ -1,5 +1,6 @@
 package io.github.sasori_256.town_planning.entity;
 
+import java.awt.Point;
 import java.awt.geom.Point2D;
 
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
@@ -67,11 +68,19 @@ public class Camera {
   }
 
   public void setScale(double scale) {
+    Point2D.Double centerScreen = new Point2D.Double(screenWidth / 2.0, screenHeight / 2.0);
+    Point2D.Double centerIso = screenToIso(centerScreen);
+
     this.scale = scale;
     this.cellHeight = (int) (32 * scale);
     this.cellWidth = (int) (32 * 2 * scale);
-    System.out.println("Cell Size Updated: (" + this.cellWidth + ", " + this.cellHeight + ")");
     updateOrigin(this.screenWidth, this.screenHeight);
+
+    this.offsetX = 0;
+    this.offsetY = 0;
+    Point2D.Double newCenterScreen = isoToScreen(centerIso);
+    this.offsetX = (int) (centerScreen.x - newCenterScreen.x);
+    this.offsetY = (int) (centerScreen.y - newCenterScreen.y);
   }
 
   public void setOffset(int offsetX, int offsetY) {

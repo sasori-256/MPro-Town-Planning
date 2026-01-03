@@ -5,11 +5,6 @@ import java.awt.geom.Point2D;
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
 import io.github.sasori_256.town_planning.common.event.EventBus;
 
-/**
- * カメラクラス
- * 引数は全てView基準?
- * 
- */
 public class Camera {
   private double scale;
   private int cellHeight;
@@ -24,8 +19,12 @@ public class Camera {
   /**
    * defaultScaleが1のとき、セルの幅が64ピクセル、高さが32ピクセルになる。
    * 
-   * @param defaultScale
-   * @param eventBus
+   * @param defaultScale 初期スケール
+   * @param screenWidth  画面の幅(実際のピクセル数)
+   * @param screenHeight 画面の高さ(実際のピクセル数)
+   * @param mapWidth     マップの幅（セル数）
+   * @param mapHeight    マップの高さ（セル数）
+   * @param eventBus     イベントバス
    */
   public Camera(double defaultScale, int screenWidth, int screenHeight, int mapWidth, int mapHeight, EventBus eventBus) {
     this.scale = defaultScale;
@@ -116,9 +115,10 @@ public class Camera {
   }
 
   public void pan(int dx, int dy) {
-    if( this.offsetX + dx < (this.mapWidth + this.mapHeight - 1) * this.cellWidth / 2 + this.cellWidth / 2  && this.offsetX + dx > - (this.mapWidth + this.mapHeight - 1) * this.cellWidth / 2 - this.cellWidth / 2 ){
-      this.offsetX = dx;
-    }
+    int offsetValitX = ((this.mapWidth + this.mapHeight - 1) * this.cellWidth / 2 + this.cellWidth / 2 ) / 2;
+    int offsetValitY = (this.mapWidth + this.mapHeight - 1) * this.cellHeight / 2 + this.cellHeight / 2;
+    this.offsetX += dx;
+    this.offsetY += dy;
     
     eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
   }
@@ -141,8 +141,8 @@ public class Camera {
   }
 
   public void zoomIn() {
-    if (this.scale * 1.1 < 3.0) {
-      setScale(this.scale * 1.1);
+    if (this.scale * 1.125 < 3.0) {
+      setScale(this.scale * 1.125);
       System.out.println("Zoomed In: New Scale = " + this.scale);
       eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
     }
@@ -150,8 +150,8 @@ public class Camera {
   }
 
   public void zoomOut() {
-    if (this.scale / 1.1 > 0.75) {
-      setScale(this.scale / 1.1);
+    if (this.scale / 1.125 > 0.25) {
+      setScale(this.scale / 1.125);
       System.out.println("Zoomed Out: New Scale = " + this.scale);
       eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
     }

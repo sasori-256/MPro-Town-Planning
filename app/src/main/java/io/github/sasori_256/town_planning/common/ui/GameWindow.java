@@ -71,11 +71,11 @@ class GameMapPanel extends JPanel {
   }
 
   boolean isInsideCameraView(int x, int y) {
-    Point2D.Double screenPos = camera.isoToScreen(new Point2D.Double(x + 1, y));
+    Point2D.Double screenPos = camera.isoToScreen(new Point2D.Double(x + 0, y));
     int panelWidth = this.getWidth();
     int panelHeight = this.getHeight();
     double cameraScale = camera.getScale();
-    int margin = (int) (100 / (cameraScale * 1.5)) + 50;
+    int margin = (int) (cameraScale * 32);
     // 画面外にある場合は描画しない
     if (screenPos.x < -margin || screenPos.x > panelWidth + margin || screenPos.y < -margin
         || screenPos.y > panelHeight + margin) {

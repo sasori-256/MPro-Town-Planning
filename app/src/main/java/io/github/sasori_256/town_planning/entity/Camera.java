@@ -82,7 +82,7 @@ public class Camera {
     applyZoomLevel();
     //画面外に行ってしまったときの対処
     Point2D.Double centerIso = screenToIso(new Point2D.Double(screenWidth / 2.0, screenHeight / 2.0));
-    if(centerIso.x < 0 || centerIso.x > this.mapWidth - 1 || centerIso.y < 0 || centerIso.y > this.mapHeight - 1){
+    if (centerIso.x < 0 || centerIso.x > this.mapWidth - 1 || centerIso.y < 0 || centerIso.y > this.mapHeight - 1){
       this.offsetX = 0;
       this.offsetY = 0;
       applyZoomLevel();
@@ -107,8 +107,8 @@ public class Camera {
 
   public void setScale(double scale) {
     int zoomLevel = (int) Math.round(scale / ZOOM_STEP);
-    if(zoomLevel < MIN_ZOOM_LEVEL) zoomLevel = MIN_ZOOM_LEVEL;
-    if(zoomLevel > MAX_ZOOM_LEVEL) zoomLevel = MAX_ZOOM_LEVEL;
+    if (zoomLevel < MIN_ZOOM_LEVEL) zoomLevel = MIN_ZOOM_LEVEL;
+    if (zoomLevel > MAX_ZOOM_LEVEL) zoomLevel = MAX_ZOOM_LEVEL;
     this.zoomLevel = zoomLevel;
     applyZoomLevel();
   }
@@ -160,7 +160,7 @@ public class Camera {
   }
 
   public void pan(int dx, int dy) {
-    if(isValidOffset(dx, dy)){
+    if (isValidOffset(dx, dy)){
       this.offsetX += dx;
       this.offsetY += dy;
       // System.out.println("Panned to Offset: (" + this.offsetX + ", " + this.offsetY + ")");
@@ -186,7 +186,7 @@ public class Camera {
   }
 
   public void zoomIn() {
-    if(this.zoomLevel < MAX_ZOOM_LEVEL){
+    if (this.zoomLevel < MAX_ZOOM_LEVEL){
       this.zoomLevel += 1;
       applyZoomLevel();
       // System.out.println("Zoomed In: New Scale = " + this.scale);
@@ -195,7 +195,7 @@ public class Camera {
   }
 
   public void zoomOut() {
-    if(this.zoomLevel > MIN_ZOOM_LEVEL){
+    if (this.zoomLevel > MIN_ZOOM_LEVEL){
       this.zoomLevel -= 1;
       applyZoomLevel();
       // System.out.println("Zoomed Out: New Scale = " + this.scale);

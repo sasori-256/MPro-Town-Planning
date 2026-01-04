@@ -17,9 +17,9 @@ public class Camera {
   private int screenWidth;
   private int screenHeight;
   private int zoomLevel;
-  private final double ZOOM_STEP = 0.25;
-  private final int MIN_ZOOM_LEVEL = 1; // 0.25倍
-  private final int MAX_ZOOM_LEVEL = 12; // 3.0倍
+  private static final double ZOOM_STEP = 0.25;
+  private static final int MIN_ZOOM_LEVEL = 1; // 0.25倍
+  private static final int MAX_ZOOM_LEVEL = 12; // 3.0倍
   private final EventBus eventBus;
 
   /**
@@ -107,8 +107,8 @@ public class Camera {
 
   public void setScale(double scale) {
     int zoomLevel = (int) Math.round(scale / ZOOM_STEP);
-    if (zoomLevel < MIN_ZOOM_LEVEL) zoomLevel = MIN_ZOOM_LEVEL;
-    if (zoomLevel > MAX_ZOOM_LEVEL) zoomLevel = MAX_ZOOM_LEVEL;
+    if(zoomLevel < MIN_ZOOM_LEVEL) zoomLevel = MIN_ZOOM_LEVEL;
+    if(zoomLevel > MAX_ZOOM_LEVEL) zoomLevel = MAX_ZOOM_LEVEL;
     this.zoomLevel = zoomLevel;
     applyZoomLevel();
   }

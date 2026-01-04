@@ -156,7 +156,7 @@ public class Camera {
   
   private boolean isValidOffset(int dx, int dy) {
     Point2D.Double centerIso = screenToIso(new Point2D.Double(this.screenWidth / 2.0 - dx, this.screenHeight / 2.0 - dy));
-    return 0<=centerIso.x && centerIso.x<=this.mapWidth - 1 && 0<=centerIso.y && centerIso.y<=this.mapHeight - 1;
+    return 0 <= centerIso.x && centerIso.x <= this.mapWidth - 1 && 0 <= centerIso.y && centerIso.y <= this.mapHeight - 1;
   }
 
   public void pan(int dx, int dy) {

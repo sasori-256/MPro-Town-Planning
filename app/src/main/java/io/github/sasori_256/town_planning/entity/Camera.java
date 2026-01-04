@@ -80,6 +80,13 @@ public class Camera {
     this.screenWidth = screenWidth;
     this.screenHeight = screenHeight;
     applyZoomLevel();
+    //画面外に行ってしまったときの対処
+    Point2D.Double centerIso = screenToIso(new Point2D.Double(screenWidth / 2.0, screenHeight / 2.0));
+    if(centerIso.x < 0 || centerIso.x > this.mapWidth - 1 || centerIso.y < 0 || centerIso.y > this.mapHeight - 1){
+      this.offsetX = 0;
+      this.offsetY = 0;
+      applyZoomLevel();
+    }
   }
 
   public void applyZoomLevel() {
@@ -147,21 +154,9 @@ public class Camera {
     return new Point2D.Double(screenX, screenY);
   }
   
-  private boolean isValidOffset(int offsetX, int offsetY) {
-    boolean validX = false;
-    boolean validY = false;
-    Point2D.Double centerIso = screenToIso(new Point2D.Double(this.screenWidth / 2.0 - offsetX, this.screenHeight / 2.0 - offsetY));
-    if(offsetX > 0){
-      validX = centerIso.x >= 0;
-    }else if(offsetX <= 0){
-      validX = centerIso.x <= this.mapWidth - 1;
-    }
-    if(offsetY > 0){
-      validY = centerIso.y >= 0;
-    }else if(offsetY <= 0){
-      validY = centerIso.y <= this.mapHeight - 1;
-    }
-    return validX && validY;
+  private boolean isValidOffset(int dx, int dy) {
+    Point2D.Double centerIso = screenToIso(new Point2D.Double(this.screenWidth / 2.0 - dx, this.screenHeight / 2.0 - dy));
+    return 0<=centerIso.x && centerIso.x<=this.mapWidth - 1 && 0<=centerIso.y && centerIso.y<=this.mapHeight - 1;
   }
 
   public void pan(int dx, int dy) {

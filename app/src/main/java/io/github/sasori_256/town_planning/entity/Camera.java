@@ -1,6 +1,5 @@
 package io.github.sasori_256.town_planning.entity;
 
-import java.awt.Point;
 import java.awt.geom.Point2D;
 
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
@@ -12,11 +11,15 @@ public class Camera {
   private int cellWidth;
   private int offsetX;
   private int offsetY;
-  private Point2D.Double screenOrigin; // Iso座標系の原点をScreen座標系で表したときの位置
+  private Point2D.Double isoOriginByScreen; // Iso座標系の原点をScreen座標系で表したときの位置
   private int mapWidth;
   private int mapHeight;
   private int screenWidth;
   private int screenHeight;
+  private int zoomLevel;
+  private final double ZOOM_STEP = 0.25;
+  private final int MIN_ZOOM_LEVEL = 1; // 0.25倍
+  private final int MAX_ZOOM_LEVEL = 12; // 3.0倍
   private final EventBus eventBus;
 
   /**
@@ -39,6 +42,7 @@ public class Camera {
     this.mapHeight = mapHeight;
     this.screenWidth = screenWidth;
     this.screenHeight = screenHeight;
+    this.zoomLevel = (int) (defaultScale / ZOOM_STEP);
     this.updateOrigin(screenWidth, screenHeight);
     this.eventBus = eventBus;
   }
@@ -63,17 +67,28 @@ public class Camera {
     return offsetY;
   }
 
-  public Point2D.Double getScreenOrigin() {
-    return screenOrigin;
+  public Point2D.Double getIsoOriginByScreen() {
+    return isoOriginByScreen;
   }
 
-  public void setScale(double scale) {
-    Point2D.Double centerScreen = new Point2D.Double(screenWidth / 2.0, screenHeight / 2.0);
+  public void setOffset(int offsetX, int offsetY) {
+    this.offsetX = offsetX;
+    this.offsetY = offsetY;
+  }
+
+  public void setScreenSize(int screenWidth, int screenHeight) {
+    this.screenWidth = screenWidth;
+    this.screenHeight = screenHeight;
+    applyZoomLevel();
+  }
+
+  public void applyZoomLevel() {
+    Point2D.Double centerScreen = new Point2D.Double(this.screenWidth / 2.0, this.screenHeight / 2.0);
     Point2D.Double centerIso = screenToIso(centerScreen);
 
-    this.scale = scale;
-    this.cellHeight = (int) (32 * scale);
-    this.cellWidth = (int) (32 * 2 * scale);
+    this.scale = zoomLevel * ZOOM_STEP;
+    this.cellHeight = (int) (32 * this.scale);
+    this.cellWidth = (int) (32 * 2 * this.scale);
     updateOrigin(this.screenWidth, this.screenHeight);
 
     this.offsetX = 0;
@@ -83,9 +98,12 @@ public class Camera {
     this.offsetY = (int) (centerScreen.y - newCenterScreen.y);
   }
 
-  public void setOffset(int offsetX, int offsetY) {
-    this.offsetX = offsetX;
-    this.offsetY = offsetY;
+  public void setScale(double scale) {
+    int zoomLevel = (int) Math.round(scale / ZOOM_STEP);
+    if (zoomLevel < MIN_ZOOM_LEVEL) zoomLevel = MIN_ZOOM_LEVEL;
+    if (zoomLevel > MAX_ZOOM_LEVEL) zoomLevel = MAX_ZOOM_LEVEL;
+    this.zoomLevel = zoomLevel;
+    applyZoomLevel();
   }
 
   /**
@@ -99,8 +117,8 @@ public class Camera {
     double centerIsoY = (this.mapHeight - 1) / 2.0;
     double centerScreenX = (centerIsoX - centerIsoY) * (this.cellWidth / 2.0);
     double centerScreenY = (centerIsoX + centerIsoY) * (this.cellHeight / 2.0);
-    this.screenOrigin = new Point2D.Double(screenWidth / 2 - centerScreenX, screenHeight / 2 - centerScreenY);
-    System.out.println("Screen Origin Updated: (" + this.screenOrigin.x + ", " + this.screenOrigin.y + ")");
+    this.isoOriginByScreen = new Point2D.Double(screenWidth / 2 - centerScreenX, screenHeight / 2 - centerScreenY);
+    // System.out.println("Screen Origin Updated: (" + this.isoOriginByScreen.x + ", " + this.isoOriginByScreen.y + ")");
   }
 
   /**
@@ -110,8 +128,8 @@ public class Camera {
    * @return アイソメトリック座標
    */
   public Point2D.Double screenToIso(Point2D.Double screenPos) {
-    double adjX = screenPos.x - this.screenOrigin.x - this.offsetX;
-    double adjY = screenPos.y - this.screenOrigin.y - this.offsetY;
+    double adjX = screenPos.x - this.isoOriginByScreen.x - this.offsetX;
+    double adjY = screenPos.y - this.isoOriginByScreen.y - this.offsetY;
     double isoX = adjX / this.cellWidth + adjY / this.cellHeight;
     double isoY = adjY / this.cellHeight - adjX / this.cellWidth;
     return new Point2D.Double(isoX, isoY);
@@ -124,25 +142,33 @@ public class Camera {
    * @return スクリーン座標
    */
   public Point2D.Double isoToScreen(Point2D.Double isoPos) {
-    double screenX = (isoPos.x - isoPos.y) * (this.cellWidth / 2.0) + this.screenOrigin.x + this.offsetX;
-    double screenY = (isoPos.x + isoPos.y) * (this.cellHeight / 2.0) + this.screenOrigin.y + this.offsetY;
+    double screenX = (isoPos.x - isoPos.y) * (this.cellWidth / 2.0) + this.isoOriginByScreen.x + this.offsetX;
+    double screenY = (isoPos.x + isoPos.y) * (this.cellHeight / 2.0) + this.isoOriginByScreen.y + this.offsetY;
     return new Point2D.Double(screenX, screenY);
+  }
+  
+  private boolean isValidOffset(int offsetX, int offsetY) {
+    boolean validX = false;
+    boolean validY = false;
+    Point2D.Double centerIso = screenToIso(new Point2D.Double(this.screenWidth / 2.0 - offsetX, this.screenHeight / 2.0 - offsetY));
+    if(offsetX > 0){
+      validX = centerIso.x >= 0;
+    }else if(offsetX <= 0){
+      validX = centerIso.x <= this.mapWidth - 1;
+    }
+    if(offsetY > 0){
+      validY = centerIso.y >= 0;
+    }else if(offsetY <= 0){
+      validY = centerIso.y <= this.mapHeight - 1;
+    }
+    return validX && validY;
   }
 
   public void pan(int dx, int dy) {
-    boolean moved=false;
-    if(-cellWidth/2 * mapHeight <= this.offsetX + dx && this.offsetX + dx <= cellWidth/2 * mapWidth){
+    if(isValidOffset(dx, dy)){
       this.offsetX += dx;
-      moved=true;
-    }
-
-    int largerY = Math.max(mapHeight, mapWidth);
-    if(-cellHeight/2 * largerY <= this.offsetY + dy && this.offsetY + dy <= cellHeight/2 * largerY){
       this.offsetY += dy;
-      moved=true;
-    }
-    if(moved){
-      System.out.println("Panned to Offset: (" + this.offsetX + ", " + this.offsetY + ")");
+      // System.out.println("Panned to Offset: (" + this.offsetX + ", " + this.offsetY + ")");
       eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
     }
   }
@@ -165,20 +191,20 @@ public class Camera {
   }
 
   public void zoomIn() {
-    if (this.scale * 1.125 < 3.0) {
-      setScale(this.scale * 1.125);
-      System.out.println("Zoomed In: New Scale = " + this.scale);
+    if(this.zoomLevel < MAX_ZOOM_LEVEL){
+      this.zoomLevel += 1;
+      applyZoomLevel();
+      // System.out.println("Zoomed In: New Scale = " + this.scale);
       eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
     }
-
   }
 
   public void zoomOut() {
-    if (this.scale / 1.125 > 0.25) {
-      setScale(this.scale / 1.125);
-      System.out.println("Zoomed Out: New Scale = " + this.scale);
+    if(this.zoomLevel > MIN_ZOOM_LEVEL){
+      this.zoomLevel -= 1;
+      applyZoomLevel();
+      // System.out.println("Zoomed Out: New Scale = " + this.scale);
       eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
     }
-
   }
 }

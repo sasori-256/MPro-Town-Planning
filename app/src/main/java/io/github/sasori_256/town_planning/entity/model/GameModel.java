@@ -3,6 +3,11 @@ package io.github.sasori_256.town_planning.entity.model;
 import java.awt.geom.Point2D;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.DoubleConsumer;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import io.github.sasori_256.town_planning.common.core.GameLoop;
@@ -24,10 +29,26 @@ import io.github.sasori_256.town_planning.map.model.GameMap;
 /**
  * ゲームの環境情報を管理するモデルクラス。
  * GameContextの実装であり、GameLoopのホストでもある。
+ * 
+ * <h2>Thread Safety and Locking</h2>
+ * This class uses a ReadWriteLock to ensure thread-safe access to game state.
+ * To prevent nested locking issues and potential deadlocks, entity lifecycle operations
+ * (spawnEntity/removeEntity) are automatically deferred when called during the update cycle.
+ * 
+ * <p>During the update cycle:
+ * <ul>
+ *   <li>Calls to spawnEntity() are queued and processed after all entity updates complete</li>
+ *   <li>Calls to removeEntity() are queued and processed after all entity updates complete</li>
+ *   <li>This prevents entity update methods from attempting to acquire locks that are already held</li>
+ * </ul>
+ * 
+ * <p>This design allows entity update strategies to safely call GameContext methods like
+ * removeEntity() without causing deadlocks or nested lock acquisitions.
  */
 public class GameModel implements GameContext, Updatable {
   private final EventBus eventBus;
   private final GameMap gameMap;
+  private final ReadWriteLock stateLock = new ReentrantReadWriteLock();
   private GameLoop gameLoop; // 現在は未使用だが、startGameLoopで使われることを想定
 
   // スレッドセーフなリストを使用
@@ -39,8 +60,19 @@ public class GameModel implements GameContext, Updatable {
   private int day = 1;
   private double dayTimer = 0;
   private static final double DAY_LENGTH = 10.0; // 10秒で1日
+  // UPDATE_STEP is 1/30s and ANIMATION_STEP is 1/6s, so animations advance every 5 update steps.
+  private static final double UPDATE_STEP = 1.0 / 30.0;
+  private static final double ANIMATION_STEP = 1.0 / 6.0;
+  private double animationAccumulator = 0.0;
 
   private double lastDeltaTime = 0;
+
+  // Thread-local flag to track if we're currently in an update cycle
+  private final ThreadLocal<Boolean> inUpdateCycle = ThreadLocal.withInitial(() -> false);
+  
+  // Lists to defer entity lifecycle operations during update to prevent nested locking
+  private final List<BaseGameEntity> entitiesToSpawn = new CopyOnWriteArrayList<>();
+  private final List<BaseGameEntity> entitiesToRemove = new CopyOnWriteArrayList<>();
 
   public GameModel(EventBus eventBus) {
     this.eventBus = eventBus;
@@ -59,7 +91,7 @@ public class GameModel implements GameContext, Updatable {
   }
 
   public void startGameLoop(Runnable renderCallback) {
-    Runnable updateCallback = () -> update(this);
+    DoubleConsumer updateCallback = dt -> update(this, dt);
     // GameLoopのインスタンスは新しいものが作られるため、既存のgameLoopフィールドとの整合性は要検討
     this.gameLoop = new GameLoop(updateCallback, renderCallback);
     this.gameLoop.start();
@@ -95,11 +127,29 @@ public class GameModel implements GameContext, Updatable {
 
   @Override
   public double getDeltaTime() {
-    return lastDeltaTime;
+    return withReadLock(() -> lastDeltaTime);
   }
 
+  /**
+   * Spawns a new entity into the game world.
+   * 
+   * <p>If called during an update cycle (i.e., from within an entity's update method),
+   * the spawn operation is automatically deferred and will be processed after all
+   * entity updates complete. This prevents nested lock acquisition and potential deadlocks.
+   * 
+   * <p>If called outside an update cycle, the entity is spawned immediately.
+   * 
+   * @param entity The entity to spawn
+   * @param <T> The entity type
+   */
   @Override
   public <T extends BaseGameEntity> void spawnEntity(T entity) {
+    // If called during an update cycle, defer the operation to avoid nested locking
+    if (inUpdateCycle.get()) {
+      entitiesToSpawn.add(entity);
+      return;
+    }
+    
     if (entity instanceof Resident) {
       addResidentEntity((Resident) entity);
     } else if (entity instanceof Building) {
@@ -109,51 +159,129 @@ public class GameModel implements GameContext, Updatable {
     }
   }
 
+  /**
+   * Internal method to spawn an entity without acquiring locks.
+   * Should only be called when a write lock is already held.
+   */
+  private <T extends BaseGameEntity> void spawnEntityInternal(T entity) {
+    if (entity instanceof Resident) {
+      addResidentEntityInternal((Resident) entity);
+    } else if (entity instanceof Building) {
+      addBuildingEntityInternal((Building) entity);
+    } else if (entity instanceof Disaster) {
+      addDisasterEntityInternal((Disaster) entity);
+    }
+  }
+
+  /**
+   * Removes an entity from the game world.
+   * 
+   * <p>If called during an update cycle (i.e., from within an entity's update method),
+   * the remove operation is automatically deferred and will be processed after all
+   * entity updates complete. This prevents nested lock acquisition and potential deadlocks.
+   * 
+   * <p>If called outside an update cycle, the entity is removed immediately.
+   * 
+   * <p>The entity's onRemoved() lifecycle method will be called before removal.
+   * 
+   * @param entity The entity to remove
+   * @param <T> The entity type
+   */
   @Override
   public <T extends BaseGameEntity> void removeEntity(T entity) {
     if (entity == null) {
       return;
     }
-
-    // ライフサイクルメソッドの呼び出し
-    entity.onRemoved();
-
-    if (entity instanceof Resident) {
-      residentEntities.remove(entity);
-    } else if (entity instanceof Building) {
-      buildingEntities.remove(entity);
-    } else if (entity instanceof Disaster) {
-      disasterEntities.remove(entity);
+    
+    // If called during an update cycle, defer the operation to avoid nested locking
+    if (inUpdateCycle.get()) {
+      entitiesToRemove.add(entity);
+      return;
     }
+    
+    withWriteLock(() -> {
+      // ライフサイクルメソッドの呼び出し
+      entity.onRemoved();
+
+      if (entity instanceof Resident) {
+        residentEntities.remove(entity);
+      } else if (entity instanceof Building) {
+        buildingEntities.remove(entity);
+      } else if (entity instanceof Disaster) {
+        disasterEntities.remove(entity);
+      }
+    });
   }
 
   // --- Game Logic API ---
 
   public void addResidentEntity(Resident entity) {
+    withWriteLock(() -> {
+      addResidentEntityInternal(entity);
+    });
+  }
+
+  /**
+   * Internal method to add a resident entity without acquiring locks.
+   * Should only be called when a write lock is already held.
+   */
+  private void addResidentEntityInternal(Resident entity) {
     residentEntities.add(entity);
     eventBus.publish(new ResidentBornEvent(entity.getPosition()));
   }
 
   public void addBuildingEntity(Building entity) {
+    withWriteLock(() -> {
+      addBuildingEntityInternal(entity);
+    });
+  }
+
+  /**
+   * Internal method to add a building entity without acquiring locks.
+   * Should only be called when a write lock is already held.
+   */
+  private void addBuildingEntityInternal(Building entity) {
     buildingEntities.add(entity);
     eventBus.publish(new MapUpdatedEvent(entity.getPosition()));
   }
 
   public void addDisasterEntity(Disaster entity) {
+    withWriteLock(() -> {
+      addDisasterEntityInternal(entity);
+    });
+  }
+
+  /**
+   * Internal method to add a disaster entity without acquiring locks.
+   * Should only be called when a write lock is already held.
+   */
+  private void addDisasterEntityInternal(Disaster entity) {
     disasterEntities.add(entity);
     eventBus.publish(new DisasterOccurredEvent(entity.getType()));
   }
 
   public void removeBuildingEntity(Building entity) {
-    gameMap.removeBuilding(entity.getPosition());
-    eventBus.publish(new MapUpdatedEvent(entity.getPosition()));
+    withWriteLock(() -> {
+      gameMap.removeBuilding(entity.getPosition());
+      eventBus.publish(new MapUpdatedEvent(entity.getPosition()));
+    });
   }
 
   public int getSouls() {
-    return souls;
+    return withReadLock(() -> souls);
   }
 
   public void addSouls(int amount) {
+    withWriteLock(() -> {
+      addSoulsInternal(amount);
+    });
+  }
+
+  /**
+   * Internal method to add souls without acquiring locks.
+   * Should only be called when a write lock is already held.
+   */
+  private void addSoulsInternal(int amount) {
     this.souls += amount;
     eventBus.publish(new SoulChangedEvent(souls));
   }
@@ -188,34 +316,40 @@ public class GameModel implements GameContext, Updatable {
   }
 
   public boolean constructBuilding(Point2D.Double pos, BuildingType type) {
-    if (souls < type.getCost()) {
-      return false;
-    }
+    return withWriteLock(() -> {
+      if (souls < type.getCost()) {
+        return false;
+      }
 
-    if (!gameMap.isValidPosition(pos) || !gameMap.getCell(pos).canBuild()) {
-      return false;
-    }
+      if (!gameMap.isValidPosition(pos) || !gameMap.getCell(pos).canBuild()) {
+        return false;
+      }
 
-    addSouls(-type.getCost());
+      addSoulsInternal(-type.getCost());
 
-    Building building = new Building(pos, type);
+      Building building = new Building(pos, type);
 
-    if (gameMap.placeBuilding(pos, building)) {
-      spawnEntity(building);
-      return true;
-    } else {
-      addSouls(type.getCost());
-      return false;
-    }
+      if (gameMap.placeBuilding(pos, building)) {
+        spawnEntityInternal(building);
+        return true;
+      } else {
+        addSoulsInternal(type.getCost());
+        return false;
+      }
+    });
   }
 
   // getters / setters
   public int getDay() {
-    return day;
+    return withReadLock(() -> day);
   }
 
   public GameMap getGameMap() {
     return gameMap;
+  }
+
+  public ReadWriteLock getStateLock() {
+    return stateLock;
   }
 
   public GameLoop getGameLoop() {
@@ -223,19 +357,25 @@ public class GameModel implements GameContext, Updatable {
   } // 現状、startGameLoopで新しいループが作られるので、このgetterの用途は不明
 
   public void setSouls(int souls) {
-    this.souls = souls;
+    withWriteLock(() -> {
+      this.souls = souls;
+    });
   }
 
   public void setDay(int day) {
-    this.day = day;
+    withWriteLock(() -> {
+      this.day = day;
+    });
   }
 
   public double getDayTimer() {
-    return dayTimer;
+    return withReadLock(() -> dayTimer);
   }
 
   public void setDayTimer(double dayTimer) {
-    this.dayTimer = dayTimer;
+    withWriteLock(() -> {
+      this.dayTimer = dayTimer;
+    });
   }
 
   public static double getDayLength() {
@@ -243,31 +383,148 @@ public class GameModel implements GameContext, Updatable {
   }
 
   public double getLastDeltaTime() {
-    return lastDeltaTime;
+    return withReadLock(() -> lastDeltaTime);
   }
 
   public void setLastDeltaTime(double lastDeltaTime) {
-    this.lastDeltaTime = lastDeltaTime;
+    withWriteLock(() -> {
+      this.lastDeltaTime = lastDeltaTime;
+    });
+  }
+
+  private <T> T withReadLock(Supplier<T> supplier) {
+    Lock readLock = stateLock.readLock();
+    readLock.lock();
+    try {
+      return supplier.get();
+    } finally {
+      readLock.unlock();
+    }
+  }
+
+  private void withWriteLock(Runnable action) {
+    withWriteLock(() -> {
+      action.run();
+      return null;
+    });
+  }
+
+  private <T> T withWriteLock(Supplier<T> supplier) {
+    Lock writeLock = stateLock.writeLock();
+    writeLock.lock();
+    try {
+      return supplier.get();
+    } finally {
+      writeLock.unlock();
+    }
   }
 
   @Override
   public void update(GameContext context) {
-    double dt = 1.0 / 60.0;
-    this.lastDeltaTime = dt;
+    update(context, UPDATE_STEP);
+  }
 
-    dayTimer += dt;
-    if (dayTimer >= DAY_LENGTH) {
-      dayTimer = 0;
-      day++;
-      eventBus.publish(new DayPassedEvent(day));
-    }
+  /**
+   * Updates the game state for the current frame.
+   * 
+   * <p>This method acquires a write lock and updates all entities. To prevent nested
+   * locking issues, any calls to spawnEntity() or removeEntity() made during entity
+   * updates are automatically deferred and processed after all updates complete.
+   * 
+   * <p>The update process:
+   * <ol>
+   *   <li>Acquire write lock</li>
+   *   <li>Update day timer and game state</li>
+   *   <li>Update all residents, buildings, and disasters (which may queue spawn/remove operations)</li>
+   *   <li>Advance animations</li>
+   *   <li>Process all deferred spawn/remove operations</li>
+   *   <li>Release write lock</li>
+   * </ol>
+   * 
+   * @param context The game context
+   * @param dt Delta time in seconds since the last update
+   */
+  public void update(GameContext context, double dt) {
+    withWriteLock(() -> {
+      // Set flag to indicate we're in an update cycle
+      inUpdateCycle.set(true);
+      
+      try {
+        this.lastDeltaTime = dt;
 
+        dayTimer += dt;
+        if (dayTimer >= DAY_LENGTH) {
+          dayTimer = 0;
+          day++;
+          eventBus.publish(new DayPassedEvent(day));
+        }
+
+        for (Resident resident : residentEntities) {
+          resident.update(context);
+        }
+
+        for (Building building : buildingEntities) {
+          building.update(context);
+        }
+        
+        for (Disaster disaster : disasterEntities) {
+          disaster.update(context);
+        }
+
+        animationAccumulator += dt;
+        while (animationAccumulator >= ANIMATION_STEP) {
+          animationAccumulator -= ANIMATION_STEP;
+          advanceAnimations();
+        }
+        
+        // Process deferred entity lifecycle operations
+        processDeferredOperations();
+      } finally {
+        // Clear flag when exiting update cycle
+        inUpdateCycle.set(false);
+      }
+    });
+  }
+
+  private void advanceAnimations() {
     for (Resident resident : residentEntities) {
-      resident.update(context);
+      resident.advanceAnimation();
     }
 
     for (Building building : buildingEntities) {
-      building.update(context);
+      building.advanceAnimation();
     }
+
+    for (Disaster disaster : disasterEntities) {
+      disaster.advanceAnimation();
+    }
+  }
+  
+  /**
+   * Process deferred entity lifecycle operations that were queued during the update cycle.
+   * This method should only be called while holding the write lock.
+   */
+  private void processDeferredOperations() {
+    // Process entities to remove first
+    for (BaseGameEntity entity : entitiesToRemove) {
+      // Call lifecycle method
+      entity.onRemoved();
+      
+      // Remove from appropriate list
+      if (entity instanceof Resident) {
+        residentEntities.remove(entity);
+      } else if (entity instanceof Building) {
+        buildingEntities.remove(entity);
+      } else if (entity instanceof Disaster) {
+        disasterEntities.remove(entity);
+      }
+    }
+    entitiesToRemove.clear();
+    
+    // Process entities to spawn
+    for (BaseGameEntity entity : entitiesToSpawn) {
+      spawnEntityInternal(entity);
+    }
+    entitiesToSpawn.clear();
   }
 }

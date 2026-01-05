@@ -11,6 +11,8 @@ import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 
 import javax.swing.SwingUtilities;
 
@@ -20,12 +22,14 @@ import io.github.sasori_256.town_planning.map.controller.handler.*;
 
 public class GameMapController implements MouseListener, MouseMotionListener, KeyListener, MouseWheelListener{
     private Camera camera;
+    private final ReadWriteLock stateLock;
     private BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> actionOnClick;
     private Function<Point2D.Double, ? extends BaseGameEntity> selectedEntityGenerator;
     private Point previousMiddleMousePos;
 
-    public GameMapController(Camera camera) {
+    public GameMapController(Camera camera, ReadWriteLock stateLock) {
         this.camera = camera;
+        this.stateLock = stateLock;
         this.actionOnClick = new ClickGameMapHandler();
         this.selectedEntityGenerator = (point) -> null;
     }
@@ -47,7 +51,13 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
     public void mouseClicked(MouseEvent e) {
         if(SwingUtilities.isLeftMouseButton(e)){
             Point2D.Double isoPoint = camera.screenToIso(new Point2D.Double(e.getX(), e.getY()));
-            actionOnClick.accept(isoPoint, selectedEntityGenerator);
+            Lock writeLock = stateLock.writeLock();
+            writeLock.lock();
+            try {
+                actionOnClick.accept(isoPoint, selectedEntityGenerator);
+            } finally {
+                writeLock.unlock();
+            }
         }
     }
 

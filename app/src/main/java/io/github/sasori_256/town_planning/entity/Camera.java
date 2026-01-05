@@ -106,10 +106,7 @@ public class Camera {
   }
 
   public void setScale(double scale) {
-    int zoomLevel = (int) Math.round(scale / ZOOM_STEP);
-    if (zoomLevel < MIN_ZOOM_LEVEL) zoomLevel = MIN_ZOOM_LEVEL;
-    if (zoomLevel > MAX_ZOOM_LEVEL) zoomLevel = MAX_ZOOM_LEVEL;
-    this.zoomLevel = zoomLevel;
+    this.zoomLevel = Math.clamp((int) Math.round(scale / ZOOM_STEP), MIN_ZOOM_LEVEL, MAX_ZOOM_LEVEL);
     applyZoomLevel();
   }
 

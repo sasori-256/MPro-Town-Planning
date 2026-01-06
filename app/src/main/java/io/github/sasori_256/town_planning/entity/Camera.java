@@ -82,9 +82,14 @@ public class Camera {
     applyZoomLevel();
     //画面外に行ってしまったときの対処
     Point2D.Double centerIso = screenToIso(new Point2D.Double(screenWidth / 2.0, screenHeight / 2.0));
-    if (centerIso.x < 0 || centerIso.x > this.mapWidth - 1 || centerIso.y < 0 || centerIso.y > this.mapHeight - 1){
+    int clampedX = (int) Math.clamp(centerIso.x, 0, this.mapWidth - 1);
+    int clampedY = (int) Math.clamp(centerIso.y, 0, this.mapHeight - 1);
+    if (clampedX != (int) centerIso.x || clampedY != (int) centerIso.y){
       this.offsetX = 0;
       this.offsetY = 0;
+      Point2D.Double clampedCenterScreen = isoToScreen(new Point2D.Double(clampedX, clampedY));
+      this.offsetX = (int) ((screenWidth / 2.0) - clampedCenterScreen.x);
+      this.offsetY = (int) ((screenHeight / 2.0) - clampedCenterScreen.y);
       applyZoomLevel();
     }
   }

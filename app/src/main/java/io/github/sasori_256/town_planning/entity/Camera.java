@@ -42,7 +42,7 @@ public class Camera {
     this.mapHeight = mapHeight;
     this.screenWidth = screenWidth;
     this.screenHeight = screenHeight;
-    this.zoomLevel = (int) (defaultScale / ZOOM_STEP);
+    this.zoomLevel = (int) Math.round(defaultScale / ZOOM_STEP);
     this.updateOrigin(screenWidth, screenHeight);
     this.eventBus = eventBus;
   }

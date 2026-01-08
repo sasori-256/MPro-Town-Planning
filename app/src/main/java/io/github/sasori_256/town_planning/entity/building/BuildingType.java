@@ -11,9 +11,13 @@ import io.github.sasori_256.town_planning.entity.model.GameEffect;
  */
 public enum BuildingType {
   // maxPopulationとPopulationGrowthStrategyの紐付けを行い、Strategy生成用Supplierを設定
-  HOUSE("住居", "red_roofed_house", 50, 4, 100, () -> new PopulationGrowthEffect(4), CategoryType.RESIDENTIAL),
-  CHURCH("教会", "error_building", 150, 0, 150, CategoryType.RELIGIOUS),
-  GRAVEYARD("墓地", "error_building", 100, 0, 100, CategoryType.CEMETERY),
+  RED_ROOFED_HOUSE("赤屋根の家", "red_roofed_house", 50, 4, 100, () -> new PopulationGrowthEffect(4),
+      CategoryType.RESIDENTIAL),
+  BLUE_ROOFED_HOUSE("青屋根の家", "blue_roofed_house", 100, 8, 150, () -> new PopulationGrowthEffect(8),
+      CategoryType.RESIDENTIAL),
+  CHAPEL("礼拝堂", "chapel", 100, 0, 100, CategoryType.RELIGIOUS),
+  CHURCH("教会", "church", 150, 0, 150, CategoryType.RELIGIOUS),
+  GRAVEYARD("墓地", "graveyard", 100, 0, 100, CategoryType.CEMETERY),
   NONE("none", "none", 0, 0, 0, CategoryType.NONE);
 
   private final String displayName;

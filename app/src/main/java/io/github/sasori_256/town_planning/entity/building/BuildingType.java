@@ -184,7 +184,15 @@ public enum BuildingType {
    * 占有セルのマスクを返す。
    */
   public boolean[][] getFootprintMask() {
-    return footprintMask;
+    if (footprintMask == null) {
+      return null;
+    }
+    boolean[][] copy = new boolean[footprintMask.length][];
+    for (int i = 0; i < footprintMask.length; i++) {
+      boolean[] row = footprintMask[i];
+      copy[i] = (row != null) ? row.clone() : null;
+    }
+    return copy;
   }
 
   /**

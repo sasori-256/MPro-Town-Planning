@@ -27,8 +27,13 @@ public enum BuildingType {
   CHURCH("教会", "church", 150, 0, 150, CategoryType.RELIGIOUS),
   GRAVEYARD("墓地", "graveyard", 100, 0, 100, CategoryType.CEMETERY);
 
+  /**
+   * 描画順のグループ。
+   */
   public enum DrawGroup {
+    /** 床タイルとして描画する。 */
     FLOOR,
+    /** 住民と同じパスで描画する。 */
     ACTOR
   }
 
@@ -98,14 +103,26 @@ public enum BuildingType {
     this.anchorY = anchorY;
   }
 
+  /**
+   * 表示名を返す。
+   */
   public String getDisplayName() {
     return displayName;
   }
 
+  /**
+   * 基本画像名を返す。
+   */
   public String getImageName() {
     return imageName;
   }
 
+  /**
+   * タイル座標に対応する画像名を返す。
+   *
+   * @param localX 建物内のX座標
+   * @param localY 建物内のY座標
+   */
   public String getImageName(int localX, int localY) {
     if (localX < 0 || localY < 0 || localX >= width || localY >= height) {
       return imageName;
@@ -114,38 +131,65 @@ public enum BuildingType {
     return name != null ? name : imageName;
   }
 
+  /**
+   * 建設コストを返す。
+   */
   public int getCost() {
     return cost;
   }
 
+  /**
+   * 最大人口を返す。
+   */
   public int getMaxPopulation() {
     return maxPopulation;
   }
 
+  /**
+   * 最大耐久度を返す。
+   */
   public int getMaxDurability() {
     return maxDurability;
   }
 
+  /**
+   * 効果生成用のSupplierを返す。
+   */
   public Supplier<GameEffect> getEffectSupplier() {
     return effectSupplier;
   }
 
+  /**
+   * 建物カテゴリを返す。
+   */
   public CategoryType getCategory() {
     return category;
   }
 
+  /**
+   * 横幅(セル数)を返す。
+   */
   public int getWidth() {
     return width;
   }
 
+  /**
+   * 高さ(セル数)を返す。
+   */
   public int getHeight() {
     return height;
   }
 
+  /**
+   * 占有セルのマスクを返す。
+   */
   public boolean[][] getFootprintMask() {
     return footprintMask;
   }
 
+  /**
+   * 指定タイルが歩行可能かを返す。
+   */
   public boolean isWalkable(int localX, int localY) {
     if (localX < 0 || localY < 0 || localX >= width || localY >= height) {
       return false;
@@ -153,6 +197,9 @@ public enum BuildingType {
     return walkableMask[localY][localX];
   }
 
+  /**
+   * 指定タイルの移動コストを返す。
+   */
   public int getMoveCost(int localX, int localY) {
     if (localX < 0 || localY < 0 || localX >= width || localY >= height) {
       return DEFAULT_IMPASSABLE_COST;
@@ -163,6 +210,9 @@ public enum BuildingType {
     return moveCost[localY][localX];
   }
 
+  /**
+   * 指定タイルの描画グループを返す。
+   */
   public DrawGroup getDrawGroup(int localX, int localY) {
     if (localX < 0 || localY < 0 || localX >= width || localY >= height) {
       return DrawGroup.FLOOR;
@@ -170,10 +220,16 @@ public enum BuildingType {
     return drawGroup[localY][localX];
   }
 
+  /**
+   * アンカーXを返す。
+   */
   public int getAnchorX() {
     return anchorX;
   }
 
+  /**
+   * アンカーYを返す。
+   */
   public int getAnchorY() {
     return anchorY;
   }

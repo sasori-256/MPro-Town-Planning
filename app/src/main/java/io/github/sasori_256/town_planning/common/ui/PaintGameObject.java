@@ -6,6 +6,7 @@ import java.awt.geom.Point2D;
 import javax.swing.JPanel;
 import io.github.sasori_256.town_planning.common.ui.ImageManager.ImageStorage;
 import io.github.sasori_256.town_planning.entity.Camera;
+import io.github.sasori_256.town_planning.entity.resident.Resident;
 import io.github.sasori_256.town_planning.map.model.GameMap;
 import io.github.sasori_256.town_planning.map.model.MapCell;
 
@@ -42,7 +43,7 @@ public class PaintGameObject {
    * @param pos            座標
    * @param gameMap        ゲームマップ
    * @param camera         カメラ
-   * @param getImageByName 画像取得関数
+   * @param imageManager   画像取得用マネージャー
    * @param panel          描画対象のパネル
    */
   public void paintTerrain(Graphics g, Point2D.Double pos, GameMap gameMap, Camera camera, ImageManager imageManager,
@@ -73,6 +74,27 @@ public class PaintGameObject {
       return;
     }
     paint(g, pos, buildingName, camera, imageManager, panel);
+  }
+
+  /**
+   * 指定された住民を描画する
+   *
+   * @param g            グラフィックスコンテキスト
+   * @param resident     描画対象の住民
+   * @param camera       カメラ
+   * @param imageManager 画像取得用マネージャー
+   * @param panel        描画対象のパネル
+   */
+  public void paintResident(Graphics g, Resident resident, Camera camera, ImageManager imageManager, JPanel panel) {
+    if (resident == null || resident.getType() == null) {
+      return;
+    }
+    String imageName = resident.getType().getImageName();
+    if (imageName == null) {
+      return;
+    }
+    Point2D.Double pos = resident.getPosition();
+    paint(g, pos, imageName, camera, imageManager, panel);
   }
 
   /**

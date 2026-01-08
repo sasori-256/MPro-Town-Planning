@@ -21,8 +21,10 @@ import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.NodeMenuInitializer;
 import io.github.sasori_256.town_planning.entity.Camera;
-import io.github.sasori_256.town_planning.map.controller.GameMapController;
+import io.github.sasori_256.town_planning.entity.building.BuildingType;
+import io.github.sasori_256.town_planning.map.controller.GameMapController;     
 import io.github.sasori_256.town_planning.map.model.GameMap;
+import io.github.sasori_256.town_planning.map.model.MapCell;
 
 /**
  * gameMapの内容を描画するクラス
@@ -65,13 +67,52 @@ class GameMapPanel extends JPanel {
     Lock readLock = stateLock.readLock();
     readLock.lock();
     try {
-      // マップの奥(上)から手前(下)に向かって描画する
-      for (int z = 0; z < gameMap.getWidth() + gameMap.getHeight(); z++) {
+      int maxZ = gameMap.getWidth() + gameMap.getHeight();
+
+      // 1. 地形を描画
+      for (int z = 0; z < maxZ; z++) {
         for (int x = 0; x <= z; x++) {
           int y = z - x;
           if (x < gameMap.getWidth() && y < gameMap.getHeight() && isInsideCameraView(x, y)) {
             Point2D.Double pos = new Point2D.Double(x, y);
             paintGameObject.paintTerrain(g, pos, gameMap, camera, imageManager, this);
+          }
+        }
+      }
+
+      // 2. 床系の建物タイルを描画
+      for (int z = 0; z < maxZ; z++) {
+        for (int x = 0; x <= z; x++) {
+          int y = z - x;
+          if (x < gameMap.getWidth() && y < gameMap.getHeight() && isInsideCameraView(x, y)) {
+            Point2D.Double pos = new Point2D.Double(x, y);
+            MapCell cell = gameMap.getCell(pos);
+            if (cell.getBuilding() == null) {
+              continue;
+            }
+            if (cell.getBuilding().getType().getDrawGroup(cell.getLocalX(), cell.getLocalY())
+                != BuildingType.DrawGroup.FLOOR) {
+              continue;
+            }
+            paintGameObject.paintBuilding(g, pos, gameMap, camera, imageManager, this);
+          }
+        }
+      }
+
+      // 3. はみ出しやすい建物タイルを描画
+      for (int z = 0; z < maxZ; z++) {
+        for (int x = 0; x <= z; x++) {
+          int y = z - x;
+          if (x < gameMap.getWidth() && y < gameMap.getHeight() && isInsideCameraView(x, y)) {
+            Point2D.Double pos = new Point2D.Double(x, y);
+            MapCell cell = gameMap.getCell(pos);
+            if (cell.getBuilding() == null) {
+              continue;
+            }
+            if (cell.getBuilding().getType().getDrawGroup(cell.getLocalX(), cell.getLocalY())
+                != BuildingType.DrawGroup.ACTOR) {
+              continue;
+            }
             paintGameObject.paintBuilding(g, pos, gameMap, camera, imageManager, this);
           }
         }

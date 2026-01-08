@@ -1,7 +1,6 @@
 package io.github.sasori_256.town_planning.entity.building;
 
 import java.util.function.Supplier;
-
 import io.github.sasori_256.town_planning.entity.building.strategy.PopulationGrowthEffect;
 import io.github.sasori_256.town_planning.entity.model.CategoryType;
 import io.github.sasori_256.town_planning.entity.model.GameEffect;
@@ -15,16 +14,23 @@ public enum BuildingType {
       CategoryType.RESIDENTIAL),
   BLUE_ROOFED_HOUSE("青屋根の家", "blue_roofed_house", 100, 8, 150, () -> new PopulationGrowthEffect(8),
       CategoryType.RESIDENTIAL),
-  ROAD("道", "stone_brick_floor", 0, 0, 1, () -> null, CategoryType.INFRASTRUCTURE,
-      1, 1, singleMask(true), singleMask(true), singleCost(1), singleTile("stone_brick_floor"), 0, 0),
+  ROAD("道", "road", 0, 0, 1, () -> null, CategoryType.INFRASTRUCTURE,
+      1, 1, singleMask(true), singleMask(true), singleCost(1), singleTile("road"),
+      singleDrawGroup(DrawGroup.FLOOR), 0, 0),
   PLAZA("広場", "plaza_fountain_center", 0, 0, 1, () -> null, CategoryType.INFRASTRUCTURE,
-      3, 3, filledMask(3, 3, true), plazaWalkable(), plazaCost(), plazaTiles(), 1, 1),
+      3, 3, filledMask(3, 3, true), plazaWalkable(), plazaCost(), plazaTiles(),
+      plazaDrawGroup(), 1, 1),
   PARK("公園", "park_floor", 0, 0, 1, () -> null, CategoryType.INFRASTRUCTURE,
       5, 5, filledMask(5, 5, true), filledMask(5, 5, true), filledCost(5, 5, 2),
-      filledTiles(5, 5, "park_floor"), 2, 2),
+      filledTiles(5, 5, "park_floor"), filledDrawGroup(5, 5, DrawGroup.FLOOR), 2, 2),
   CHAPEL("礼拝堂", "chapel", 100, 0, 100, CategoryType.RELIGIOUS),
   CHURCH("教会", "church", 150, 0, 150, CategoryType.RELIGIOUS),
   GRAVEYARD("墓地", "graveyard", 100, 0, 100, CategoryType.CEMETERY);
+
+  public enum DrawGroup {
+    FLOOR,
+    ACTOR
+  }
 
   private final String displayName;
   private final String imageName;
@@ -40,6 +46,7 @@ public enum BuildingType {
   private final boolean[][] walkableMask;
   private final int[][] moveCost;
   private final String[][] tileImageNames;
+  private final DrawGroup[][] drawGroup;
   private final int anchorX;
   private final int anchorY;
 
@@ -50,7 +57,7 @@ public enum BuildingType {
       Supplier<GameEffect> effectSupplier, CategoryType category) {
     this(displayName, imageName, cost, maxPopulation, maxDurability, effectSupplier, category,
         1, 1, singleMask(true), singleMask(false), singleCost(DEFAULT_IMPASSABLE_COST),
-        singleTile(imageName), 0, 0);
+        singleTile(imageName), singleDrawGroup(DrawGroup.ACTOR), 0, 0);
   }
 
   // Effectなしのコンストラクタ
@@ -62,7 +69,8 @@ public enum BuildingType {
   BuildingType(String displayName, String imageName, int cost, int maxPopulation, int maxDurability,
       Supplier<GameEffect> effectSupplier, CategoryType category,
       int width, int height, boolean[][] footprintMask, boolean[][] walkableMask,
-      int[][] moveCost, String[][] tileImageNames, int anchorX, int anchorY) {
+      int[][] moveCost, String[][] tileImageNames, DrawGroup[][] drawGroup,
+      int anchorX, int anchorY) {
     if (width <= 0 || height <= 0) {
       throw new IllegalArgumentException("width/height must be positive.");
     }
@@ -70,6 +78,7 @@ public enum BuildingType {
     validateMask("walkableMask", width, height, walkableMask);
     validateCost("moveCost", width, height, moveCost);
     validateTiles("tileImageNames", width, height, tileImageNames);
+    validateDrawGroup("drawGroup", width, height, drawGroup);
 
     this.displayName = displayName;
     this.imageName = imageName;
@@ -84,6 +93,7 @@ public enum BuildingType {
     this.walkableMask = walkableMask;
     this.moveCost = moveCost;
     this.tileImageNames = tileImageNames;
+    this.drawGroup = drawGroup;
     this.anchorX = anchorX;
     this.anchorY = anchorY;
   }
@@ -153,6 +163,13 @@ public enum BuildingType {
     return moveCost[localY][localX];
   }
 
+  public DrawGroup getDrawGroup(int localX, int localY) {
+    if (localX < 0 || localY < 0 || localX >= width || localY >= height) {
+      return DrawGroup.FLOOR;
+    }
+    return drawGroup[localY][localX];
+  }
+
   public int getAnchorX() {
     return anchorX;
   }
@@ -162,15 +179,19 @@ public enum BuildingType {
   }
 
   private static boolean[][] singleMask(boolean value) {
-    return new boolean[][] { { value } };
+    return new boolean[][]{{value}};
   }
 
   private static int[][] singleCost(int value) {
-    return new int[][] { { value } };
+    return new int[][]{{value}};
   }
 
   private static String[][] singleTile(String value) {
-    return new String[][] { { value } };
+    return new String[][]{{value}};
+  }
+
+  private static DrawGroup[][] singleDrawGroup(DrawGroup value) {
+    return new DrawGroup[][]{{value}};
   }
 
   private static boolean[][] filledMask(int width, int height, boolean value) {
@@ -203,6 +224,16 @@ public enum BuildingType {
     return tiles;
   }
 
+  private static DrawGroup[][] filledDrawGroup(int width, int height, DrawGroup value) {
+    DrawGroup[][] groups = new DrawGroup[height][width];
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        groups[y][x] = value;
+      }
+    }
+    return groups;
+  }
+
   private static boolean[][] plazaWalkable() {
     boolean[][] mask = filledMask(3, 3, true);
     mask[1][1] = false;
@@ -216,9 +247,15 @@ public enum BuildingType {
   }
 
   private static String[][] plazaTiles() {
-    String[][] tiles = filledTiles(3, 3, "stone_brick_floor");
+    String[][] tiles = filledTiles(3, 3, "road");
     tiles[1][1] = "plaza_fountain_center";
     return tiles;
+  }
+
+  private static DrawGroup[][] plazaDrawGroup() {
+    DrawGroup[][] groups = filledDrawGroup(3, 3, DrawGroup.FLOOR);
+    groups[1][1] = DrawGroup.ACTOR;
+    return groups;
   }
 
   private static void validateMask(String name, int width, int height, boolean[][] mask) {
@@ -249,6 +286,17 @@ public enum BuildingType {
     }
     for (int y = 0; y < height; y++) {
       if (tiles[y] == null || tiles[y].length != width) {
+        throw new IllegalArgumentException(name + " width mismatch at y=" + y);
+      }
+    }
+  }
+
+  private static void validateDrawGroup(String name, int width, int height, DrawGroup[][] group) {
+    if (group == null || group.length != height) {
+      throw new IllegalArgumentException(name + " height mismatch.");
+    }
+    for (int y = 0; y < height; y++) {
+      if (group[y] == null || group[y].length != width) {
         throw new IllegalArgumentException(name + " width mismatch at y=" + y);
       }
     }

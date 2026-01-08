@@ -33,6 +33,7 @@ public class RandomMoveAction implements GameAction {
 
   public RandomMoveAction() {
     this.speed = 50.0; // ピクセル/秒
+    this.searchCooldown = 0.0;
   }
 
   @Override

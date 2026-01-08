@@ -1,20 +1,22 @@
 package io.github.sasori_256.town_planning.map.model;
 
 import java.awt.geom.Point2D;
-
 import io.github.sasori_256.town_planning.entity.building.Building;
-import io.github.sasori_256.town_planning.entity.building.BuildingType;
 
 public class MapCell {
   private final Point2D.Double position;
   private Terrain terrain;
   private Building building;
+  private int localX;
+  private int localY;
 
   public MapCell(Point2D.Double position, Terrain initTerrain) {
     this.position = position;
     this.terrain = initTerrain;
-    // TODO: インスタンスプールを導入してメモリ効率を改善する
-    this.building = new Building(position, BuildingType.NONE);
+    // Buildingはnull許容に変更してResident通過判定や描画時に余計なメンバーにアクセス不可に
+    this.building = null;
+    this.localX = 0;
+    this.localY = 0;
   }
 
   public Point2D.Double getPosition() {
@@ -34,12 +36,28 @@ public class MapCell {
     return building;
   }
 
-  public void setBuilding(Building building) {
-    this.building = building;
+  public int getLocalX() {
+    return localX;
   }
 
-  public void removeBuilding() {
-    this.building = new Building(this.position, BuildingType.NONE); // nullではなくNONEタイプを設定
+  public int getLocalY() {
+    return localY;
+  }
+
+  public boolean isOccupied() {
+    return building != null;
+  }
+
+  public void setBuilding(Building building, int localX, int localY) {
+    this.building = building;
+    this.localX = localX;
+    this.localY = localY;
+  }
+
+  public void clearBuilding() {
+    this.building = null;
+    this.localX = 0;
+    this.localY = 0;
   }
 
   /**
@@ -47,16 +65,27 @@ public class MapCell {
    * 単純に地形が建築可能かつ建物が存在しない場合にtrueを返す
    */
   public boolean canBuild() {
-    return terrain.isBuildable() && building.getType() == BuildingType.NONE;
+    return terrain.isBuildable() && building == null;
   }
 
   /**
    * 住民が歩けるかどうかを判定する
-   * 地形が歩行可能かつ建物が存在しない場合にtrueを返す
+   * 地形が歩行可能かつ建物が侵入可能ならtrueを返す
    */
   public boolean canWalk() {
-    boolean terrainOk = terrain.isWalkable();
-    boolean buildingOk = (building.getType() == BuildingType.NONE);
-    return terrainOk && buildingOk;
+    if (!terrain.isWalkable()) {
+      return false;
+    }
+    if (building == null) {
+      return true;
+    }
+    return building.getType().isWalkable(localX, localY);
+  }
+
+  public int getMoveCost() {
+    if (building == null) {
+      return terrain.getMoveCost();
+    }
+    return building.getType().getMoveCost(localX, localY);
   }
 }

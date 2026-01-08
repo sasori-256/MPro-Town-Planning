@@ -15,12 +15,16 @@ public class Building extends BaseGameEntity {
   private final BuildingType type;
   private int currentDurability;
   private int currentPopulation;
+  private int originX;
+  private int originY;
 
   public Building(Point2D.Double position, BuildingType buildingType) {
     super(position);
     this.type = buildingType;
     this.currentDurability = buildingType.getMaxDurability();
     this.currentPopulation = 0;
+    this.originX = (int) Math.round(position.getX());
+    this.originY = (int) Math.round(position.getY());
 
     // CompositeUpdateStrategy を使用して、排他アクションと並行エフェクトを管理可能にする
     CompositeUpdateStrategy strategy = new CompositeUpdateStrategy();
@@ -55,5 +59,18 @@ public class Building extends BaseGameEntity {
 
   public void setCurrentPopulation(int population) {
     this.currentPopulation = Math.max(0, Math.min(population, this.type.getMaxPopulation()));
+  }
+
+  public int getOriginX() {
+    return originX;
+  }
+
+  public int getOriginY() {
+    return originY;
+  }
+
+  public void setOrigin(int originX, int originY) {
+    this.originX = originX;
+    this.originY = originY;
   }
 }

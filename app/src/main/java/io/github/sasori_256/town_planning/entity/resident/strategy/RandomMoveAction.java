@@ -4,12 +4,15 @@ import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.entity.model.GameAction;
 import io.github.sasori_256.town_planning.entity.model.GameContext;
 import io.github.sasori_256.town_planning.map.model.GameMap;
+import io.github.sasori_256.town_planning.map.model.MapCell;
 import java.awt.Point;
 import java.awt.geom.Point2D;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -20,6 +23,7 @@ public class RandomMoveAction implements GameAction {
   private static final double ARRIVAL_EPSILON = 1e-3;
   private static final double SEARCH_COOLDOWN = 0.5;
   private static final int MAX_RANDOM_TRIES = 20;
+  private static final int COST_INF = 1_000_000;
 
   private final double speed;
   private double searchCooldown;
@@ -177,19 +181,11 @@ public class RandomMoveAction implements GameAction {
     return true;
   }
 
-  /**
-   * Finds a path from the starting position to the goal position using a
-   * breadth-first search algorithm
-   *
-   * @param map      The game map to navigate.
-   * @param startPos The starting position.
-   * @param goalPos  The goal position.
-   * @return A list of points representing the path, or null if no path is found.
-   */
   private List<Point2D.Double> findPath(
       GameMap map,
       Point2D.Double startPos,
-      Point2D.Double goalPos) {
+      Point2D.Double goalPos
+  ) {
     int width = map.getWidth();
     int height = map.getHeight();
     int startX = toCellIndex(startPos.getX(), width);
@@ -204,18 +200,24 @@ public class RandomMoveAction implements GameAction {
       return null;
     }
 
-    boolean[][] visited = new boolean[height][width];
+    int[][] dist = new int[height][width];
+    for (int y = 0; y < height; y++) {
+      Arrays.fill(dist[y], COST_INF);
+    }
     Point[][] prev = new Point[height][width];
-    ArrayDeque<Point> queue = new ArrayDeque<>();
+    PriorityQueue<Node> queue = new PriorityQueue<>(Comparator.comparingInt(n -> n.cost));
 
-    visited[startY][startX] = true;
-    queue.add(new Point(startX, startY));
+    dist[startY][startX] = 0;
+    queue.add(new Node(startX, startY, 0));
 
-    int[] dx = { 1, -1, 0, 0 };
-    int[] dy = { 0, 0, 1, -1 };
+    int[] dx = {1, -1, 0, 0};
+    int[] dy = {0, 0, 1, -1};
 
     while (!queue.isEmpty()) {
-      Point current = queue.poll();
+      Node current = queue.poll();
+      if (current.cost != dist[current.y][current.x]) {
+        continue;
+      }
       if (current.x == goalX && current.y == goalY) {
         break;
       }
@@ -225,19 +227,24 @@ public class RandomMoveAction implements GameAction {
         if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
           continue;
         }
-        if (visited[ny][nx]) {
-          continue;
-        }
         if (!isCellWalkable(map, nx, ny)) {
           continue;
         }
-        visited[ny][nx] = true;
-        prev[ny][nx] = current;
-        queue.add(new Point(nx, ny));
+        MapCell cell = map.getCell(new Point2D.Double(nx, ny));
+        int stepCost = cell.getMoveCost();
+        if (stepCost >= COST_INF) {
+          continue;
+        }
+        int newCost = current.cost + stepCost;
+        if (newCost < dist[ny][nx]) {
+          dist[ny][nx] = newCost;
+          prev[ny][nx] = new Point(current.x, current.y);
+          queue.add(new Node(nx, ny, newCost));
+        }
       }
     }
 
-    if (!visited[goalY][goalX]) {
+    if (dist[goalY][goalX] >= COST_INF) {
       return null;
     }
 
@@ -286,5 +293,17 @@ public class RandomMoveAction implements GameAction {
     destination = null;
     path = null;
     pathIndex = 0;
+  }
+
+  private static final class Node {
+    private final int x;
+    private final int y;
+    private final int cost;
+
+    private Node(int x, int y, int cost) {
+      this.x = x;
+      this.y = y;
+      this.cost = cost;
+    }
   }
 }

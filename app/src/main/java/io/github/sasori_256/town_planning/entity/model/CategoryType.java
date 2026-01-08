@@ -4,6 +4,7 @@ public enum CategoryType {
     RESIDENTIAL("住居"),
     RELIGIOUS("宗教施設"),
     CEMETERY("墓地"),
+    INFRASTRUCTURE("インフラ"),
     NONE("なし"),
     METEOR("隕石"),
     PLAGUE("疫病");

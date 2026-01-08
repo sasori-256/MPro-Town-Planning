@@ -1,7 +1,6 @@
 package io.github.sasori_256.town_planning.map.model;
 
 import java.awt.geom.Point2D;
-
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
 import io.github.sasori_256.town_planning.entity.building.Building;
@@ -52,30 +51,97 @@ public class GameMap implements MapContext {
 
   @Override
   public boolean placeBuilding(Point2D.Double pos, Building building) {
-    if (!isValidPosition(pos)) {
+    if (building == null) {
       return false;
     }
-    MapCell cell = getCell(pos);
-    if (cell.canBuild()) {
-      cell.setBuilding(building);
-      eventBus.publish(new MapUpdatedEvent(pos));
-      return true;
+    int anchorX = (int) Math.round(pos.getX());
+    int anchorY = (int) Math.round(pos.getY());
+    Point2D.Double anchorPos = new Point2D.Double(anchorX, anchorY);
+    if (!isValidPosition(anchorPos)) {
+      return false;
     }
-    return false;
+
+    BuildingType type = building.getType();
+    int originX = anchorX - type.getAnchorX();
+    int originY = anchorY - type.getAnchorY();
+    boolean[][] footprint = type.getFootprintMask();
+
+    for (int y = 0; y < type.getHeight(); y++) {
+      for (int x = 0; x < type.getWidth(); x++) {
+        if (!footprint[y][x]) {
+          continue;
+        }
+        int mapX = originX + x;
+        int mapY = originY + y;
+        Point2D.Double cellPos = new Point2D.Double(mapX, mapY);
+        if (!isValidPosition(cellPos)) {
+          return false;
+        }
+        MapCell cell = getCell(cellPos);
+        if (cell.isOccupied() || !cell.getTerrain().isBuildable()) {
+          return false;
+        }
+      }
+    }
+
+    building.setOrigin(originX, originY);
+    building.setPosition(anchorPos);
+
+    for (int y = 0; y < type.getHeight(); y++) {
+      for (int x = 0; x < type.getWidth(); x++) {
+        if (!footprint[y][x]) {
+          continue;
+        }
+        int mapX = originX + x;
+        int mapY = originY + y;
+        Point2D.Double cellPos = new Point2D.Double(mapX, mapY);
+        getCell(cellPos).setBuilding(building, x, y);
+      }
+    }
+
+    eventBus.publish(new MapUpdatedEvent(anchorPos));
+    return true;
   }
 
   @Override
   public boolean removeBuilding(Point2D.Double pos) {
-    if (!isValidPosition(pos)) {
+    int anchorX = (int) Math.round(pos.getX());
+    int anchorY = (int) Math.round(pos.getY());
+    Point2D.Double anchorPos = new Point2D.Double(anchorX, anchorY);
+    if (!isValidPosition(anchorPos)) {
       return false;
     }
-    MapCell cell = getCell(pos);
-    if (cell.getBuilding().getType() != BuildingType.NONE) {
-      cell.removeBuilding();
-      eventBus.publish(new MapUpdatedEvent(pos)); // 修正箇所
-      return true;
+    MapCell cell = getCell(anchorPos);
+    Building building = cell.getBuilding();
+    if (building == null) {
+      return false;
     }
-    return false;
+
+    BuildingType type = building.getType();
+    int originX = building.getOriginX();
+    int originY = building.getOriginY();
+    boolean[][] footprint = type.getFootprintMask();
+
+    for (int y = 0; y < type.getHeight(); y++) {
+      for (int x = 0; x < type.getWidth(); x++) {
+        if (!footprint[y][x]) {
+          continue;
+        }
+        int mapX = originX + x;
+        int mapY = originY + y;
+        Point2D.Double cellPos = new Point2D.Double(mapX, mapY);
+        if (!isValidPosition(cellPos)) {
+          continue;
+        }
+        MapCell target = getCell(cellPos);
+        if (target.getBuilding() == building) {
+          target.clearBuilding();
+        }
+      }
+    }
+
+    eventBus.publish(new MapUpdatedEvent(anchorPos));
+    return true;
   }
 
   @Override

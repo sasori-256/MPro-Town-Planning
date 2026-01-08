@@ -84,6 +84,11 @@ public enum BuildingType {
     validateCost("moveCost", width, height, moveCost);
     validateTiles("tileImageNames", width, height, tileImageNames);
     validateDrawGroup("drawGroup", width, height, drawGroup);
+    if (anchorX < 0 || anchorX >= width || anchorY < 0 || anchorY >= height) {
+      throw new IllegalArgumentException(
+          "anchorX and anchorY must be within bounds: 0 <= anchorX < " + width
+          + ", 0 <= anchorY < " + height + " (got anchorX=" + anchorX + ", anchorY=" + anchorY + ")");
+    }
 
     this.displayName = displayName;
     this.imageName = imageName;

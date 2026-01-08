@@ -15,8 +15,8 @@ public enum BuildingType {
       CategoryType.RESIDENTIAL),
   BLUE_ROOFED_HOUSE("青屋根の家", "blue_roofed_house", 100, 8, 150, () -> new PopulationGrowthEffect(8),
       CategoryType.RESIDENTIAL),
-  ROAD("道", "road", 0, 0, 1, () -> null, CategoryType.INFRASTRUCTURE,
-      1, 1, singleMask(true), singleMask(true), singleCost(1), singleTile("road"), 0, 0),
+  ROAD("道", "stone_brick_floor", 0, 0, 1, () -> null, CategoryType.INFRASTRUCTURE,
+      1, 1, singleMask(true), singleMask(true), singleCost(1), singleTile("stone_brick_floor"), 0, 0),
   PLAZA("広場", "plaza_fountain_center", 0, 0, 1, () -> null, CategoryType.INFRASTRUCTURE,
       3, 3, filledMask(3, 3, true), plazaWalkable(), plazaCost(), plazaTiles(), 1, 1),
   PARK("公園", "park_floor", 0, 0, 1, () -> null, CategoryType.INFRASTRUCTURE,
@@ -162,15 +162,15 @@ public enum BuildingType {
   }
 
   private static boolean[][] singleMask(boolean value) {
-    return new boolean[][]{{value}};
+    return new boolean[][] { { value } };
   }
 
   private static int[][] singleCost(int value) {
-    return new int[][]{{value}};
+    return new int[][] { { value } };
   }
 
   private static String[][] singleTile(String value) {
-    return new String[][]{{value}};
+    return new String[][] { { value } };
   }
 
   private static boolean[][] filledMask(int width, int height, boolean value) {
@@ -216,7 +216,7 @@ public enum BuildingType {
   }
 
   private static String[][] plazaTiles() {
-    String[][] tiles = filledTiles(3, 3, "road");
+    String[][] tiles = filledTiles(3, 3, "stone_brick_floor");
     tiles[1][1] = "plaza_fountain_center";
     return tiles;
   }

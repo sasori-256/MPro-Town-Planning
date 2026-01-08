@@ -232,7 +232,7 @@ public class RandomMoveAction implements GameAction {
           continue;
         }
         MapCell cell = map.getCell(new Point2D.Double(nx, ny));
-        int stepCost = cell.getMoveCost();
+        long stepCost = cell.getMoveCost();
         if (stepCost >= COST_INF) {
           continue;
         }

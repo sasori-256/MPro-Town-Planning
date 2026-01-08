@@ -23,7 +23,7 @@ public class RandomMoveAction implements GameAction {
   private static final double ARRIVAL_EPSILON = 1e-3;
   private static final double SEARCH_COOLDOWN = 0.5;
   private static final int MAX_RANDOM_TRIES = 20;
-  private static final int COST_INF = 1_000_000;
+  private static final long COST_INF = 1_000_000L;
 
   private final double speed;
   private double searchCooldown;
@@ -201,12 +201,12 @@ public class RandomMoveAction implements GameAction {
       return null;
     }
 
-    int[][] dist = new int[height][width];
+    long[][] dist = new long[height][width];
     for (int y = 0; y < height; y++) {
       Arrays.fill(dist[y], COST_INF);
     }
     Point[][] prev = new Point[height][width];
-    PriorityQueue<Node> queue = new PriorityQueue<>(Comparator.comparingInt(n -> n.cost));
+    PriorityQueue<Node> queue = new PriorityQueue<>(Comparator.comparingLong(n -> n.cost));
 
     dist[startY][startX] = 0;
     queue.add(new Node(startX, startY, 0));
@@ -236,7 +236,7 @@ public class RandomMoveAction implements GameAction {
         if (stepCost >= COST_INF) {
           continue;
         }
-        int newCost = current.cost + stepCost;
+        long newCost = current.cost + stepCost;
         if (newCost < dist[ny][nx]) {
           dist[ny][nx] = newCost;
           prev[ny][nx] = new Point(current.x, current.y);
@@ -299,9 +299,9 @@ public class RandomMoveAction implements GameAction {
   private static final class Node {
     private final int x;
     private final int y;
-    private final int cost;
+    private final long cost;
 
-    private Node(int x, int y, int cost) {
+    private Node(int x, int y, long cost) {
       this.x = x;
       this.y = y;
       this.cost = cost;

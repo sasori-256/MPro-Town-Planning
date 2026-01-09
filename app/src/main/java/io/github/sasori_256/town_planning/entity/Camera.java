@@ -96,7 +96,7 @@ public class Camera {
       Point2D.Double clampedCenterScreen = isoToScreen(new Point2D.Double(clampedX, clampedY));
       this.offsetX = (int) ((screenWidth / 2.0) - clampedCenterScreen.x);
       this.offsetY = (int) ((screenHeight / 2.0) - clampedCenterScreen.y);
-      applyZoomLevel();
+      // applyZoomLevel();
     }
   }
 

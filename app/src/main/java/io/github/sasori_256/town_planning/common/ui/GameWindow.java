@@ -75,52 +75,26 @@ class GameMapPanel extends JPanel {
     try {
       int maxZ = gameMap.getWidth() + gameMap.getHeight();
 
-      // 1. 地形を描画
-      for (int z = 0; z < maxZ; z++) {
-        for (int x = 0; x <= z; x++) {
-          int y = z - x;
-          if (x < gameMap.getWidth() && y < gameMap.getHeight() && isInsideCameraView(x, y)) {
-            Point2D.Double pos = new Point2D.Double(x, y);
-            paintGameObject.paintTerrain(g, pos, gameMap, camera, imageManager, this);
-          }
-        }
-      }
-
-      // 2. 床系の建物タイルを描画
-      for (int z = 0; z < maxZ; z++) {
-        for (int x = 0; x <= z; x++) {
-          int y = z - x;
-          if (x < gameMap.getWidth() && y < gameMap.getHeight() && isInsideCameraView(x, y)) {
-            Point2D.Double pos = new Point2D.Double(x, y);
-            MapCell cell = gameMap.getCell(pos);
-            if (cell.getBuilding() == null) {
-              continue;
-            }
-            if (cell.getBuilding().getType().getDrawGroup(cell.getLocalX(), cell.getLocalY())
-                != BuildingType.DrawGroup.FLOOR) {
-              continue;
-            }
-            paintGameObject.paintBuilding(g, pos, gameMap, camera, imageManager, this);
-          }
-        }
-      }
-
-      // 3. はみ出しやすい建物タイルと住民を奥行き順に描画
+      // 1. 地形と床系タイルを描画し、アクタ系タイルを収集
       List<DrawEntry> actors = new ArrayList<>();
       for (int z = 0; z < maxZ; z++) {
         for (int x = 0; x <= z; x++) {
           int y = z - x;
           if (x < gameMap.getWidth() && y < gameMap.getHeight() && isInsideCameraView(x, y)) {
             Point2D.Double pos = new Point2D.Double(x, y);
+            paintGameObject.paintTerrain(g, pos, gameMap, camera, imageManager, this);
+
             MapCell cell = gameMap.getCell(pos);
             if (cell.getBuilding() == null) {
               continue;
             }
-            if (cell.getBuilding().getType().getDrawGroup(cell.getLocalX(), cell.getLocalY())
-                != BuildingType.DrawGroup.ACTOR) {
-              continue;
+            BuildingType.DrawGroup group = cell.getBuilding().getType()
+                .getDrawGroup(cell.getLocalX(), cell.getLocalY());
+            if (group == BuildingType.DrawGroup.FLOOR) {
+              paintGameObject.paintBuilding(g, pos, gameMap, camera, imageManager, this);
+            } else if (group == BuildingType.DrawGroup.ACTOR) {
+              actors.add(DrawEntry.forBuilding(pos));
             }
-            actors.add(DrawEntry.forBuilding(pos));
           }
         }
       }

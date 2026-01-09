@@ -1,12 +1,18 @@
 package io.github.sasori_256.town_planning.map.model;
 
 import java.awt.geom.Point2D;
+
+import org.jspecify.annotations.Nullable;
+
 import io.github.sasori_256.town_planning.entity.building.Building;
 
 public class MapCell {
   private final Point2D.Double position;
   private Terrain terrain;
+
+  @Nullable
   private Building building;
+
   private int localX;
   private int localY;
 

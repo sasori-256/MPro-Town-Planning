@@ -21,11 +21,29 @@ public class ImageManager extends Component {
    * 所定の場所にある全ての画像を読み込む
    */
   public void loadImages() {
-    String PATH = this.getClass().getClassLoader().getResource("images").getPath();
-    File dir = new File(PATH);
-    File[] files = dir.listFiles((d, name) -> {
-      return name.endsWith(".png");
-    });
+    java.net.URL imagesUrl = this.getClass().getClassLoader().getResource("images");
+    String PATH = imagesUrl != null ? imagesUrl.getPath() : null;
+    File dir = PATH != null ? new File(PATH) : null;
+
+    java.util.List<File> fileList = new java.util.ArrayList<>();
+    if (dir != null && dir.exists()) {
+      // スタックを使って再帰的にサブディレクトリを探索する
+      java.util.Deque<File> stack = new java.util.ArrayDeque<>();
+      stack.push(dir);
+      while (!stack.isEmpty()) {
+        File current = stack.pop();
+        File[] children = current.listFiles();
+        if (children == null) continue;
+        for (File child : children) {
+          if (child.isDirectory()) {
+            stack.push(child);
+          } else if (child.getName().toLowerCase().endsWith(".png")) {
+            fileList.add(child);
+          }
+        }
+      }
+    }
+    File[] files = fileList.toArray(new File[0]);
     MediaTracker tracker = new MediaTracker(this);
     // 一時的に画像名とImageオブジェクトを保持する
     Map<String, BufferedImage> loadedImages = new HashMap<>();

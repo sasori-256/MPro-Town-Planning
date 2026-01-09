@@ -177,8 +177,6 @@ public class PaintUI {
 
   /**
    * 現在のSelectedMode、SelectedCategoryに応じたUIを描画する
-   * 
-   * @param g
    */
   public void paint() {
     // モード選択ボタンの描画

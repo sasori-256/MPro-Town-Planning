@@ -33,6 +33,12 @@ public class Camera {
    * @param eventBus     イベントバス
    */
   public Camera(double defaultScale, int screenWidth, int screenHeight, int mapWidth, int mapHeight, EventBus eventBus) {
+    if(defaultScale <= 0){
+      throw new IllegalArgumentException("Default scale must be greater than 0.");
+    }
+    if(mapWidth < 1 || mapHeight < 1){
+      throw new IllegalArgumentException("Map width and height must be at least 1.");
+    }
     this.scale = defaultScale;
     this.cellHeight = (int) (32 * defaultScale);
     this.cellWidth = (int) (32 * 2 * defaultScale);

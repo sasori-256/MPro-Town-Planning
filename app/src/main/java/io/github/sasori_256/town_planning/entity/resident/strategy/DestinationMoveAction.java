@@ -19,7 +19,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * 目的地を決めて最短経路で移動するStrategy。
  * 他の動作（働く、祈るなど）と分離させたいのでGameActionとして実装（排他動作）。
  */
-public class RandomMoveAction implements GameAction {
+public class DestinationMoveAction implements GameAction {
   private static final double ARRIVAL_EPSILON = 1e-3;
   private static final double SEARCH_COOLDOWN = 0.5;
   private static final int MAX_RANDOM_TRIES = 20;
@@ -31,7 +31,7 @@ public class RandomMoveAction implements GameAction {
   private List<Point2D.Double> path;
   private int pathIndex;
 
-  public RandomMoveAction() {
+  public DestinationMoveAction() {
     this.speed = 50.0; // ピクセル/秒
     this.searchCooldown = 0.0;
   }
@@ -185,8 +185,7 @@ public class RandomMoveAction implements GameAction {
   private List<Point2D.Double> findPath(
       GameMap map,
       Point2D.Double startPos,
-      Point2D.Double goalPos
-  ) {
+      Point2D.Double goalPos) {
     int width = map.getWidth();
     int height = map.getHeight();
     int startX = toCellIndex(startPos.getX(), width);
@@ -211,8 +210,8 @@ public class RandomMoveAction implements GameAction {
     dist[startY][startX] = 0;
     queue.add(new Node(startX, startY, 0));
 
-    int[] dx = {1, -1, 0, 0};
-    int[] dy = {0, 0, 1, -1};
+    int[] dx = { 1, -1, 0, 0 };
+    int[] dy = { 0, 0, 1, -1 };
 
     while (!queue.isEmpty()) {
       Node current = queue.poll();

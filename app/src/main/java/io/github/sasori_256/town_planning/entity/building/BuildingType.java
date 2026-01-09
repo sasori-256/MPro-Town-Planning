@@ -127,23 +127,45 @@ public enum BuildingType {
   private static final int DEFAULT_IMPASSABLE_COST = 1_000_000;
 
   // Effectありのコンストラクタ
-  BuildingType(String displayName, String imageName, int cost, int maxPopulation, int maxDurability,
-      Supplier<GameEffect> effectSupplier, CategoryType category) {
+  BuildingType(
+      String displayName,
+      String imageName,
+      int cost,
+      int maxPopulation,
+      int maxDurability,
+      Supplier<GameEffect> effectSupplier,
+      CategoryType category) {
     this(displayName, imageName, cost, maxPopulation, maxDurability, effectSupplier, category,
         1, 1, singleMask(true), singleMask(false), singleCost(DEFAULT_IMPASSABLE_COST),
         singleTile(imageName), singleDrawGroup(DrawGroup.ACTOR), 0, 0);
   }
 
   // Effectなしのコンストラクタ
-  BuildingType(String displayName, String imageName, int cost, int maxPopulation, int maxDurability,
+  BuildingType(
+      String displayName,
+      String imageName,
+      int cost,
+      int maxPopulation,
+      int maxDurability,
       CategoryType category) {
     this(displayName, imageName, cost, maxPopulation, maxDurability, () -> null, category);
   }
 
-  BuildingType(String displayName, String imageName, int cost, int maxPopulation, int maxDurability,
-      Supplier<GameEffect> effectSupplier, CategoryType category,
-      int width, int height, boolean[][] footprintMask, boolean[][] walkableMask,
-      int[][] moveCost, String[][] tileImageNames, DrawGroup[][] drawGroup,
+  BuildingType(
+      String displayName,
+      String imageName,
+      int cost,
+      int maxPopulation,
+      int maxDurability,
+      Supplier<GameEffect> effectSupplier,
+      CategoryType category,
+      int width,
+      int height,
+      boolean[][] footprintMask,
+      boolean[][] walkableMask,
+      int[][] moveCost,
+      String[][] tileImageNames,
+      DrawGroup[][] drawGroup,
       int anchorX, int anchorY) {
     if (width <= 0 || height <= 0) {
       throw new IllegalArgumentException("width/height must be positive.");

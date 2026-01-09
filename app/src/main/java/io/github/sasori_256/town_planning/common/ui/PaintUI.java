@@ -65,6 +65,7 @@ public class PaintUI {
       }
       String imageName = prefix + buttonText.toLowerCase();
       CustomButton button = new CustomButton(buttonText); // 画像が見つからない場合はテキストだけのボタンを使用
+      button.setFocusable(false); // mapPannelでのキーイベントを受け取るため、ボタンにフォーカスしないようにフォーカスを外す
       ImageStorage imageStorage = imageManager.getImageStorage(imageName);
       if (imageStorage == null || imageStorage.name == null || imageStorage.name.equals("error")) {
         // System.err.println("Warning: Image not found: " + imageName);

@@ -2,8 +2,6 @@ package io.github.sasori_256.town_planning.entity.resident;
 
 /**
  * 住民の属性定義。
- *
- * TODO: 将来的にjsonなどの外部データから読み込む形に変更する。
  */
 public enum ResidentType {
   CIVILIAN("civilian", "resident", 50, 10, 1.0f),

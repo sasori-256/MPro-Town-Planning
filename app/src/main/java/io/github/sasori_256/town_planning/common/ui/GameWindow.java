@@ -75,7 +75,7 @@ class GameMapPanel extends JPanel {
     try {
       int maxZ = gameMap.getWidth() + gameMap.getHeight();
 
-      // 1. 地形と床系タイルを描画し、アクタ系タイルを収集
+      // 地形と床系タイルを描画し、アクタ系タイルを収集
       List<DrawEntry> actors = new ArrayList<>();
       for (int z = 0; z < maxZ; z++) {
         for (int x = 0; x <= z; x++) {

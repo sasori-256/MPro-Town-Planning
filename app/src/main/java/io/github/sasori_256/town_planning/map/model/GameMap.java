@@ -54,12 +54,13 @@ public class GameMap implements MapContext {
     if (building == null) {
       return false;
     }
+    // Validate the original continuous position before snapping to the grid.
+    if (!isValidPosition(pos)) {
+      return false;
+    }
     int anchorX = (int) Math.round(pos.getX());
     int anchorY = (int) Math.round(pos.getY());
     Point2D.Double anchorPos = new Point2D.Double(anchorX, anchorY);
-    if (!isValidPosition(anchorPos)) {
-      return false;
-    }
 
     BuildingType type = building.getType();
     int originX = anchorX - type.getAnchorX();

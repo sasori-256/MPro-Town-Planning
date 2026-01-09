@@ -1,15 +1,5 @@
 package io.github.sasori_256.town_planning.common.core;
 
-// AtomicBooleanについて
-// AtomicBooleanは、Javaのjava.util.concurrent.atomicパッケージに属するクラスであり、
-// スレッドセーフなブール値の操作を提供します。
-// 複数のスレッドが同時にアクセスする可能性のあるブール値を扱う際に使用され、
-// 競合状態を防ぐために設計されています。
-// AtomicBooleanは、基本的なブール値の操作（true/falseの設定、取得、反転など）を
-// 原子操作として提供します。
-// これにより、複数のスレッドが同時に値を変更しようとした場合でも、一貫性が保たれます。
-// 例えば、複数のスレッドが同時にフラグを設定またはクリアしようとする場合に、
-// AtomicBooleanを使用することで、競合状態を防ぎ、正しい結果を得ることができます。
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.DoubleConsumer;
 import javax.swing.SwingUtilities;

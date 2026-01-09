@@ -52,6 +52,7 @@ public class Resident extends BaseGameEntity {
     return this.faith;
   }
 
+  @Override
   public int getLayerIndex() {
     return this.layerIndex;
   }

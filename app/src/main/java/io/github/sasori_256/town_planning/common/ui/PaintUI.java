@@ -10,6 +10,7 @@ import javax.swing.JPanel;
 import io.github.sasori_256.town_planning.common.ui.ImageManager.ImageStorage;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.BuildingNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
+import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.DisasterNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.MenuNode;
 
 /**
@@ -65,6 +66,7 @@ public class PaintUI {
       }
       String imageName = prefix + buttonText.toLowerCase();
       CustomButton button = new CustomButton(buttonText); // 画像が見つからない場合はテキストだけのボタンを使用
+      button.setFocusable(false); // mapPannelでのキーイベントを受け取るため、ボタンにフォーカスしないようにフォーカスを外す
       ImageStorage imageStorage = imageManager.getImageStorage(imageName);
       if (imageStorage == null || imageStorage.name == null || imageStorage.name.equals("error")) {
         // System.err.println("Warning: Image not found: " + imageName);
@@ -74,7 +76,9 @@ public class PaintUI {
       button.setCustomBounds(xPos, yPos, width, height);
       // ボタンの画像を指定
       button.addActionListener(actionListener);
-      button.addActionListener(objectNode);
+      if (objectNode != null) {
+        button.addActionListener(objectNode);
+      }
       createdButtons.get(level).add(button);
       panel.add(button);
     }
@@ -156,9 +160,8 @@ public class PaintUI {
    * @param objectName
    */
   public void setSelectedObject(String objectName, MenuNode objectNode) {
-    // TODO: 選択されたオブジェクトをゲームマップコントローラーに通知する
-    if (!(objectNode instanceof BuildingNode)) {
-      System.err.println("Selected object node is not a BuildingNode: " + objectName);
+    if (!(objectNode instanceof BuildingNode || objectNode instanceof DisasterNode)) {
+      System.err.println("Selected object node is not a BuildingNode or DisasterNode: " + objectName);
       return;
     }
     objectNode.actionPerformed(null);
@@ -176,8 +179,6 @@ public class PaintUI {
 
   /**
    * 現在のSelectedMode、SelectedCategoryに応じたUIを描画する
-   * 
-   * @param g
    */
   public void paint() {
     // モード選択ボタンの描画

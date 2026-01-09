@@ -10,6 +10,7 @@ import javax.swing.JPanel;
 import io.github.sasori_256.town_planning.common.ui.ImageManager.ImageStorage;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.BuildingNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
+import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.DisasterNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.MenuNode;
 
 /**
@@ -74,7 +75,9 @@ public class PaintUI {
       button.setCustomBounds(xPos, yPos, width, height);
       // ボタンの画像を指定
       button.addActionListener(actionListener);
-      button.addActionListener(objectNode);
+      if (objectNode != null) {
+        button.addActionListener(objectNode);
+      }
       createdButtons.get(level).add(button);
       panel.add(button);
     }
@@ -156,9 +159,8 @@ public class PaintUI {
    * @param objectName
    */
   public void setSelectedObject(String objectName, MenuNode objectNode) {
-    // TODO: 選択されたオブジェクトをゲームマップコントローラーに通知する
-    if (!(objectNode instanceof BuildingNode)) {
-      System.err.println("Selected object node is not a BuildingNode: " + objectName);
+    if (!(objectNode instanceof BuildingNode || objectNode instanceof DisasterNode)) {
+      System.err.println("Selected object node is not a BuildingNode or DisasterNode: " + objectName);
       return;
     }
     objectNode.actionPerformed(null);

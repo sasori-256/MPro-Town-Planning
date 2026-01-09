@@ -43,7 +43,7 @@ public class PaintGameObject {
    * @param pos            座標
    * @param gameMap        ゲームマップ
    * @param camera         カメラ
-   * @param getImageByName 画像取得関数
+   * @param imageManager   画像取得関数
    * @param panel          描画対象のパネル
    */
   public void paintTerrain(Graphics g, Point2D.Double pos, GameMap gameMap, Camera camera, ImageManager imageManager,

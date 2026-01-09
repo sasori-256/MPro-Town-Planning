@@ -31,16 +31,16 @@ public class ImageManager extends Component {
       java.util.Deque<File> stack = new java.util.ArrayDeque<>();
       stack.push(dir);
       while (!stack.isEmpty()) {
-      File current = stack.pop();
-      File[] children = current.listFiles();
-      if (children == null) continue;
-      for (File child : children) {
-        if (child.isDirectory()) {
-        stack.push(child);
-        } else if (child.getName().toLowerCase().endsWith(".png")) {
-        fileList.add(child);
+        File current = stack.pop();
+        File[] children = current.listFiles();
+        if (children == null) continue;
+        for (File child : children) {
+          if (child.isDirectory()) {
+            stack.push(child);
+          } else if (child.getName().toLowerCase().endsWith(".png")) {
+            fileList.add(child);
+          }
         }
-      }
       }
     }
     File[] files = fileList.toArray(new File[0]);

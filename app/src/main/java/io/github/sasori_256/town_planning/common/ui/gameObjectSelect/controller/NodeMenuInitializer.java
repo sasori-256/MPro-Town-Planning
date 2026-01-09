@@ -28,9 +28,6 @@ public class NodeMenuInitializer {
         // Buildingのノード追加
         Map<CategoryType, CategoryNode> categoryNodeMap = new HashMap<>();
         for(BuildingType type: BuildingType.values()){
-            if(type == BuildingType.NONE) {
-                continue;
-            }
             CategoryNode categoryNode = categoryNodeMap.computeIfAbsent(type.getCategory(), cat -> {
                 CategoryNode newCategoryNode = new CategoryNode(cat.getDisplayName());
                 creativeRoot.add(newCategoryNode);

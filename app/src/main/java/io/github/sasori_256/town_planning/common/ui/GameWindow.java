@@ -9,9 +9,12 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
@@ -32,13 +35,15 @@ class GameMapPanel extends JPanel {
   private final ImageManager imageManager;
   private final PaintGameObject paintGameObject;
   private final PaintUI paintUI;
+  private final ReadWriteLock stateLock;
 
-  public GameMapPanel(GameMap gameMap, Camera camera, CategoryNode root) {
+  public GameMapPanel(GameMap gameMap, Camera camera, CategoryNode root, ReadWriteLock stateLock) {
     this.gameMap = gameMap;
     this.camera = camera;
     this.root = root;
     this.imageManager = new ImageManager();
     this.paintGameObject = new PaintGameObject();
+    this.stateLock = stateLock;
     this.setLayout(null);
     setBackground(Color.BLACK);
     this.paintUI = new PaintUI(imageManager, this, root);
@@ -57,16 +62,22 @@ class GameMapPanel extends JPanel {
   public void paintComponent(Graphics g) {
 
     super.paintComponent(g);
-    // マップの奥(上)から手前(下)に向かって描画する
-    for (int z = 0; z < gameMap.getWidth() + gameMap.getHeight(); z++) {
-      for (int x = 0; x <= z; x++) {
-        int y = z - x;
-        if (x < gameMap.getWidth() && y < gameMap.getHeight() && isInsideCameraView(x, y)) {
-          Point2D.Double pos = new Point2D.Double(x, y);
-          paintGameObject.paintTerrain(g, pos, gameMap, camera, imageManager, this);
-          paintGameObject.paintBuilding(g, pos, gameMap, camera, imageManager, this);
+    Lock readLock = stateLock.readLock();
+    readLock.lock();
+    try {
+      // マップの奥(上)から手前(下)に向かって描画する
+      for (int z = 0; z < gameMap.getWidth() + gameMap.getHeight(); z++) {
+        for (int x = 0; x <= z; x++) {
+          int y = z - x;
+          if (x < gameMap.getWidth() && y < gameMap.getHeight() && isInsideCameraView(x, y)) {
+            Point2D.Double pos = new Point2D.Double(x, y);
+            paintGameObject.paintTerrain(g, pos, gameMap, camera, imageManager, this);
+            paintGameObject.paintBuilding(g, pos, gameMap, camera, imageManager, this);
+          }
         }
       }
+    } finally {
+      readLock.unlock();
     }
   }
 
@@ -98,20 +109,25 @@ class GameMapPanel extends JPanel {
  */
 public class GameWindow extends JFrame {
   public <T extends MouseListener & MouseMotionListener & MouseWheelListener & KeyListener> GameWindow(T listener,
-      GameMap gameMap, Camera camera, int width, int height, EventBus eventBus, GameMapController gameMapController) {
+      GameMap gameMap, Camera camera, int width, int height, EventBus eventBus, GameMapController gameMapController,
+      ReadWriteLock stateLock) {
     setTitle("Town Planning Game");
     setSize(width, height);
     // GameMap gameMap = generateTestMap();;
     CategoryNode root = NodeMenuInitializer.setup(gameMapController, gameMap);
 
-    GameMapPanel gameMapPanel = new GameMapPanel(gameMap, camera, root);
+    GameMapPanel gameMapPanel = new GameMapPanel(gameMap, camera, root, stateLock);
     gameMapPanel.addMouseListener(listener);
     gameMapPanel.addMouseMotionListener(listener);
     gameMapPanel.addMouseWheelListener(listener);
     gameMapPanel.addKeyListener(listener);
     gameMapPanel.setFocusable(true);
     eventBus.subscribe(MapUpdatedEvent.class, event -> {
-      gameMapPanel.repaint();
+      if (SwingUtilities.isEventDispatchThread()) {
+        gameMapPanel.repaint();
+      } else {
+        SwingUtilities.invokeLater(gameMapPanel::repaint);
+      }
     });
     this.add(gameMapPanel, BorderLayout.CENTER);
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -119,6 +135,7 @@ public class GameWindow extends JFrame {
       @Override
       public void componentResized(java.awt.event.ComponentEvent e) {
         gameMapPanel.repaintUI();
+        camera.setScreenSize(getWidth(), getHeight());
         // MEMO:ウィンドウリサイズ時の処理を追加する場合はここに記載 Cameraの位置修正とか
       }
     });

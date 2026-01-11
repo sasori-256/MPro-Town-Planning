@@ -132,5 +132,13 @@ public class ImageManager extends Component {
       this.image = image;
       this.loadSize();
     }
+
+    public String getName() {
+      return name;
+    }
+
+    public BufferedImage getImage() {
+      return image;
+    }
   }
 }

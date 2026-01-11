@@ -123,7 +123,7 @@ public class PaintGameObject {
       int yPos = (int) Math.round(screenPos.y + posShift.y);
       int width = (int) (imageScale.x * cameraScale);
       int height = (int) (imageScale.y * cameraScale);
-      g2d.drawImage(imageStorage.image, xPos, yPos, width, height, panel);
+      g2d.drawImage(imageStorage.getImage(), xPos, yPos, width, height, panel);
     }
   }
 }

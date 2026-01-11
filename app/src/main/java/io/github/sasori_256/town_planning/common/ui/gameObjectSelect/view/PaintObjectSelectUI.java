@@ -1,4 +1,4 @@
-package io.github.sasori_256.town_planning.common.ui;
+package io.github.sasori_256.town_planning.common.ui.gameObjectSelect.view;
 
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -7,6 +7,8 @@ import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
+import io.github.sasori_256.town_planning.common.ui.CustomButton;
+import io.github.sasori_256.town_planning.common.ui.ImageManager;
 import io.github.sasori_256.town_planning.common.ui.ImageManager.ImageStorage;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.BuildingNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
@@ -18,14 +20,14 @@ import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.
  * 最初にモード選択ボタンを描画し、次に選択されたモードに応じたカテゴリボタンを描画する
  * 更に、選択されたカテゴリに応じたオブジェクトボタンを描画する
  */
-public class PaintUI {
+public class PaintObjectSelectUI {
   private final ImageManager imageManager;
   private final JPanel panel;
   private CategoryNode root;
   // private GameMapController gameMapController;
   private double UIScale = 1;
 
-  public PaintUI(ImageManager imageManager, JPanel panel, CategoryNode root) {
+  public PaintObjectSelectUI(ImageManager imageManager, JPanel panel, CategoryNode root) {
     this.imageManager = imageManager;
     this.panel = panel;
     this.root = root;
@@ -68,10 +70,10 @@ public class PaintUI {
       CustomButton button = new CustomButton(buttonText); // 画像が見つからない場合はテキストだけのボタンを使用
       button.setFocusable(false); // mapPannelでのキーイベントを受け取るため、ボタンにフォーカスしないようにフォーカスを外す
       ImageStorage imageStorage = imageManager.getImageStorage(imageName);
-      if (imageStorage == null || imageStorage.name == null || imageStorage.name.equals("error")) {
+      if (imageStorage == null || imageStorage.getName() == null || imageStorage.getName().equals("error")) {
         // System.err.println("Warning: Image not found: " + imageName);
       } else {
-        button.setImage(imageStorage.image, width, height);
+        button.setImage(imageStorage.getImage(), width, height);
       }
       button.setCustomBounds(xPos, yPos, width, height);
       // ボタンの画像を指定

@@ -33,7 +33,8 @@ public class ImageManager extends Component {
       while (!stack.isEmpty()) {
         File current = stack.pop();
         File[] children = current.listFiles();
-        if (children == null) continue;
+        if (children == null)
+          continue;
         for (File child : children) {
           if (child.isDirectory()) {
             stack.push(child);
@@ -96,7 +97,8 @@ public class ImageManager extends Component {
     } else {
       storage = this.imageStorages.get("error");
       if (storage != null) {
-        // System.out.println("Warning: Image not found: " + name + ".png, returning error image.");
+        // System.out.println("Warning: Image not found: " + name + ".png, returning
+        // error image.");
         return storage;
       } else {
         System.err.println("Fatal: Error image not found: error.png");

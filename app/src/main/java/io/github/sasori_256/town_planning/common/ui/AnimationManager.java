@@ -1,6 +1,7 @@
 package io.github.sasori_256.town_planning.common.ui;
 
 import java.awt.Graphics;
+import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.URL;
@@ -37,7 +38,6 @@ public class AnimationManager extends JComponent {
 
 	public AnimationManager() {
 		this.loadAnimations();
-		// デフォルトで透過描画（必要なら true に変更してください）
 		this.setOpaque(false);
 	}
 
@@ -193,23 +193,28 @@ public class AnimationManager extends JComponent {
 		}
 	}
 
-	public final class AnimationStorage {
+	public static final class AnimationStorage {
 		private final String name;
 		private final List<BufferedImage> frames;
-		private final int width;
-		private final int height;
+		Point2D.Double size = new Point2D.Double();
+
+		public void loadSize() {
+			if (frames.isEmpty())
+				return;
+			BufferedImage img = frames.get(0);
+			this.size.x = img.getWidth(null);
+			this.size.y = img.getHeight(null);
+			if (this.size.x == -1 || this.size.y == -1) {
+				System.err.println("Failed to get image size for: " + this.name);
+				this.size = new Point2D.Double(64.0, 32.0);
+				return;
+			}
+		}
 
 		AnimationStorage(String name, List<BufferedImage> frames) {
 			this.name = name;
 			this.frames = frames;
-			if (!frames.isEmpty()) {
-				BufferedImage img = frames.get(0);
-				this.width = img.getWidth();
-				this.height = img.getHeight();
-			} else {
-				this.width = 0;
-				this.height = 0;
-			}
+			this.loadSize();
 		}
 	}
 

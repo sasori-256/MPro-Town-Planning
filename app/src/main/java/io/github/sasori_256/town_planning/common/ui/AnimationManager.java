@@ -25,29 +25,27 @@ import javax.swing.Timer;
  * - コンストラクタで resources/animations 下の PNG を読み込む
  * - play("walk", 12, x, y) のようにして再生を登録する
  *
- * 実装の注意:
  * - ファイル名は末尾に番号がついていることを期待します（例: walk_001.png, walk_002.png）
  * - 番号部分のパターンは (.*?)[_-]?(\\d+) を想定し、数値でソートします
- * - 再生はループ再生します
  */
 public class AnimationManager extends JComponent {
-    private final Map<String, AnimationStorage> animations = new HashMap<>();
-    private final List<PlayingAnimation> playing = new ArrayList<>();
+	private final Map<String, AnimationStorage> animations = new HashMap<>();
+	private final List<PlayingAnimation> playing = new ArrayList<>();
 
-    // 汎用タイマーで repaint をトリガーする（UI スレッドで動く）
-    private Timer timer;
+	// 汎用タイマーで repaint をトリガーする（UI スレッドで動く）
+	private Timer timer;
 
-    public AnimationManager() {
-        this.loadAnimations();
-        // デフォルトで透過描画（必要なら true に変更してください）
-        this.setOpaque(false);
-    }
+	public AnimationManager() {
+		this.loadAnimations();
+		// デフォルトで透過描画（必要なら true に変更してください）
+		this.setOpaque(false);
+	}
 
-    /** resources/animations にある画像を読み込む */
-    public void loadAnimations() {
-        URL animationsUrl = this.getClass().getClassLoader().getResource("animations");
-        String path = animationsUrl != null ? animationsUrl.getPath() : null;
-        File dir = path != null ? new File(path) : null;
+	/** resources/animations にある画像を読み込む */
+	public void loadAnimations() {
+		URL animationsUrl = this.getClass().getClassLoader().getResource("animations");
+		String path = animationsUrl != null ? animationsUrl.getPath() : null;
+		File dir = path != null ? new File(path) : null;
 
 		List<File> fileList = new ArrayList<>();
 		if (dir != null && dir.exists()) {
@@ -118,11 +116,11 @@ public class AnimationManager extends JComponent {
 	/**
 	 * 指定した名前のアニメーションを指定フレームレートで x,y に描画する（doLoop が true の場合はループ再生）
 	 * 
-	 * @param name     アニメーション名（拡張子・番号なし、小文字大文字不問）
+	 * @param name      アニメーション名（拡張子・番号なし、小文字大文字不問）
 	 * @param frameRate 1 秒あたりのフレーム数（0 以下の場合は 1 として扱われます）
-	 * @param x        描画位置の X 座標
-	 * @param y        描画位置の Y 座標
-	 * @param doLoop   true の場合は最後のフレームまで再生した後に先頭に戻ってループ再生し、false の場合は 1 回のみ再生します
+	 * @param x         描画位置の X 座標
+	 * @param y         描画位置の Y 座標
+	 * @param doLoop    true の場合は最後のフレームまで再生した後に先頭に戻ってループ再生し、false の場合は 1 回のみ再生します
 	 */
 	public PlayingAnimation play(String name, int frameRate, double x, double y, boolean doLoop) {
 		if (name == null)
@@ -195,11 +193,11 @@ public class AnimationManager extends JComponent {
 		}
 	}
 
-	public static final class AnimationStorage {
-		public final String name;
-		public final List<BufferedImage> frames;
-		public final int width;
-		public final int height;
+	public final class AnimationStorage {
+		private final String name;
+		private final List<BufferedImage> frames;
+		private final int width;
+		private final int height;
 
 		AnimationStorage(String name, List<BufferedImage> frames) {
 			this.name = name;
@@ -216,17 +214,15 @@ public class AnimationManager extends JComponent {
 	}
 
 	private static final class PlayingAnimation {
-		final AnimationStorage storage;
-		final int frameRate;
-		final double x;
-		final double y;
-		final boolean doLoop;
-		final long startMs;
-		final long frameDurationMs;
+		private final AnimationStorage storage;
+		private final double x;
+		private final double y;
+		private final boolean doLoop;
+		private final long startMs;
+		private final long frameDurationMs;
 
 		PlayingAnimation(AnimationStorage storage, int frameRate, double x, double y, boolean doLoop, long startMs) {
 			this.storage = storage;
-			this.frameRate = frameRate;
 			this.x = x;
 			this.y = y;
 			this.doLoop = doLoop;

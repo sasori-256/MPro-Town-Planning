@@ -31,23 +31,23 @@ import javax.swing.Timer;
  * - 再生はループ再生します
  */
 public class AnimationManager extends JComponent {
-	private final Map<String, AnimationStorage> animations = new HashMap<>();
-	private final List<PlayingAnimation> playing = new ArrayList<>();
+    private final Map<String, AnimationStorage> animations = new HashMap<>();
+    private final List<PlayingAnimation> playing = new ArrayList<>();
 
-	// 汎用タイマーで repaint をトリガーする（UI スレッドで動く）
-	private Timer timer;
+    // 汎用タイマーで repaint をトリガーする（UI スレッドで動く）
+    private Timer timer;
 
-	public AnimationManager() {
-		this.loadAnimations();
-		// デフォルトで透過描画（必要なら true に変更してください）
-		this.setOpaque(false);
-	}
+    public AnimationManager() {
+        this.loadAnimations();
+        // デフォルトで透過描画（必要なら true に変更してください）
+        this.setOpaque(false);
+    }
 
-	/** resources/animations にある画像を読み込む */
-	public void loadAnimations() {
-		URL animationsUrl = this.getClass().getClassLoader().getResource("animations");
-		String path = animationsUrl != null ? animationsUrl.getPath() : null;
-		File dir = path != null ? new File(path) : null;
+    /** resources/animations にある画像を読み込む */
+    public void loadAnimations() {
+        URL animationsUrl = this.getClass().getClassLoader().getResource("animations");
+        String path = animationsUrl != null ? animationsUrl.getPath() : null;
+        File dir = path != null ? new File(path) : null;
 
 		List<File> fileList = new ArrayList<>();
 		if (dir != null && dir.exists()) {

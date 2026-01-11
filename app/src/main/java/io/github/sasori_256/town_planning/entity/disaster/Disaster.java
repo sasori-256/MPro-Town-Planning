@@ -11,8 +11,10 @@ import io.github.sasori_256.town_planning.entity.model.GameAction;
  * <p>
  * A {@code Disaster} is a {@link BaseGameEntity} placed at a specific position
  * on the map. Its concrete behavior and effects are defined by the associated
- * {@link DisasterType}, which is responsible for creating the {@link GameAction}
- * that drives the disaster's update logic via a {@link CompositeUpdateStrategy}.
+ * {@link DisasterType}, which is responsible for creating the
+ * {@link GameAction}
+ * that drives the disaster's update logic via a
+ * {@link CompositeUpdateStrategy}.
  * </p>
  */
 public class Disaster extends BaseGameEntity {
@@ -23,13 +25,15 @@ public class Disaster extends BaseGameEntity {
    * <p>
    * Initializes the disaster by creating a {@link CompositeUpdateStrategy} and
    * populating it with a {@link GameAction} obtained from the disaster type's
-   * action factory. The {@code position} parameter is passed to the action factory
+   * action factory. The {@code position} parameter is passed to the action
+   * factory
    * to create position-specific disaster behavior.
    * </p>
    *
    * @param position     the position where the disaster occurs; used to create
    *                     the disaster's action via the type's action factory
-   * @param disasterType the type defining the disaster's characteristics and behavior
+   * @param disasterType the type defining the disaster's characteristics and
+   *                     behavior
    */
   public Disaster(Point2D.Double position, DisasterType disasterType) {
     super(position);

@@ -32,17 +32,25 @@ import io.github.sasori_256.town_planning.map.model.GameMap;
  * 
  * <h2>Thread Safety and Locking</h2>
  * This class uses a ReadWriteLock to ensure thread-safe access to game state.
- * To prevent nested locking issues and potential deadlocks, entity lifecycle operations
- * (spawnEntity/removeEntity) are automatically deferred when called during the update cycle.
+ * To prevent nested locking issues and potential deadlocks, entity lifecycle
+ * operations
+ * (spawnEntity/removeEntity) are automatically deferred when called during the
+ * update cycle.
  * 
- * <p>During the update cycle:
+ * <p>
+ * During the update cycle:
  * <ul>
- *   <li>Calls to spawnEntity() are queued and processed after all entity updates complete</li>
- *   <li>Calls to removeEntity() are queued and processed after all entity updates complete</li>
- *   <li>This prevents entity update methods from attempting to acquire locks that are already held</li>
+ * <li>Calls to spawnEntity() are queued and processed after all entity updates
+ * complete</li>
+ * <li>Calls to removeEntity() are queued and processed after all entity updates
+ * complete</li>
+ * <li>This prevents entity update methods from attempting to acquire locks that
+ * are already held</li>
  * </ul>
  * 
- * <p>This design allows entity update strategies to safely call GameContext methods like
+ * <p>
+ * This design allows entity update strategies to safely call GameContext
+ * methods like
  * removeEntity() without causing deadlocks or nested lock acquisitions.
  */
 public class GameModel implements GameContext, Updatable {
@@ -60,7 +68,8 @@ public class GameModel implements GameContext, Updatable {
   private int day = 1;
   private double dayTimer = 0;
   private static final double DAY_LENGTH = 10.0; // 10秒で1日
-  // UPDATE_STEP is 1/30s and ANIMATION_STEP is 1/6s, so animations advance every 5 update steps.
+  // UPDATE_STEP is 1/30s and ANIMATION_STEP is 1/6s, so animations advance every
+  // 5 update steps.
   private static final double UPDATE_STEP = 1.0 / 30.0;
   private static final double ANIMATION_STEP = 1.0 / 6.0;
   private double animationAccumulator = 0.0;
@@ -69,8 +78,9 @@ public class GameModel implements GameContext, Updatable {
 
   // Thread-local flag to track if we're currently in an update cycle
   private final ThreadLocal<Boolean> inUpdateCycle = ThreadLocal.withInitial(() -> false);
-  
-  // Lists to defer entity lifecycle operations during update to prevent nested locking
+
+  // Lists to defer entity lifecycle operations during update to prevent nested
+  // locking
   private final List<BaseGameEntity> entitiesToSpawn = new CopyOnWriteArrayList<>();
   private final List<BaseGameEntity> entitiesToRemove = new CopyOnWriteArrayList<>();
 
@@ -132,14 +142,18 @@ public class GameModel implements GameContext, Updatable {
   /**
    * Spawns a new entity into the game world.
    * 
-   * <p>If called during an update cycle (i.e., from within an entity's update method),
+   * <p>
+   * If called during an update cycle (i.e., from within an entity's update
+   * method),
    * the spawn operation is automatically deferred and will be processed after all
-   * entity updates complete. This prevents nested lock acquisition and potential deadlocks.
+   * entity updates complete. This prevents nested lock acquisition and potential
+   * deadlocks.
    * 
-   * <p>If called outside an update cycle, the entity is spawned immediately.
+   * <p>
+   * If called outside an update cycle, the entity is spawned immediately.
    * 
    * @param entity The entity to spawn
-   * @param <T> The entity type
+   * @param <T>    The entity type
    */
   @Override
   public <T extends BaseGameEntity> void spawnEntity(T entity) {
@@ -148,7 +162,7 @@ public class GameModel implements GameContext, Updatable {
       entitiesToSpawn.add(entity);
       return;
     }
-    
+
     if (entity instanceof Resident) {
       addResidentEntity((Resident) entity);
     } else if (entity instanceof Building) {
@@ -175,29 +189,35 @@ public class GameModel implements GameContext, Updatable {
   /**
    * Removes an entity from the game world.
    * 
-   * <p>If called during an update cycle (i.e., from within an entity's update method),
-   * the remove operation is automatically deferred and will be processed after all
-   * entity updates complete. This prevents nested lock acquisition and potential deadlocks.
+   * <p>
+   * If called during an update cycle (i.e., from within an entity's update
+   * method),
+   * the remove operation is automatically deferred and will be processed after
+   * all
+   * entity updates complete. This prevents nested lock acquisition and potential
+   * deadlocks.
    * 
-   * <p>If called outside an update cycle, the entity is removed immediately.
+   * <p>
+   * If called outside an update cycle, the entity is removed immediately.
    * 
-   * <p>The entity's onRemoved() lifecycle method will be called before removal.
+   * <p>
+   * The entity's onRemoved() lifecycle method will be called before removal.
    * 
    * @param entity The entity to remove
-   * @param <T> The entity type
+   * @param <T>    The entity type
    */
   @Override
   public <T extends BaseGameEntity> void removeEntity(T entity) {
     if (entity == null) {
       return;
     }
-    
+
     // If called during an update cycle, defer the operation to avoid nested locking
     if (inUpdateCycle.get()) {
       entitiesToRemove.add(entity);
       return;
     }
-    
+
     withWriteLock(() -> {
       // ライフサイクルメソッドの呼び出し
       entity.onRemoved();
@@ -426,28 +446,32 @@ public class GameModel implements GameContext, Updatable {
   /**
    * Updates the game state for the current frame.
    * 
-   * <p>This method acquires a write lock and updates all entities. To prevent nested
-   * locking issues, any calls to spawnEntity() or removeEntity() made during entity
+   * <p>
+   * This method acquires a write lock and updates all entities. To prevent nested
+   * locking issues, any calls to spawnEntity() or removeEntity() made during
+   * entity
    * updates are automatically deferred and processed after all updates complete.
    * 
-   * <p>The update process:
+   * <p>
+   * The update process:
    * <ol>
-   *   <li>Acquire write lock</li>
-   *   <li>Update day timer and game state</li>
-   *   <li>Update all residents, buildings, and disasters (which may queue spawn/remove operations)</li>
-   *   <li>Advance animations</li>
-   *   <li>Process all deferred spawn/remove operations</li>
-   *   <li>Release write lock</li>
+   * <li>Acquire write lock</li>
+   * <li>Update day timer and game state</li>
+   * <li>Update all residents, buildings, and disasters (which may queue
+   * spawn/remove operations)</li>
+   * <li>Advance animations</li>
+   * <li>Process all deferred spawn/remove operations</li>
+   * <li>Release write lock</li>
    * </ol>
    * 
    * @param context The game context
-   * @param dt Delta time in seconds since the last update
+   * @param dt      Delta time in seconds since the last update
    */
   public void update(GameContext context, double dt) {
     withWriteLock(() -> {
       // Set flag to indicate we're in an update cycle
       inUpdateCycle.set(true);
-      
+
       try {
         this.lastDeltaTime = dt;
 
@@ -465,7 +489,7 @@ public class GameModel implements GameContext, Updatable {
         for (Building building : buildingEntities) {
           building.update(context);
         }
-        
+
         for (Disaster disaster : disasterEntities) {
           disaster.update(context);
         }
@@ -475,7 +499,7 @@ public class GameModel implements GameContext, Updatable {
           animationAccumulator -= ANIMATION_STEP;
           advanceAnimations();
         }
-        
+
         // Process deferred entity lifecycle operations
         processDeferredOperations();
       } finally {
@@ -498,9 +522,10 @@ public class GameModel implements GameContext, Updatable {
       disaster.advanceAnimation();
     }
   }
-  
+
   /**
-   * Process deferred entity lifecycle operations that were queued during the update cycle.
+   * Process deferred entity lifecycle operations that were queued during the
+   * update cycle.
    * This method should only be called while holding the write lock.
    */
   private void processDeferredOperations() {
@@ -508,7 +533,7 @@ public class GameModel implements GameContext, Updatable {
     for (BaseGameEntity entity : entitiesToRemove) {
       // Call lifecycle method
       entity.onRemoved();
-      
+
       // Remove from appropriate list
       if (entity instanceof Resident) {
         residentEntities.remove(entity);
@@ -519,7 +544,7 @@ public class GameModel implements GameContext, Updatable {
       }
     }
     entitiesToRemove.clear();
-    
+
     // Process entities to spawn
     for (BaseGameEntity entity : entitiesToSpawn) {
       spawnEntityInternal(entity);

@@ -9,20 +9,25 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
-
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.NodeMenuInitializer;
 import io.github.sasori_256.town_planning.entity.Camera;
+import io.github.sasori_256.town_planning.entity.building.BuildingType;
+import io.github.sasori_256.town_planning.entity.model.GameModel;
+import io.github.sasori_256.town_planning.entity.resident.Resident;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
 import io.github.sasori_256.town_planning.map.model.GameMap;
+import io.github.sasori_256.town_planning.map.model.MapCell;
 
 /**
  * gameMapの内容を描画するクラス
@@ -30,6 +35,7 @@ import io.github.sasori_256.town_planning.map.model.GameMap;
 class GameMapPanel extends JPanel {
 
   private final GameMap gameMap;
+  private final GameModel gameModel;
   private final Camera camera;
   private final CategoryNode root;
   private final ImageManager imageManager;
@@ -38,8 +44,10 @@ class GameMapPanel extends JPanel {
   private final PaintUI paintUI;
   private final ReadWriteLock stateLock;
 
-  public GameMapPanel(GameMap gameMap, Camera camera, CategoryNode root, ReadWriteLock stateLock) {
+  public GameMapPanel(GameMap gameMap, GameModel gameModel, Camera camera, CategoryNode root,
+      ReadWriteLock stateLock) {
     this.gameMap = gameMap;
+    this.gameModel = gameModel;
     this.camera = camera;
     this.root = root;
     this.imageManager = new ImageManager();
@@ -67,7 +75,7 @@ class GameMapPanel extends JPanel {
 
   /**
    * gameMapの内容を描画する
-   * 
+   *
    * @param g 描画に使用するGraphicsオブジェクト
    * @implNote 画像ファイルが見つからない場合、"Warning Image not found: imageName.png at (x,y)"
    *           という警告が出力されます。
@@ -80,15 +88,51 @@ class GameMapPanel extends JPanel {
     Lock readLock = stateLock.readLock();
     readLock.lock();
     try {
-      // マップの奥(上)から手前(下)に向かって描画する
-      for (int z = 0; z < gameMap.getWidth() + gameMap.getHeight(); z++) {
+      int maxZ = gameMap.getWidth() + gameMap.getHeight();
+
+      // 地形と床系タイルを描画し、アクタ系タイルを収集
+      List<DrawEntry> actors = new ArrayList<>();
+      for (int z = 0; z < maxZ; z++) {
         for (int x = 0; x <= z; x++) {
           int y = z - x;
           if (x < gameMap.getWidth() && y < gameMap.getHeight() && isInsideCameraView(x, y)) {
             Point2D.Double pos = new Point2D.Double(x, y);
             paintGameObject.paintTerrain(g, pos, gameMap, camera, imageManager, this);
-            paintGameObject.paintBuilding(g, pos, gameMap, camera, imageManager, this);
+
+            MapCell cell = gameMap.getCell(pos);
+            if (cell.getBuilding() == null) {
+              continue;
+            }
+            BuildingType.DrawGroup group = cell.getBuilding().getType()
+                .getDrawGroup(cell.getLocalX(), cell.getLocalY());
+            if (group == BuildingType.DrawGroup.FLOOR) {
+              paintGameObject.paintBuilding(g, pos, gameMap, camera, imageManager, this);
+            } else if (group == BuildingType.DrawGroup.ACTOR) {
+              actors.add(DrawEntry.forBuilding(pos));
+            }
           }
+        }
+      }
+
+      gameModel.getResidentEntities().forEach(resident -> {
+        Point2D.Double pos = resident.getPosition();
+        int x = (int) Math.floor(pos.getX());
+        int y = (int) Math.floor(pos.getY());
+        if (x < 0 || y < 0 || x >= gameMap.getWidth() || y >= gameMap.getHeight()) {
+          return;
+        }
+        if (!isInsideCameraView(x, y)) {
+          return;
+        }
+        actors.add(DrawEntry.forResident(resident));
+      });
+
+      actors.sort(DrawEntry.DEPTH_ORDER);
+      for (DrawEntry entry : actors) {
+        if (entry.kind == DrawKind.BUILDING_TILE) {
+          paintGameObject.paintBuilding(g, entry.pos, gameMap, camera, imageManager, this);
+        } else if (entry.kind == DrawKind.RESIDENT) {
+          paintGameObject.paintResident(g, entry.resident, camera, imageManager, this);
         }
       }
     } finally {
@@ -117,25 +161,81 @@ class GameMapPanel extends JPanel {
   public AnimationManager getAnimationManager() {
     return this.animationManager;
   }
+  private enum DrawKind {
+    BUILDING_TILE,
+    RESIDENT
+  }
+
+  private static final class DrawEntry {
+    private static final Comparator<DrawEntry> DEPTH_ORDER = Comparator
+        .comparingDouble((DrawEntry entry) -> entry.depth)
+        .thenComparingDouble(entry -> entry.y)
+        .thenComparingDouble(entry -> entry.x)
+        .thenComparingInt(entry -> entry.kind == DrawKind.BUILDING_TILE ? 0 : 1);
+
+    private final double x;
+    private final double y;
+    private final double depth;
+    private final DrawKind kind;
+    private final Point2D.Double pos;
+    private final Resident resident;
+
+    private static DrawEntry forBuilding(Point2D.Double pos) {
+      return new DrawEntry(DrawKind.BUILDING_TILE, pos, null);
+    }
+
+    private static DrawEntry forResident(Resident resident) {
+      return new DrawEntry(DrawKind.RESIDENT, resident.getPosition(), resident);
+    }
+
+    private DrawEntry(DrawKind kind, Point2D.Double pos, Resident resident) {
+      this.kind = kind;
+      this.pos = new Point2D.Double(pos.getX(), pos.getY());
+      this.x = this.pos.getX();
+      this.y = this.pos.getY();
+      this.depth = this.x + this.y;
+      this.resident = resident;
+    }
+  }
 }
 
 /**
  * ゲームウィンドウを表すクラス
  * ウィンドウサイズ: 640*640
  * タイトル: "Town Planning Game"
- * 
+ *
  * @see GameMapPanel
  */
 public class GameWindow extends JFrame {
-  public <T extends MouseListener & MouseMotionListener & MouseWheelListener & KeyListener> GameWindow(T listener,
-      GameMap gameMap, Camera camera, int width, int height, EventBus eventBus, GameMapController gameMapController,
+  /**
+   * ゲーム描画ウィンドウを初期化する。
+   *
+   * @param listener          入力イベントのリスナー
+   * @param gameModel         ゲーム状態を管理するモデル
+   * @param gameMap           ゲームマップ
+   * @param camera            カメラ
+   * @param width             ウィンドウ幅
+   * @param height            ウィンドウ高さ
+   * @param eventBus          イベントバス
+   * @param gameMapController マップ操作コントローラ
+   * @param stateLock         状態ロック
+   */
+  public <T extends MouseListener & MouseMotionListener & MouseWheelListener & KeyListener> GameWindow(
+      T listener,
+      GameModel gameModel,
+      GameMap gameMap,
+      Camera camera,
+      int width,
+      int height,
+      EventBus eventBus,
+      GameMapController gameMapController,
       ReadWriteLock stateLock) {
     setTitle("Town Planning Game");
     setSize(width, height);
-    // GameMap gameMap = generateTestMap();;
+    // GameMap gameMap = generateTestMap();
     CategoryNode root = NodeMenuInitializer.setup(gameMapController, gameMap);
 
-    GameMapPanel gameMapPanel = new GameMapPanel(gameMap, camera, root, stateLock);
+    GameMapPanel gameMapPanel = new GameMapPanel(gameMap, gameModel, camera, root, stateLock);
     gameMapPanel.addMouseListener(listener);
     gameMapPanel.addMouseMotionListener(listener);
     gameMapPanel.addMouseWheelListener(listener);

@@ -61,7 +61,6 @@ class GameMapPanel extends JPanel {
     add(animationManager);
     // 子コンポーネントをオーバーレイ表示するため、animationManager をパネル全体に広げる
     animationManager.setOpaque(false);
-    animationManager.setBounds(0, 0, this.getWidth(), this.getHeight());
     // リサイズ時に animationManager のサイズを更新する
     this.addComponentListener(new java.awt.event.ComponentAdapter() {
       @Override

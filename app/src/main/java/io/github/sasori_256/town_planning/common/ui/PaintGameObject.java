@@ -50,7 +50,7 @@ public class PaintGameObject {
       JPanel panel) {
     MapCell cell = gameMap.getCell(pos);
     String terrainName = cell.getTerrain().getDisplayName();
-    paint(g, pos, terrainName, camera, imageManager, panel);
+    paint(g, pos, terrainName, camera, imageManager, panel, true);
   }
 
   /**
@@ -73,7 +73,7 @@ public class PaintGameObject {
     if (buildingName == null) {
       return;
     }
-    paint(g, pos, buildingName, camera, imageManager, panel);
+    paint(g, pos, buildingName, camera, imageManager, panel, true);
   }
 
   /**
@@ -94,7 +94,7 @@ public class PaintGameObject {
       return;
     }
     Point2D.Double pos = resident.getPosition();
-    paint(g, pos, imageName, camera, imageManager, panel);
+    paint(g, pos, imageName, camera, imageManager, panel, false);
   }
 
   /**
@@ -106,16 +106,18 @@ public class PaintGameObject {
    * @param camera       カメラ
    * @param imageManager 画像取得用マネージャー
    * @param panel        描画対象のパネル
-   */
-  public void paint(Graphics g, Point2D.Double pos, String name, Camera camera, ImageManager imageManager,
-      JPanel panel) {
+  */
+  private void paint(Graphics g, Point2D.Double pos, String name, Camera camera,
+      ImageManager imageManager, JPanel panel, boolean snapToGrid) {
     Graphics2D g2d = (Graphics2D) g;
     // 建物または地形の描画
     ImageStorage imageStorage = imageManager.getImageStorage(name);
     if (imageStorage != null) {
-      pos.x = Math.round(pos.x);
-      pos.y = Math.round(pos.y);
-      Point2D.Double screenPos = camera.isoToScreen(pos);
+      Point2D.Double renderPos = pos;
+      if (snapToGrid) {
+        renderPos = new Point2D.Double(Math.round(pos.x), Math.round(pos.y));
+      }
+      Point2D.Double screenPos = camera.isoToScreen(renderPos);
       double cameraScale = camera.getScale();
       Point2D.Double posShift = calculateShiftImage(imageStorage.size, cameraScale);
       Point2D.Double imageScale = imageStorage.size;
@@ -127,3 +129,4 @@ public class PaintGameObject {
     }
   }
 }
+

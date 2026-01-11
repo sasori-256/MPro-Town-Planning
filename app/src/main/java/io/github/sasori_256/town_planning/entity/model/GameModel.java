@@ -1,7 +1,11 @@
 package io.github.sasori_256.town_planning.entity.model;
 
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -68,6 +72,7 @@ public class GameModel implements GameContext, Updatable {
   private int day = 1;
   private double dayTimer = 0;
   private static final double DAY_LENGTH = 10.0; // 10秒で1日
+  private static final int MIN_RESIDENTS_PER_HOUSE = 2;
   // UPDATE_STEP is 1/30s and ANIMATION_STEP is 1/6s, so animations advance every
   // 5 update steps.
   private static final double UPDATE_STEP = 1.0 / 30.0;
@@ -358,6 +363,168 @@ public class GameModel implements GameContext, Updatable {
     });
   }
 
+  private void rebalanceResidents() {
+    List<Building> houses = new ArrayList<>();
+    for (Building building : buildingEntities) {
+      if (building.getType().getCategory() == CategoryType.RESIDENTIAL) {
+        houses.add(building);
+      }
+    }
+    if (houses.isEmpty()) {
+      return;
+    }
+
+    Map<HomeKey, HouseStats> statsByHome = new HashMap<>();
+    int totalResidents = 0;
+    for (Resident resident : residentEntities) {
+      if (resident.getState() == ResidentState.DEAD) {
+        continue;
+      }
+      Point2D.Double assignedHome = resident.hasRelocationTarget()
+          ? resident.getRelocationTarget()
+          : resident.getHomePosition();
+      if (assignedHome == null) {
+        continue;
+      }
+      HomeKey key = HomeKey.from(assignedHome);
+      HouseStats stats = statsByHome.computeIfAbsent(key, k -> new HouseStats());
+      stats.assignedCount++;
+      if (!resident.hasRelocationTarget()) {
+        stats.movableResidents.add(resident);
+      }
+      totalResidents++;
+    }
+    if (totalResidents == 0) {
+      for (Building building : houses) {
+        building.setCurrentPopulation(0);
+      }
+      return;
+    }
+
+    List<HouseInfo> houseInfos = new ArrayList<>();
+    for (Building building : houses) {
+      HomeKey key = HomeKey.from(building.getPosition());
+      HouseStats stats = statsByHome.get(key);
+      int assignedCount = stats != null ? stats.assignedCount : 0;
+      List<Resident> movable = stats != null ? new ArrayList<>(stats.movableResidents)
+          : new ArrayList<>();
+      houseInfos.add(new HouseInfo(building, assignedCount, movable));
+    }
+    houseInfos.sort(Comparator.comparingInt((HouseInfo info) -> info.assignedCount).reversed());
+
+    int houseCount = houseInfos.size();
+    List<Integer> targets = new ArrayList<>(houseCount);
+    if (totalResidents >= MIN_RESIDENTS_PER_HOUSE * houseCount) {
+      int base = totalResidents / houseCount;
+      int remainder = totalResidents % houseCount;
+      for (int i = 0; i < houseCount; i++) {
+        targets.add(base + (i < remainder ? 1 : 0));
+      }
+    } else {
+      int fullHouseCount = totalResidents / MIN_RESIDENTS_PER_HOUSE;
+      int remainder = totalResidents % MIN_RESIDENTS_PER_HOUSE;
+      for (int i = 0; i < houseCount; i++) {
+        targets.add(i < fullHouseCount ? MIN_RESIDENTS_PER_HOUSE : 0);
+      }
+      if (remainder > 0) {
+        targets.set(0, targets.get(0) + remainder);
+      }
+    }
+
+    List<Resident> movers = new ArrayList<>();
+    List<HouseNeed> needs = new ArrayList<>();
+    for (int i = 0; i < houseCount; i++) {
+      HouseInfo info = houseInfos.get(i);
+      int target = targets.get(i);
+      int current = info.assignedCount;
+      if (current > target) {
+        int excess = current - target;
+        for (int j = 0; j < excess && !info.movableResidents.isEmpty(); j++) {
+          movers.add(info.movableResidents.remove(info.movableResidents.size() - 1));
+          info.assignedCount--;
+        }
+      } else if (current < target) {
+        needs.add(new HouseNeed(info, target - current));
+      }
+    }
+
+    for (HouseNeed need : needs) {
+      while (need.remaining > 0 && !movers.isEmpty()) {
+        if (movers.isEmpty()) {
+          break;
+        }
+        Resident resident = movers.remove(movers.size() - 1);
+        Point2D.Double newHome = need.house.building.getPosition();
+        resident.requestRelocation(newHome);
+        resident.setState(ResidentState.RELOCATING);
+        need.house.assignedCount++;
+        need.remaining--;
+      }
+    }
+
+    for (HouseInfo info : houseInfos) {
+      info.building.setCurrentPopulation(info.assignedCount);
+    }
+  }
+
+  private static final class HomeKey {
+    private final int x;
+    private final int y;
+
+    private HomeKey(int x, int y) {
+      this.x = x;
+      this.y = y;
+    }
+
+    private static HomeKey from(Point2D.Double pos) {
+      return new HomeKey((int) Math.round(pos.getX()), (int) Math.round(pos.getY()));
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (!(obj instanceof HomeKey)) {
+        return false;
+      }
+      HomeKey other = (HomeKey) obj;
+      return x == other.x && y == other.y;
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * x + y;
+    }
+  }
+
+  private static final class HouseInfo {
+    private final Building building;
+    private int assignedCount;
+    private final List<Resident> movableResidents;
+
+    private HouseInfo(Building building, int assignedCount, List<Resident> movableResidents) {
+      this.building = building;
+      this.assignedCount = assignedCount;
+      this.movableResidents = movableResidents;
+    }
+  }
+
+  private static final class HouseNeed {
+    private final HouseInfo house;
+    private int remaining;
+
+    private HouseNeed(HouseInfo house, int count) {
+      this.house = house;
+      this.remaining = count;
+    }
+  }
+
+  private static final class HouseStats {
+    private int assignedCount;
+    private final List<Resident> movableResidents = new ArrayList<>();
+  }
+
   // getters / setters
   public int getDay() {
     return withReadLock(() -> day);
@@ -480,6 +647,7 @@ public class GameModel implements GameContext, Updatable {
           dayTimer = 0;
           day++;
           eventBus.publish(new DayPassedEvent(day));
+          rebalanceResidents();
         }
 
         for (Resident resident : residentEntities) {

@@ -1,8 +1,13 @@
 package io.github.sasori_256.town_planning.entity.building.strategy;
 
+import io.github.sasori_256.town_planning.entity.building.Building;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.entity.model.GameContext;
 import io.github.sasori_256.town_planning.entity.model.GameEffect;
+import io.github.sasori_256.town_planning.entity.resident.Resident;
+import io.github.sasori_256.town_planning.entity.resident.ResidentState;
+import io.github.sasori_256.town_planning.entity.resident.ResidentType;
+import java.awt.geom.Point2D;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -14,7 +19,6 @@ public class PopulationGrowthEffect implements GameEffect {
   private final int maxPopulation;
   private final double spawnInterval;
   private double timer;
-  private int currentPopulation; // この家が生成した（管理している）住民数
 
   /**
    * コンストラクタ
@@ -25,24 +29,43 @@ public class PopulationGrowthEffect implements GameEffect {
     this.maxPopulation = maxPopulation;
     this.spawnInterval = 15.0;
     this.timer = 0.0;
-    this.currentPopulation = 0;
   }
 
   @Override
   public void execute(GameContext context, BaseGameEntity self) {
+    if (!(self instanceof Building)) {
+      return;
+    }
+    Building building = (Building) self;
+    int currentPopulation = building.getCurrentPopulation();
+    if (currentPopulation < 2) {
+      return;
+    }
     if (currentPopulation >= maxPopulation) {
       return;
     }
 
     timer += context.getDeltaTime();
-    if (timer >= spawnInterval) {
-      timer = 0;
-      // 50%の確率で住民生成
-      if (ThreadLocalRandom.current().nextBoolean()) {
-        currentPopulation++;
-        // ここで本来は住民生成イベントなどを発火する
-        System.out.println("Population increased! Total for this building: " + currentPopulation);
-      }
+    if (timer < spawnInterval) {
+      return;
     }
+    timer = 0.0;
+
+    if (!ThreadLocalRandom.current().nextBoolean()) {
+      return;
+    }
+
+    currentPopulation++;
+    Point2D.Double homePos = building.getPosition();
+    ResidentType type = selectResidentType();
+    Resident resident = new Resident(new Point2D.Double(homePos.getX(), homePos.getY()), type,
+        ResidentState.AT_HOME, homePos);
+    context.spawnEntity(resident);
+    building.setCurrentPopulation(currentPopulation);
+  }
+
+  private ResidentType selectResidentType() {
+    ResidentType[] types = ResidentType.values();
+    return types[ThreadLocalRandom.current().nextInt(types.length)];
   }
 }

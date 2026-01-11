@@ -25,6 +25,7 @@ import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
 import io.github.sasori_256.town_planning.entity.model.GameModel;
 import io.github.sasori_256.town_planning.entity.resident.Resident;
+import io.github.sasori_256.town_planning.entity.resident.ResidentState;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
 import io.github.sasori_256.town_planning.map.model.GameMap;
 import io.github.sasori_256.town_planning.map.model.MapCell;
@@ -100,6 +101,9 @@ class GameMapPanel extends JPanel {
       }
 
       gameModel.getResidentEntities().forEach(resident -> {
+        if (resident.getState() == ResidentState.AT_HOME) {
+          return;
+        }
         Point2D.Double pos = resident.getPosition();
         int x = (int) Math.floor(pos.getX());
         int y = (int) Math.floor(pos.getY());
@@ -215,7 +219,7 @@ public class GameWindow extends JFrame {
     setTitle("Town Planning Game");
     setSize(width, height);
     // GameMap gameMap = generateTestMap();
-    CategoryNode root = NodeMenuInitializer.setup(gameMapController, gameMap);
+    CategoryNode root = NodeMenuInitializer.setup(gameMapController, gameModel);
 
     GameMapPanel gameMapPanel = new GameMapPanel(gameMap, gameModel, camera, root, stateLock);
     gameMapPanel.addMouseListener(listener);
@@ -243,3 +247,5 @@ public class GameWindow extends JFrame {
     setVisible(true);
   }
 }
+
+

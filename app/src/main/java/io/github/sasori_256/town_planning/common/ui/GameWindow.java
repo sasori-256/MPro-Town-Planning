@@ -66,7 +66,7 @@ class GameMapPanel extends JPanel {
     this.addComponentListener(new java.awt.event.ComponentAdapter() {
       @Override
       public void componentResized(java.awt.event.ComponentEvent e) {
-        
+        animationManager.setBounds(0, 0, getWidth(), getHeight());
       }
     });
     revalidate();
@@ -161,6 +161,7 @@ class GameMapPanel extends JPanel {
   public AnimationManager getAnimationManager() {
     return this.animationManager;
   }
+
   private enum DrawKind {
     BUILDING_TILE,
     RESIDENT

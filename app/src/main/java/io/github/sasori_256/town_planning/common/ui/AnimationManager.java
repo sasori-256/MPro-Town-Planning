@@ -46,8 +46,8 @@ public class AnimationManager extends JComponent {
 	/** resources/animations にある画像を読み込む */
 	public void loadAnimations() {
 		URL animationsUrl = this.getClass().getClassLoader().getResource("animations");
-		String PATH = animationsUrl != null ? animationsUrl.getPath() : null;
-		File dir = PATH != null ? new File(PATH) : null;
+		String path = animationsUrl != null ? animationsUrl.getPath() : null;
+		File dir = path != null ? new File(path) : null;
 
 		List<File> fileList = new ArrayList<>();
 		if (dir != null && dir.exists()) {
@@ -57,7 +57,8 @@ public class AnimationManager extends JComponent {
 			while (!stack.isEmpty()) {
 				File current = stack.pop();
 				File[] children = current.listFiles();
-				if (children == null) continue;
+				if (children == null)
+					continue;
 				for (File child : children) {
 					if (child.isDirectory()) {
 						stack.push(child);
@@ -99,7 +100,8 @@ public class AnimationManager extends JComponent {
 			for (FileWithIndex fi : list) {
 				try {
 					BufferedImage img = ImageIO.read(fi.file);
-					if (img != null) frames.add(img);
+					if (img != null)
+						frames.add(img);
 				} catch (Exception ex) {
 					System.err.println("Error loading animation frame: " + fi.file.getName());
 					ex.printStackTrace();
@@ -115,17 +117,20 @@ public class AnimationManager extends JComponent {
 
 	/**
 	 * 指定した名前のアニメーションを指定フレームレートで x,y に描画する（ループ再生）
+	 * 
 	 * @param name アニメーション名（拡張子・番号なし、小文字大文字不問）
 	 */
 	public void play(String name, int frameRate, double x, double y) {
-		if (name == null) return;
+		if (name == null)
+			return;
 		AnimationStorage storage = this.animations.get(name.toLowerCase());
 		if (storage == null) {
 			System.err.println("Animation not found: " + name);
 			return;
 		}
-    System.out.println("Start animation: " + name + " at (" + x + "," + y + ") with frameRate " + frameRate);
-		if (frameRate <= 0) frameRate = 1;
+		System.out.println("Start animation: " + name + " at (" + x + "," + y + ") with frameRate " + frameRate);
+		if (frameRate <= 0)
+			frameRate = 1;
 		PlayingAnimation pa = new PlayingAnimation(storage, frameRate, x, y, System.currentTimeMillis());
 		synchronized (this.playing) {
 			this.playing.add(pa);
@@ -135,7 +140,7 @@ public class AnimationManager extends JComponent {
 	}
 
 	private void ensureTimerRunning() {
-    // TODO: オリジナルのタイマーを持つのではなく、GameLoopから呼び出されるように変更する
+		// TODO: オリジナルのタイマーを持つのではなく、GameLoopから呼び出されるように変更する
 		if (this.timer == null) {
 			// 40ms 毎に repaint（最終描画タイミングは各アニメーションの fps を尊重する）
 			this.timer = new Timer(40, e -> this.repaint());
@@ -176,8 +181,8 @@ public class AnimationManager extends JComponent {
 	public static final class AnimationStorage {
 		public final String name;
 		public final List<BufferedImage> frames;
-		public int width;
-		public int height;
+		public final int width;
+		public final int height;
 
 		AnimationStorage(String name, List<BufferedImage> frames) {
 			this.name = name;
@@ -211,7 +216,8 @@ public class AnimationManager extends JComponent {
 		}
 
 		BufferedImage getCurrentFrame(long nowMs) {
-			if (storage == null || storage.frames.isEmpty()) return null;
+			if (storage == null || storage.frames.isEmpty())
+				return null;
 			long elapsed = Math.max(0, nowMs - this.startMs);
 			int idx = (int) ((elapsed / this.frameDurationMs) % storage.frames.size());
 			return storage.frames.get(idx);

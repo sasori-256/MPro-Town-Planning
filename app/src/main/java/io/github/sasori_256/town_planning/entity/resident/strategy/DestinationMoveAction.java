@@ -21,7 +21,8 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class DestinationMoveAction implements GameAction {
   /**
-   * 移動の状態。
+   * 移動処理の結果ステータス。
+   * execute() 呼び出しごとに更新される。
    */
   public enum MoveStatus {
     /** 待機中。 */
@@ -60,6 +61,7 @@ public class DestinationMoveAction implements GameAction {
    * @param autoDestination trueなら目的地を自動選択する
    */
   public DestinationMoveAction(boolean autoDestination) {
+    // タイル単位で速度を管理し、タイルサイズ変更の影響を避ける。
     this.speed = 2.0; // タイル/秒
     this.autoDestination = autoDestination;
     this.searchCooldown = 0.0;

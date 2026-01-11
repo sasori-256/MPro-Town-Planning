@@ -79,7 +79,7 @@ public class GameTime {
   /**
    * 時間スケールを設定する。
    *
-   * @param scale 実時間に対する倍率
+   * @param scale 実時間に対する倍率 (0.0は一時停止を表す)
    */
   public void setTimeScale(double scale) {
     if (scale < 0.0) {

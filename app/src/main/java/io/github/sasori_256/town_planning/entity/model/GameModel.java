@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import io.github.sasori_256.town_planning.common.core.GameLoop;
-import io.github.sasori_256.town_planning.common.core.Updatable;
+import io.github.sasori_256.town_planning.common.core.SimulationStep;
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.DayPassedEvent;
 import io.github.sasori_256.town_planning.common.event.events.DisasterOccurredEvent;
@@ -57,7 +57,7 @@ import io.github.sasori_256.town_planning.map.model.GameMap;
  * methods like
  * removeEntity() without causing deadlocks or nested lock acquisitions.
  */
-public class GameModel implements GameContext, Updatable {
+public class GameModel implements GameContext, SimulationStep {
   private final EventBus eventBus;
   private final GameMap gameMap;
   private final ReadWriteLock stateLock = new ReentrantReadWriteLock();
@@ -70,10 +70,12 @@ public class GameModel implements GameContext, Updatable {
 
   private int souls = 100;
   private final GameTime gameTime = new GameTime();
+  /**
+   * 住民再配置で最低限成立させる世帯人数。
+   * 2人未満の家は空き家/移住対象として扱う。
+   */
   private static final int MIN_RESIDENTS_PER_HOUSE = 2;
-  // UPDATE_STEP is 1/30s and ANIMATION_STEP is 1/6s, so animations advance every
-  // 5 update steps.
-  private static final double UPDATE_STEP = 1.0 / 30.0;
+  // ANIMATION_STEP is 1/6s.
   private static final double ANIMATION_STEP = 1.0 / 6.0;
   private double animationAccumulator = 0.0;
 
@@ -103,7 +105,7 @@ public class GameModel implements GameContext, Updatable {
   }
 
   public void startGameLoop(Runnable renderCallback) {
-    DoubleConsumer updateCallback = dt -> update(this, dt);
+    DoubleConsumer updateCallback = this::step;
     // GameLoopのインスタンスは新しいものが作られるため、既存のgameLoopフィールドとの整合性は要検討
     this.gameLoop = new GameLoop(updateCallback, renderCallback);
     this.gameLoop.start();
@@ -224,7 +226,7 @@ public class GameModel implements GameContext, Updatable {
    * If called outside an update cycle, the entity is removed immediately.
    * 
    * <p>
-   * The entity's onRemoved() lifecycle method will be called before removal.
+   * The entity's onRemove() lifecycle method will be called before removal.
    * 
    * @param entity The entity to remove
    * @param <T>    The entity type
@@ -243,7 +245,7 @@ public class GameModel implements GameContext, Updatable {
 
     withWriteLock(() -> {
       // ライフサイクルメソッドの呼び出し
-      entity.onRemoved();
+      entity.onRemove(this);
 
       if (entity instanceof Resident) {
         residentEntities.remove(entity);
@@ -269,6 +271,7 @@ public class GameModel implements GameContext, Updatable {
    */
   private void addResidentEntityInternal(Resident entity) {
     residentEntities.add(entity);
+    entity.onSpawn(this);
     eventBus.publish(new ResidentBornEvent(entity.getPosition()));
   }
 
@@ -284,6 +287,7 @@ public class GameModel implements GameContext, Updatable {
    */
   private void addBuildingEntityInternal(Building entity) {
     buildingEntities.add(entity);
+    entity.onSpawn(this);
     eventBus.publish(new MapUpdatedEvent(entity.getPosition()));
   }
 
@@ -299,6 +303,7 @@ public class GameModel implements GameContext, Updatable {
    */
   private void addDisasterEntityInternal(Disaster entity) {
     disasterEntities.add(entity);
+    entity.onSpawn(this);
     eventBus.publish(new DisasterOccurredEvent(entity.getType()));
   }
 
@@ -381,6 +386,12 @@ public class GameModel implements GameContext, Updatable {
     });
   }
 
+  /**
+   * 住民数を住宅に均等化し、引っ越し対象を決める。
+   *
+   * <p>全住宅に均等配分しつつ、総住民数が少ない場合は
+   * {@link #MIN_RESIDENTS_PER_HOUSE} 人単位で満たせる家を優先する。
+   */
   private void rebalanceResidents() {
     List<Building> houses = new ArrayList<>();
     for (Building building : buildingEntities) {
@@ -602,14 +613,9 @@ public class GameModel implements GameContext, Updatable {
     }
   }
 
-  @Override
-  public void update(GameContext context) {
-    update(context, UPDATE_STEP);
-  }
-
   /**
-   * Updates the game state for the current frame.
-   * 
+   * Updates the game state for the current step.
+   *
    * <p>
    * This method acquires a write lock and updates all entities. To prevent nested
    * locking issues, any calls to spawnEntity() or removeEntity() made during
@@ -628,10 +634,14 @@ public class GameModel implements GameContext, Updatable {
    * <li>Release write lock</li>
    * </ol>
    * 
-   * @param context The game context
-   * @param dt      Delta time in seconds since the last update
+   * @param dt Delta time in seconds since the last step
    */
-  public void update(GameContext context, double dt) {
+  @Override
+  public void step(double dt) {
+    stepInternal(this, dt);
+  }
+
+  private void stepInternal(GameContext context, double dt) {
     withWriteLock(() -> {
       // Set flag to indicate we're in an update cycle
       inUpdateCycle.set(true);
@@ -664,7 +674,7 @@ public class GameModel implements GameContext, Updatable {
         animationAccumulator += dt;
         while (animationAccumulator >= ANIMATION_STEP) {
           animationAccumulator -= ANIMATION_STEP;
-          advanceAnimations();
+          advanceAnimations(ANIMATION_STEP);
         }
 
         // Process deferred entity lifecycle operations
@@ -676,17 +686,17 @@ public class GameModel implements GameContext, Updatable {
     });
   }
 
-  private void advanceAnimations() {
+  private void advanceAnimations(double dt) {
     for (Resident resident : residentEntities) {
-      resident.advanceAnimation();
+      resident.advanceAnimation(dt);
     }
 
     for (Building building : buildingEntities) {
-      building.advanceAnimation();
+      building.advanceAnimation(dt);
     }
 
     for (Disaster disaster : disasterEntities) {
-      disaster.advanceAnimation();
+      disaster.advanceAnimation(dt);
     }
   }
 
@@ -697,9 +707,9 @@ public class GameModel implements GameContext, Updatable {
    */
   private void processDeferredOperations() {
     // Process entities to remove first
-    for (BaseGameEntity entity : entitiesToRemove) {
-      // Call lifecycle method
-      entity.onRemoved();
+      for (BaseGameEntity entity : entitiesToRemove) {
+        // Call lifecycle method
+        entity.onRemove(this);
 
       // Remove from appropriate list
       if (entity instanceof Resident) {

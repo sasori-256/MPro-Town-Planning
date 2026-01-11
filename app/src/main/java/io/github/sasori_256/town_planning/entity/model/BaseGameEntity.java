@@ -3,7 +3,6 @@ package io.github.sasori_256.town_planning.entity.model;
 import java.awt.geom.Point2D;
 
 import io.github.sasori_256.town_planning.common.core.Animatable;
-import io.github.sasori_256.town_planning.common.core.Updatable;
 import io.github.sasori_256.town_planning.common.core.strategy.UpdateStrategy;
 
 /**
@@ -11,7 +10,7 @@ import io.github.sasori_256.town_planning.common.core.strategy.UpdateStrategy;
  * Strategyパターンを用いて振る舞いを定義する。
  * 継承による拡張ではなく、コンポジション（Strategy）による機能追加を推奨する。
  */
-public abstract class BaseGameEntity implements GameEntity, Updatable, Animatable {
+public abstract class BaseGameEntity implements GameEntity, Animatable, LifecycleAware {
   protected int layerIndex = 0;
   protected Point2D.Double position;
 
@@ -59,11 +58,15 @@ public abstract class BaseGameEntity implements GameEntity, Updatable, Animatabl
   }
 
   @Override
-  public void onRemoved() {
+  public void onSpawn(GameContext context) {
     // デフォルトでは何もしない (必要に応じてオーバーライド)
   }
 
   @Override
+  public void onRemove(GameContext context) {
+    // デフォルトでは何もしない (必要に応じてオーバーライド)
+  }
+
   public void update(GameContext context) {
     if (updateStrategy != null) {
       updateStrategy.update(context, this);
@@ -71,7 +74,7 @@ public abstract class BaseGameEntity implements GameEntity, Updatable, Animatabl
   }
 
   @Override
-  public void advanceAnimation() {
+  public void advanceAnimation(double dt) {
     // No-op by default
   }
 }

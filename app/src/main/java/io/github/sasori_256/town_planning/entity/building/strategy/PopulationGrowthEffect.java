@@ -16,6 +16,8 @@ import java.util.concurrent.ThreadLocalRandom;
  * GameEffectとして実装（並行動作可能）。
  */
 public class PopulationGrowthEffect implements GameEffect {
+  // 住民生成の判定間隔(秒)。
+  private static final double DEFAULT_SPAWN_INTERVAL = 15.0;
   private final int maxPopulation;
   private final double spawnInterval;
   private double timer;
@@ -27,7 +29,7 @@ public class PopulationGrowthEffect implements GameEffect {
    */
   public PopulationGrowthEffect(int maxPopulation) {
     this.maxPopulation = maxPopulation;
-    this.spawnInterval = 15.0;
+    this.spawnInterval = DEFAULT_SPAWN_INTERVAL;
     this.timer = 0.0;
   }
 
@@ -55,13 +57,12 @@ public class PopulationGrowthEffect implements GameEffect {
       return;
     }
 
-    currentPopulation++;
     Point2D.Double homePos = building.getPosition();
     ResidentType type = selectResidentType();
     Resident resident = new Resident(new Point2D.Double(homePos.getX(), homePos.getY()), type,
         ResidentState.AT_HOME, homePos);
     context.spawnEntity(resident);
-    building.setCurrentPopulation(currentPopulation);
+    building.setCurrentPopulation(currentPopulation + 1);
   }
 
   private ResidentType selectResidentType() {

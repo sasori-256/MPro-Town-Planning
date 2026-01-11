@@ -101,7 +101,8 @@ class GameMapPanel extends JPanel {
       }
 
       gameModel.getResidentEntities().forEach(resident -> {
-        if (resident.getState() == ResidentState.AT_HOME) {
+        ResidentState state = resident.getState();
+        if (state == ResidentState.AT_HOME) {
           return;
         }
         Point2D.Double pos = resident.getPosition();

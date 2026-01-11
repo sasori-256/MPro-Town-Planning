@@ -23,16 +23,19 @@ import java.util.stream.Collectors;
  * 住民の移動・作業・帰宅を管理するアクション。
  */
 public class ResidentBehaviorAction implements GameAction {
+  // Timings are in game seconds unless noted.
   private static final double WORK_DURATION = 5.0;
   private static final double HOME_WAIT_MIN = 8.0;
   private static final double HOME_WAIT_MAX = 20.0;
+  // Distance threshold to treat an entry point as reached.
   private static final double HOME_ENTRY_EPSILON = 0.1;
-  private static final int[][] HOME_ENTRY_OFFSETS = {
+  private static final int[][] ADJACENT_OFFSETS = {
       { 0, 1 },
       { 1, 0 },
       { 0, -1 },
       { -1, 0 }
   };
+  private static final int[][] HOME_ENTRY_OFFSETS = ADJACENT_OFFSETS;
 
   private final DestinationMoveAction mover = new DestinationMoveAction(false);
   private double workTimer;
@@ -234,6 +237,7 @@ public class ResidentBehaviorAction implements GameAction {
   }
 
   private void scheduleHomeWait() {
+    // Used after normal completion and as a fallback when actions fail.
     homeWaitTimer = 0.0;
     homeWaitDuration = ThreadLocalRandom.current().nextDouble(HOME_WAIT_MIN, HOME_WAIT_MAX);
   }
@@ -332,8 +336,6 @@ public class ResidentBehaviorAction implements GameAction {
     }
 
     Set<Point> adjacent = new LinkedHashSet<>();
-    int[] dx = { 1, -1, 0, 0 };
-    int[] dy = { 0, 0, 1, -1 };
     for (int y = 0; y < type.getHeight(); y++) {
       for (int x = 0; x < type.getWidth(); x++) {
         if (!footprint[y][x]) {
@@ -341,9 +343,9 @@ public class ResidentBehaviorAction implements GameAction {
         }
         int baseX = originX + x;
         int baseY = originY + y;
-        for (int i = 0; i < dx.length; i++) {
-          int nx = baseX + dx[i];
-          int ny = baseY + dy[i];
+        for (int[] offset : ADJACENT_OFFSETS) {
+          int nx = baseX + offset[0];
+          int ny = baseY + offset[1];
           if (isWalkable(map, nx, ny)) {
             adjacent.add(new Point(nx, ny));
           }

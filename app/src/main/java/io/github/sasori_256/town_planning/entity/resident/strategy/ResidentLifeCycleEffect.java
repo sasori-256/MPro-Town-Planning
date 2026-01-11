@@ -9,9 +9,9 @@ import io.github.sasori_256.town_planning.entity.resident.Resident;
 import io.github.sasori_256.town_planning.entity.resident.ResidentState;
 
 /**
- * 住民のライフサイクル（加齢、死亡）を管理するStrategy。
+ * 住民のライフサイクル（加齢、死亡）を管理するEffect。
  */
-public class ResidentLifeCycleStrategy implements UpdateStrategy, GameEffect {
+public class ResidentLifeCycleEffect implements UpdateStrategy, GameEffect {
   @Override
   public void update(GameContext context, BaseGameEntity self) {
     if (!(self instanceof Resident)) {
@@ -51,6 +51,7 @@ public class ResidentLifeCycleStrategy implements UpdateStrategy, GameEffect {
 
   /**
    * 住民のライフサイクルを進める。
+   * UpdateStrategy/GameEffect両方に対応するため、update() に委譲する。
    *
    * @param context ゲーム内の環境情報
    * @param self    対象エンティティ

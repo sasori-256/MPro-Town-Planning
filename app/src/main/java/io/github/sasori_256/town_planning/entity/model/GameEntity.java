@@ -49,9 +49,4 @@ public interface GameEntity {
    */
   void setUpdateStrategy(UpdateStrategy updateStrategy);
 
-  /**
-   * エンティティが削除される際に呼び出されるライフサイクルメソッド。
-   * リソースの解放や終了処理を行う。
-   */
-  void onRemoved();
 }

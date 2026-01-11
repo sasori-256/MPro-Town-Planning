@@ -94,6 +94,7 @@ public class PaintGameObject {
       return;
     }
     Point2D.Double pos = resident.getPosition();
+    // Residents move with sub-tile positions, so don't snap to grid.
     paint(g, pos, imageName, camera, imageManager, panel, false);
   }
 

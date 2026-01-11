@@ -5,7 +5,7 @@ import java.awt.geom.Point2D;
 import io.github.sasori_256.town_planning.common.core.strategy.CompositeUpdateStrategy;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.entity.resident.strategy.ResidentBehaviorAction;
-import io.github.sasori_256.town_planning.entity.resident.strategy.ResidentLifeCycleStrategy;
+import io.github.sasori_256.town_planning.entity.resident.strategy.ResidentLifeCycleEffect;
 
 public class Resident extends BaseGameEntity {
   private final ResidentType type;
@@ -36,7 +36,7 @@ public class Resident extends BaseGameEntity {
 
     CompositeUpdateStrategy strategy = new CompositeUpdateStrategy();
     strategy.setAction(new ResidentBehaviorAction());
-    strategy.addEffect(new ResidentLifeCycleStrategy());
+    strategy.addEffect(new ResidentLifeCycleEffect());
     this.setUpdateStrategy(strategy);
   }
 
@@ -46,6 +46,7 @@ public class Resident extends BaseGameEntity {
    * @param position     現在位置
    * @param residentType 種別
    * @param state        初期状態
+   * @implNote Strategy初期化は4引数コンストラクタに委譲する。
    */
   public Resident(Point2D.Double position, ResidentType residentType, ResidentState state) {
     this(position, residentType, state, position);

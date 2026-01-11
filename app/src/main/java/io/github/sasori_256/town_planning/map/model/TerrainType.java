@@ -12,8 +12,8 @@ public enum TerrainType implements Terrain {
 
   TerrainType(String displayName, boolean buildable, boolean walkable, int moveCost) {
     this.displayName = displayName;
-    this.walkable = walkable;
     this.buildable = buildable;
+    this.walkable = walkable;
     this.moveCost = moveCost;
   }
 

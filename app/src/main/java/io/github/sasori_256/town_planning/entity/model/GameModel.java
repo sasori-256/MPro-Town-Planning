@@ -1,7 +1,11 @@
 package io.github.sasori_256.town_planning.entity.model;
 
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -11,7 +15,7 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import io.github.sasori_256.town_planning.common.core.GameLoop;
-import io.github.sasori_256.town_planning.common.core.Updatable;
+import io.github.sasori_256.town_planning.common.core.SimulationStep;
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.DayPassedEvent;
 import io.github.sasori_256.town_planning.common.event.events.DisasterOccurredEvent;
@@ -53,7 +57,7 @@ import io.github.sasori_256.town_planning.map.model.GameMap;
  * methods like
  * removeEntity() without causing deadlocks or nested lock acquisitions.
  */
-public class GameModel implements GameContext, Updatable {
+public class GameModel implements GameContext, SimulationStep {
   private final EventBus eventBus;
   private final GameMap gameMap;
   private final ReadWriteLock stateLock = new ReentrantReadWriteLock();
@@ -65,12 +69,13 @@ public class GameModel implements GameContext, Updatable {
   private final List<Disaster> disasterEntities = new CopyOnWriteArrayList<>();
 
   private int souls = 100;
-  private int day = 1;
-  private double dayTimer = 0;
-  private static final double DAY_LENGTH = 10.0; // 10秒で1日
-  // UPDATE_STEP is 1/30s and ANIMATION_STEP is 1/6s, so animations advance every
-  // 5 update steps.
-  private static final double UPDATE_STEP = 1.0 / 30.0;
+  private final GameTime gameTime = new GameTime();
+  /**
+   * 住民再配置で最低限成立させる世帯人数。
+   * 2人未満の家は空き家/移住対象として扱う。
+   */
+  private static final int MIN_RESIDENTS_PER_HOUSE = 2;
+  // ANIMATION_STEP is 1/6s.
   private static final double ANIMATION_STEP = 1.0 / 6.0;
   private double animationAccumulator = 0.0;
 
@@ -100,7 +105,7 @@ public class GameModel implements GameContext, Updatable {
   }
 
   public void startGameLoop(Runnable renderCallback) {
-    DoubleConsumer updateCallback = dt -> update(this, dt);
+    DoubleConsumer updateCallback = this::step;
     // GameLoopのインスタンスは新しいものが作られるため、既存のgameLoopフィールドとの整合性は要検討
     this.gameLoop = new GameLoop(updateCallback, renderCallback);
     this.gameLoop.start();
@@ -137,6 +142,26 @@ public class GameModel implements GameContext, Updatable {
   @Override
   public double getDeltaTime() {
     return withReadLock(() -> lastDeltaTime);
+  }
+
+  @Override
+  public int getDay() {
+    return withReadLock(() -> gameTime.getDayCount());
+  }
+
+  @Override
+  public double getTimeOfDaySeconds() {
+    return withReadLock(() -> gameTime.getTimeOfDaySeconds());
+  }
+
+  @Override
+  public double getTimeOfDayNormalized() {
+    return withReadLock(() -> gameTime.getTimeOfDayNormalized());
+  }
+
+  @Override
+  public double getDayLengthSeconds() {
+    return withReadLock(() -> gameTime.getDayLengthSeconds());
   }
 
   /**
@@ -201,7 +226,7 @@ public class GameModel implements GameContext, Updatable {
    * If called outside an update cycle, the entity is removed immediately.
    * 
    * <p>
-   * The entity's onRemoved() lifecycle method will be called before removal.
+   * The entity's onRemove() lifecycle method will be called before removal.
    * 
    * @param entity The entity to remove
    * @param <T>    The entity type
@@ -220,7 +245,7 @@ public class GameModel implements GameContext, Updatable {
 
     withWriteLock(() -> {
       // ライフサイクルメソッドの呼び出し
-      entity.onRemoved();
+      entity.onRemove(this);
 
       if (entity instanceof Resident) {
         residentEntities.remove(entity);
@@ -246,6 +271,7 @@ public class GameModel implements GameContext, Updatable {
    */
   private void addResidentEntityInternal(Resident entity) {
     residentEntities.add(entity);
+    entity.onSpawn(this);
     eventBus.publish(new ResidentBornEvent(entity.getPosition()));
   }
 
@@ -261,6 +287,7 @@ public class GameModel implements GameContext, Updatable {
    */
   private void addBuildingEntityInternal(Building entity) {
     buildingEntities.add(entity);
+    entity.onSpawn(this);
     eventBus.publish(new MapUpdatedEvent(entity.getPosition()));
   }
 
@@ -276,6 +303,7 @@ public class GameModel implements GameContext, Updatable {
    */
   private void addDisasterEntityInternal(Disaster entity) {
     disasterEntities.add(entity);
+    entity.onSpawn(this);
     eventBus.publish(new DisasterOccurredEvent(entity.getType()));
   }
 
@@ -358,11 +386,172 @@ public class GameModel implements GameContext, Updatable {
     });
   }
 
-  // getters / setters
-  public int getDay() {
-    return withReadLock(() -> day);
+  /**
+   * 住民数を住宅に均等化し、引っ越し対象を決める。
+   *
+   * <p>全住宅に均等配分しつつ、総住民数が少ない場合は
+   * {@link #MIN_RESIDENTS_PER_HOUSE} 人単位で満たせる家を優先する。
+   */
+  private void rebalanceResidents() {
+    List<Building> houses = new ArrayList<>();
+    for (Building building : buildingEntities) {
+      if (building.getType().getCategory() == CategoryType.RESIDENTIAL) {
+        houses.add(building);
+      }
+    }
+    if (houses.isEmpty()) {
+      return;
+    }
+
+    Map<HomeKey, HouseStats> statsByHome = new HashMap<>();
+    int totalResidents = 0;
+    for (Resident resident : residentEntities) {
+      if (resident.getState() == ResidentState.DEAD) {
+        continue;
+      }
+      Point2D.Double assignedHome = resident.hasRelocationTarget()
+          ? resident.getRelocationTarget()
+          : resident.getHomePosition();
+      if (assignedHome == null) {
+        continue;
+      }
+      HomeKey key = HomeKey.from(assignedHome);
+      HouseStats stats = statsByHome.computeIfAbsent(key, k -> new HouseStats());
+      stats.assignedCount++;
+      if (!resident.hasRelocationTarget()) {
+        stats.movableResidents.add(resident);
+      }
+      totalResidents++;
+    }
+    if (totalResidents == 0) {
+      for (Building building : houses) {
+        building.setCurrentPopulation(0);
+      }
+      return;
+    }
+
+    List<HouseInfo> houseInfos = new ArrayList<>();
+    for (Building building : houses) {
+      HomeKey key = HomeKey.from(building.getPosition());
+      HouseStats stats = statsByHome.get(key);
+      int assignedCount = stats != null ? stats.assignedCount : 0;
+      List<Resident> movable = stats != null ? new ArrayList<>(stats.movableResidents)
+          : new ArrayList<>();
+      houseInfos.add(new HouseInfo(building, assignedCount, movable));
+    }
+    houseInfos.sort(Comparator.comparingInt((HouseInfo info) -> info.assignedCount).reversed());
+
+    int houseCount = houseInfos.size();
+    List<Integer> targets = new ArrayList<>(houseCount);
+    if (totalResidents >= MIN_RESIDENTS_PER_HOUSE * houseCount) {
+      int base = totalResidents / houseCount;
+      int remainder = totalResidents % houseCount;
+      for (int i = 0; i < houseCount; i++) {
+        targets.add(base + (i < remainder ? 1 : 0));
+      }
+    } else {
+      int fullHouseCount = totalResidents / MIN_RESIDENTS_PER_HOUSE;
+      int remainder = totalResidents % MIN_RESIDENTS_PER_HOUSE;
+      for (int i = 0; i < houseCount; i++) {
+        targets.add(i < fullHouseCount ? MIN_RESIDENTS_PER_HOUSE : 0);
+      }
+      if (remainder > 0) {
+        targets.set(0, targets.get(0) + remainder);
+      }
+    }
+
+    List<Resident> movers = new ArrayList<>();
+    List<HouseNeed> needs = new ArrayList<>();
+    for (int i = 0; i < houseCount; i++) {
+      HouseInfo info = houseInfos.get(i);
+      int target = targets.get(i);
+      int current = info.assignedCount;
+      if (current > target) {
+        int excess = current - target;
+        for (int j = 0; j < excess && !info.movableResidents.isEmpty(); j++) {
+          movers.add(info.movableResidents.remove(info.movableResidents.size() - 1));
+          info.assignedCount--;
+        }
+      } else if (current < target) {
+        needs.add(new HouseNeed(info, target - current));
+      }
+    }
+
+    for (HouseNeed need : needs) {
+      while (need.remaining > 0 && !movers.isEmpty()) {
+        Resident resident = movers.remove(movers.size() - 1);
+        Point2D.Double newHome = need.house.building.getPosition();
+        resident.requestRelocation(newHome);
+        resident.setState(ResidentState.RELOCATING);
+        need.house.assignedCount++;
+        need.remaining--;
+      }
+    }
+
+    for (HouseInfo info : houseInfos) {
+      info.building.setCurrentPopulation(info.assignedCount);
+    }
   }
 
+  private static final class HomeKey {
+    private final int x;
+    private final int y;
+
+    private HomeKey(int x, int y) {
+      this.x = x;
+      this.y = y;
+    }
+
+    private static HomeKey from(Point2D.Double pos) {
+      return new HomeKey((int) Math.round(pos.getX()), (int) Math.round(pos.getY()));
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (!(obj instanceof HomeKey)) {
+        return false;
+      }
+      HomeKey other = (HomeKey) obj;
+      return x == other.x && y == other.y;
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * x + y;
+    }
+  }
+
+  private static final class HouseInfo {
+    private final Building building;
+    private int assignedCount;
+    private final List<Resident> movableResidents;
+
+    private HouseInfo(Building building, int assignedCount, List<Resident> movableResidents) {
+      this.building = building;
+      this.assignedCount = assignedCount;
+      this.movableResidents = movableResidents;
+    }
+  }
+
+  private static final class HouseNeed {
+    private final HouseInfo house;
+    private int remaining;
+
+    private HouseNeed(HouseInfo house, int count) {
+      this.house = house;
+      this.remaining = count;
+    }
+  }
+
+  private static final class HouseStats {
+    private int assignedCount;
+    private final List<Resident> movableResidents = new ArrayList<>();
+  }
+
+  // getters / setters
   public GameMap getGameMap() {
     return gameMap;
   }
@@ -383,22 +572,8 @@ public class GameModel implements GameContext, Updatable {
 
   public void setDay(int day) {
     withWriteLock(() -> {
-      this.day = day;
+      gameTime.setDayCount(day);
     });
-  }
-
-  public double getDayTimer() {
-    return withReadLock(() -> dayTimer);
-  }
-
-  public void setDayTimer(double dayTimer) {
-    withWriteLock(() -> {
-      this.dayTimer = dayTimer;
-    });
-  }
-
-  public static double getDayLength() {
-    return DAY_LENGTH;
   }
 
   public double getLastDeltaTime() {
@@ -438,14 +613,9 @@ public class GameModel implements GameContext, Updatable {
     }
   }
 
-  @Override
-  public void update(GameContext context) {
-    update(context, UPDATE_STEP);
-  }
-
   /**
-   * Updates the game state for the current frame.
-   * 
+   * Updates the game state for the current step.
+   *
    * <p>
    * This method acquires a write lock and updates all entities. To prevent nested
    * locking issues, any calls to spawnEntity() or removeEntity() made during
@@ -456,7 +626,7 @@ public class GameModel implements GameContext, Updatable {
    * The update process:
    * <ol>
    * <li>Acquire write lock</li>
-   * <li>Update day timer and game state</li>
+   * <li>Update game time and state</li>
    * <li>Update all residents, buildings, and disasters (which may queue
    * spawn/remove operations)</li>
    * <li>Advance animations</li>
@@ -464,10 +634,14 @@ public class GameModel implements GameContext, Updatable {
    * <li>Release write lock</li>
    * </ol>
    * 
-   * @param context The game context
-   * @param dt      Delta time in seconds since the last update
+   * @param dt Delta time in seconds since the last step
    */
-  public void update(GameContext context, double dt) {
+  @Override
+  public void step(double dt) {
+    stepInternal(this, dt);
+  }
+
+  private void stepInternal(GameContext context, double dt) {
     withWriteLock(() -> {
       // Set flag to indicate we're in an update cycle
       inUpdateCycle.set(true);
@@ -475,11 +649,14 @@ public class GameModel implements GameContext, Updatable {
       try {
         this.lastDeltaTime = dt;
 
-        dayTimer += dt;
-        if (dayTimer >= DAY_LENGTH) {
-          dayTimer = 0;
-          day++;
-          eventBus.publish(new DayPassedEvent(day));
+        int previousDay = gameTime.getDayCount();
+        int daysAdvanced = gameTime.advance(dt);
+        if (daysAdvanced > 0) {
+          int currentDay = gameTime.getDayCount();
+          for (int dayNumber = previousDay + 1; dayNumber <= currentDay; dayNumber++) {
+            eventBus.publish(new DayPassedEvent(dayNumber));
+            rebalanceResidents();
+          }
         }
 
         for (Resident resident : residentEntities) {
@@ -497,7 +674,7 @@ public class GameModel implements GameContext, Updatable {
         animationAccumulator += dt;
         while (animationAccumulator >= ANIMATION_STEP) {
           animationAccumulator -= ANIMATION_STEP;
-          advanceAnimations();
+          advanceAnimations(ANIMATION_STEP);
         }
 
         // Process deferred entity lifecycle operations
@@ -509,17 +686,17 @@ public class GameModel implements GameContext, Updatable {
     });
   }
 
-  private void advanceAnimations() {
+  private void advanceAnimations(double dt) {
     for (Resident resident : residentEntities) {
-      resident.advanceAnimation();
+      resident.advanceAnimation(dt);
     }
 
     for (Building building : buildingEntities) {
-      building.advanceAnimation();
+      building.advanceAnimation(dt);
     }
 
     for (Disaster disaster : disasterEntities) {
-      disaster.advanceAnimation();
+      disaster.advanceAnimation(dt);
     }
   }
 
@@ -530,9 +707,9 @@ public class GameModel implements GameContext, Updatable {
    */
   private void processDeferredOperations() {
     // Process entities to remove first
-    for (BaseGameEntity entity : entitiesToRemove) {
-      // Call lifecycle method
-      entity.onRemoved();
+      for (BaseGameEntity entity : entitiesToRemove) {
+        // Call lifecycle method
+        entity.onRemove(this);
 
       // Remove from appropriate list
       if (entity instanceof Resident) {

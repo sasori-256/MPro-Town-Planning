@@ -3,9 +3,12 @@ package io.github.sasori_256.town_planning.common.ui;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
 import javax.swing.JPanel;
 import io.github.sasori_256.town_planning.common.ui.ImageManager.ImageStorage;
 import io.github.sasori_256.town_planning.entity.Camera;
+import io.github.sasori_256.town_planning.entity.building.Building;
+import io.github.sasori_256.town_planning.entity.disaster.Disaster;
 import io.github.sasori_256.town_planning.entity.resident.Resident;
 import io.github.sasori_256.town_planning.map.model.GameMap;
 import io.github.sasori_256.town_planning.map.model.MapCell;
@@ -14,7 +17,6 @@ import io.github.sasori_256.town_planning.map.model.MapCell;
  * 建物を描画するためのクラス
  */
 public class PaintGameObject {
-
   /**
    * 垂直方向の高さを持つ画像のシフト量を計算する
    *
@@ -31,8 +33,9 @@ public class PaintGameObject {
     double shiftY = -imgSize.y / 2 * cameraScale - (imgSize.y / imgSize.x - 0.5)
         * cameraScale * imgSize.x / 2;
     // imageSize / 2 * cameraScale は画像の中心を基準にするためのシフト量
-    // (imageSize.y / imageSize.x - 0.5) * cameraScale * imageSize.x / 2
-    // は垂直方向の高さを考慮したシフト量 これにより、画像の(視覚的な)底面の重心が基準点に一致するようになる
+    // (imageSize.y / imageSize.x - 0.5) * cameraScale * imgSize.x / 2
+    // は垂直方向の高さを考慮したシフト量 これにより、画像の(視覚的な)底面の重心
+    // が基準点に一致するようになる
     return new Point2D.Double(shiftX, shiftY);
   }
 
@@ -46,8 +49,8 @@ public class PaintGameObject {
    * @param imageManager 画像取得用マネージャー
    * @param panel        描画対象のパネル
    */
-  public void paintTerrain(Graphics g, Point2D.Double pos, GameMap gameMap, Camera camera, ImageManager imageManager,
-      JPanel panel) {
+  public void paintTerrain(Graphics g, Point2D.Double pos, GameMap gameMap, Camera camera,
+      ImageManager imageManager, JPanel panel) {
     MapCell cell = gameMap.getCell(pos);
     String terrainName = cell.getTerrain().getDisplayName();
     paint(g, pos, terrainName, camera, imageManager, panel, true);
@@ -56,20 +59,33 @@ public class PaintGameObject {
   /**
    * 指定された座標の建物を描画する
    *
-   * @param g            グラフィックスコンテキスト
-   * @param pos          座標
-   * @param gameMap      ゲームマップ
-   * @param camera       カメラ
-   * @param imageManager 画像取得用マネージャー
-   * @param panel        描画対象のパネル
+   * @param g                グラフィックスコンテキスト
+   * @param pos              座標
+   * @param gameMap          ゲームマップ
+   * @param camera           カメラ
+   * @param imageManager     画像取得用マネージャー
+   * @param animationManager アニメーション取得用マネージャー
+   * @param panel            描画対象のパネル
    */
-  public void paintBuilding(Graphics g, Point2D.Double pos, GameMap gameMap, Camera camera, ImageManager imageManager,
-      JPanel panel) {
+  public void paintBuilding(Graphics g, Point2D.Double pos, GameMap gameMap, Camera camera,
+      ImageManager imageManager, AnimationManager animationManager, JPanel panel) {
     MapCell cell = gameMap.getCell(pos);
     if (cell.getBuilding() == null) {
       return;
     }
-    String buildingName = cell.getBuilding().getType().getImageName(cell.getLocalX(), cell.getLocalY());
+    Building building = cell.getBuilding();
+    String animationName = building.getType().getAnimationName(cell.getLocalX(), cell.getLocalY());
+    if (animationManager != null && animationName != null) {
+      int frameIndex = building.getAnimationFrameIndex(cell.getLocalX(), cell.getLocalY());
+      boolean loop = building.getType().isAnimationLoop(cell.getLocalX(), cell.getLocalY());
+      BufferedImage frame = animationManager.getFrame(animationName, frameIndex, loop);
+      if (frame != null) {
+        paintImage(g, pos, frame, camera, panel, true);
+        return;
+      }
+    }
+
+    String buildingName = building.getType().getImageName(cell.getLocalX(), cell.getLocalY());
     if (buildingName == null) {
       return;
     }
@@ -85,7 +101,8 @@ public class PaintGameObject {
    * @param imageManager 画像取得用マネージャー
    * @param panel        描画対象のパネル
    */
-  public void paintResident(Graphics g, Resident resident, Camera camera, ImageManager imageManager, JPanel panel) {
+  public void paintResident(Graphics g, Resident resident, Camera camera, ImageManager imageManager,
+      JPanel panel) {
     if (resident == null || resident.getType() == null) {
       return;
     }
@@ -96,6 +113,37 @@ public class PaintGameObject {
     Point2D.Double pos = resident.getPosition();
     // Residents move with sub-tile positions, so don't snap to grid.
     paint(g, pos, imageName, camera, imageManager, panel, false);
+  }
+
+  /**
+   * 指定された災害を描画する
+   *
+   * @param g                グラフィックスコンテキスト
+   * @param disaster         描画対象の災害
+   * @param camera           カメラ
+   * @param imageManager     画像取得用マネージャー
+   * @param animationManager アニメーション取得用マネージャー
+   * @param panel            描画対象のパネル
+   */
+  public void paintDisaster(Graphics g, Disaster disaster, Camera camera, ImageManager imageManager,
+      AnimationManager animationManager, JPanel panel) {
+    if (disaster == null || disaster.getType() == null) {
+      return;
+    }
+    String animationName = disaster.getAnimationName();
+    if (animationManager != null && animationName != null) {
+      BufferedImage frame = animationManager.getFrame(animationName, disaster.getAnimationFrameIndex(),
+          disaster.isAnimationLoop());
+      if (frame != null) {
+        paintImage(g, disaster.getPosition(), frame, camera, panel, false);
+        return;
+      }
+    }
+    String imageName = disaster.getType().getImageName();
+    if (imageName == null) {
+      return;
+    }
+    paint(g, disaster.getPosition(), imageName, camera, imageManager, panel, false);
   }
 
   /**
@@ -127,7 +175,28 @@ public class PaintGameObject {
       int yPos = (int) Math.round(screenPos.y + posShift.y);
       int width = (int) (imageScale.x * cameraScale);
       int height = (int) (imageScale.y * cameraScale);
-      g2d.drawImage(imageStorage.getImage(), xPos, yPos, width, height, panel);
+      g2d.drawImage(imageStorage.image, xPos, yPos, width, height, panel);
     }
+  }
+
+  private void paintImage(Graphics g, Point2D.Double pos, BufferedImage image, Camera camera,
+      JPanel panel, boolean snapToGrid) {
+    if (image == null) {
+      return;
+    }
+    Graphics2D g2d = (Graphics2D) g;
+    Point2D.Double renderPos = pos;
+    if (snapToGrid) {
+      renderPos = new Point2D.Double(Math.round(pos.x), Math.round(pos.y));
+    }
+    Point2D.Double screenPos = camera.isoToScreen(renderPos);
+    double cameraScale = camera.getScale();
+    Point2D.Double imageSize = new Point2D.Double(image.getWidth(), image.getHeight());
+    Point2D.Double posShift = calculateShiftImage(imageSize, cameraScale);
+    int xPos = (int) Math.round(screenPos.x + posShift.x);
+    int yPos = (int) Math.round(screenPos.y + posShift.y);
+    int width = (int) (imageSize.x * cameraScale);
+    int height = (int) (imageSize.y * cameraScale);
+    g2d.drawImage(image, xPos, yPos, width, height, panel);
   }
 }

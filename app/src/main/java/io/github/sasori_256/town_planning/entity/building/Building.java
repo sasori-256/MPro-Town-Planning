@@ -17,6 +17,7 @@ public class Building extends BaseGameEntity {
   private int currentPopulation;
   private int originX;
   private int originY;
+  private double animationElapsedSeconds;
 
   public Building(Point2D.Double position, BuildingType buildingType) {
     super(position);
@@ -25,6 +26,7 @@ public class Building extends BaseGameEntity {
     this.currentPopulation = 0;
     this.originX = (int) Math.round(position.getX());
     this.originY = (int) Math.round(position.getY());
+    this.animationElapsedSeconds = 0.0;
 
     // CompositeUpdateStrategy を使用して、排他アクションと並行エフェクトを管理可能にする
     CompositeUpdateStrategy strategy = new CompositeUpdateStrategy();
@@ -72,5 +74,30 @@ public class Building extends BaseGameEntity {
   public void setOrigin(int originX, int originY) {
     this.originX = originX;
     this.originY = originY;
+  }
+
+  @Override
+  public void advanceAnimation(double dt) {
+    if (!type.hasAnimation()) {
+      return;
+    }
+    if (dt <= 0) {
+      return;
+    }
+    animationElapsedSeconds += dt;
+  }
+
+  /**
+   * 指定タイルのアニメーションフレーム番号を返す。
+   *
+   * @param localX 建物内のX座標
+   * @param localY 建物内のY座標
+   */
+  public int getAnimationFrameIndex(int localX, int localY) {
+    int fps = type.getAnimationFrameRate(localX, localY);
+    if (fps <= 0) {
+      return 0;
+    }
+    return (int) Math.floor(animationElapsedSeconds * fps);
   }
 }

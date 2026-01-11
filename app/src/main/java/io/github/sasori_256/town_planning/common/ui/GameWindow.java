@@ -23,6 +23,7 @@ import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.NodeMenuInitializer;
 import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
+import io.github.sasori_256.town_planning.entity.disaster.Disaster;
 import io.github.sasori_256.town_planning.entity.model.GameModel;
 import io.github.sasori_256.town_planning.entity.resident.Resident;
 import io.github.sasori_256.town_planning.entity.resident.ResidentState;
@@ -59,9 +60,6 @@ class GameMapPanel extends JPanel {
     setBackground(Color.BLACK);
     this.paintObjectSelectUI = new PaintObjectSelectUI(imageManager, this, root);
     paintObjectSelectUI.paint();
-    add(animationManager);
-    // 子コンポーネントをオーバーレイ表示するため、animationManager をパネル全体に広げる
-    animationManager.setOpaque(false);
     revalidate();
     repaint();
   }
@@ -99,7 +97,8 @@ class GameMapPanel extends JPanel {
             BuildingType.DrawGroup group = cell.getBuilding().getType()
                 .getDrawGroup(cell.getLocalX(), cell.getLocalY());
             if (group == BuildingType.DrawGroup.FLOOR) {
-              paintGameObject.paintBuilding(g, pos, gameMap, camera, imageManager, this);
+              paintGameObject.paintBuilding(g, pos, gameMap, camera, imageManager,
+                  animationManager, this);
             } else if (group == BuildingType.DrawGroup.ACTOR) {
               actors.add(DrawEntry.forBuilding(pos));
             }
@@ -124,12 +123,26 @@ class GameMapPanel extends JPanel {
         actors.add(DrawEntry.forResident(resident));
       });
 
+      gameModel.getDisasterEntities().forEach(disaster -> {
+        Point2D.Double pos = disaster.getPosition();
+        int x = (int) Math.floor(pos.getX());
+        int y = (int) Math.floor(pos.getY());
+        if (!isInsideCameraView(x, y)) {
+          return;
+        }
+        actors.add(DrawEntry.forDisaster(disaster));
+      });
+
       actors.sort(DrawEntry.DEPTH_ORDER);
       for (DrawEntry entry : actors) {
         if (entry.kind == DrawKind.BUILDING_TILE) {
-          paintGameObject.paintBuilding(g, entry.pos, gameMap, camera, imageManager, this);
+          paintGameObject.paintBuilding(g, entry.pos, gameMap, camera, imageManager,
+              animationManager, this);
         } else if (entry.kind == DrawKind.RESIDENT) {
           paintGameObject.paintResident(g, entry.resident, camera, imageManager, this);
+        } else if (entry.kind == DrawKind.DISASTER) {
+          paintGameObject.paintDisaster(g, entry.disaster, camera, imageManager,
+              animationManager, this);
         }
       }
     } finally {
@@ -155,21 +168,26 @@ class GameMapPanel extends JPanel {
     this.paintObjectSelectUI.repaintUI();
   }
 
-  public AnimationManager getAnimationManager() {
-    return this.animationManager;
-  }
-
   private enum DrawKind {
     BUILDING_TILE,
-    RESIDENT
+    RESIDENT,
+    DISASTER
   }
 
   private static final class DrawEntry {
-    private static final Comparator<DrawEntry> DEPTH_ORDER = Comparator
-        .comparingDouble((DrawEntry entry) -> entry.depth)
-        .thenComparingDouble(entry -> entry.y)
-        .thenComparingDouble(entry -> entry.x)
-        .thenComparingInt(entry -> entry.kind == DrawKind.BUILDING_TILE ? 0 : 1);
+      private static final Comparator<DrawEntry> DEPTH_ORDER = Comparator
+          .comparingDouble((DrawEntry entry) -> entry.depth)
+          .thenComparingDouble(entry -> entry.y)
+          .thenComparingDouble(entry -> entry.x)
+          .thenComparingInt(entry -> {
+            if (entry.kind == DrawKind.BUILDING_TILE) {
+              return 0;
+            }
+            if (entry.kind == DrawKind.RESIDENT) {
+              return 1;
+            }
+            return 2;
+          });
 
     private final double x;
     private final double y;
@@ -177,22 +195,29 @@ class GameMapPanel extends JPanel {
     private final DrawKind kind;
     private final Point2D.Double pos;
     private final Resident resident;
+    private final Disaster disaster;
 
     private static DrawEntry forBuilding(Point2D.Double pos) {
-      return new DrawEntry(DrawKind.BUILDING_TILE, pos, null);
+      return new DrawEntry(DrawKind.BUILDING_TILE, pos, null, null);
     }
 
     private static DrawEntry forResident(Resident resident) {
-      return new DrawEntry(DrawKind.RESIDENT, resident.getPosition(), resident);
+      return new DrawEntry(DrawKind.RESIDENT, resident.getPosition(), resident, null);
     }
 
-    private DrawEntry(DrawKind kind, Point2D.Double pos, Resident resident) {
+    private static DrawEntry forDisaster(Disaster disaster) {
+      return new DrawEntry(DrawKind.DISASTER, disaster.getPosition(), null, disaster);
+    }
+
+    private DrawEntry(DrawKind kind, Point2D.Double pos, Resident resident,
+        Disaster disaster) {
       this.kind = kind;
       this.pos = new Point2D.Double(pos.getX(), pos.getY());
       this.x = this.pos.getX();
       this.y = this.pos.getY();
       this.depth = this.x + this.y;
       this.resident = resident;
+      this.disaster = disaster;
     }
   }
 }
@@ -253,7 +278,6 @@ public class GameWindow extends JFrame {
       public void componentResized(java.awt.event.ComponentEvent e) {
         gameMapPanel.repaintUI();
         camera.setScreenSize(getWidth(), getHeight());
-        gameMapPanel.getAnimationManager().setBounds(0, 0, getWidth(), getHeight());
         // MEMO:ウィンドウリサイズ時の処理を追加する場合はここに記載 Cameraの位置修正とか
       }
     });

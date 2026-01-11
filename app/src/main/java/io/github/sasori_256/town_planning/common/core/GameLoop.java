@@ -1,16 +1,8 @@
 package io.github.sasori_256.town_planning.common.core;
 
-// AtomicBooleanについて
-// AtomicBooleanは、Javaのjava.util.concurrent.atomicパッケージに属するクラスであり、
-// スレッドセーフなブール値の操作を提供します。
-// 複数のスレッドが同時にアクセスする可能性のあるブール値を扱う際に使用され、
-// 競合状態を防ぐために設計されています。
-// AtomicBooleanは、基本的なブール値の操作（true/falseの設定、取得、反転など）を
-// 原子操作として提供します。
-// これにより、複数のスレッドが同時に値を変更しようとした場合でも、一貫性が保たれます。
-// 例えば、複数のスレッドが同時にフラグを設定またはクリアしようとする場合に、
-// AtomicBooleanを使用することで、競合状態を防ぎ、正しい結果を得ることができます。
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.DoubleConsumer;
+import javax.swing.SwingUtilities;
 
 /**
  * 固定タイムステップのゲームループを提供するクラス。
@@ -18,27 +10,28 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class GameLoop implements Runnable {
   private final AtomicBoolean running = new AtomicBoolean(false);
+  private final AtomicBoolean renderPending = new AtomicBoolean(false);
 
   /**
    * CallBackによる更新処理
    * CallBackを使うことで、GameLoopクラスが特定のゲームロジックに依存しないようにする
    * ゲームロジックを知っているMainクラスでUpdateとRenderの具体的な処理を提供する
    */
-  private final Runnable updateCallback;
+  private final DoubleConsumer updateCallback;
   private final Runnable renderCallback;
   private Thread thread = null;
 
-  // 60 FPS target
+  // 30 FPS target
   // TODO: マジックナンバーを定数化して外部から変更できるようにする
-  private static final double TIME_STEP = 1.0 / 60.0;
+  private static final double TIME_STEP = 1.0 / 30.0;
   private static final long TIME_STEP_NANO = (long) (TIME_STEP * 1_000_000_000);
 
-  public GameLoop(Runnable updateCallback, Runnable renderCallback) {
+  public GameLoop(DoubleConsumer updateCallback, Runnable renderCallback) {
     this.updateCallback = updateCallback;
     this.renderCallback = renderCallback;
   }
 
-  public void start() {
+  public synchronized void start() {
     if (thread == null) {
       try {
         if (running.compareAndSet(false, true)) {
@@ -48,16 +41,41 @@ public class GameLoop implements Runnable {
         }
       } catch (Exception e) {
         running.set(false);
+        System.err.println("Failed to start GameLoop.");
         e.printStackTrace();
       }
     }
   }
 
+  /**
+   * ゲームループを停止する。
+   * 
+   * <p>
+   * このメソッドは、EDT（Event Dispatch Thread）から呼び出された場合でも安全に動作します。
+   * EDTから呼び出された場合、ゲームループスレッドの終了を待機せず、すぐに戻ります。
+   * これは、ゲームループがSwingUtilities.invokeLater()を使用してEDTにレンダリングタスクを
+   * ディスパッチしている可能性があるため、EDTでの待機はデッドロックを引き起こす可能性があるためです。
+   * 
+   * <p>
+   * ゲームループスレッドはデーモンスレッドとして実行されるため、アプリケーションの終了時に
+   * 自動的に終了します。
+   * 
+   * <p>
+   * EDT以外のスレッドから呼び出された場合は、ゲームループスレッドの終了を待機します。
+   */
   public void stop() {
     running.set(false);
     try {
-      if (thread != null) {
-        thread.join(); // ゲームループスレッドの終了を待機
+      Thread toJoin;
+      synchronized (this) {
+        toJoin = thread;
+      }
+      boolean isCalledFromEDT = SwingUtilities.isEventDispatchThread();
+      boolean shouldWaitForCompletion = toJoin != null
+          && toJoin != Thread.currentThread()
+          && !isCalledFromEDT;
+      if (shouldWaitForCompletion) {
+        toJoin.join(); // ゲームループスレッドの終了を待機
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -70,37 +88,59 @@ public class GameLoop implements Runnable {
     long lastTime = System.nanoTime(); // 前フレームの時刻
     double accumulator = 0.0; // 経過時間
 
-    while (running.get()) {
-      long now = System.nanoTime();
-      long frameTime = now - lastTime;
-      lastTime = now;
+    try {
+      while (running.get()) {
+        long now = System.nanoTime();
+        long frameTime = now - lastTime;
+        lastTime = now;
 
-      // あまりに大きな遅延が発生した場合の補正
-      // フレーム時間が0.25秒を超える場合、0.25秒に制限する
-      if (frameTime > 250_000_000) { // Max frame time to avoid spiral of death (0.25s)
-        frameTime = 250_000_000;
-      }
+        // あまりに大きな遅延が発生した場合の補正
+        // フレーム時間が0.25秒を超える場合、0.25秒に制限する
+        if (frameTime > 250_000_000) { // Max frame time to avoid spiral of death (0.25s)
+          frameTime = 250_000_000;
+        }
 
-      accumulator += frameTime;
+        accumulator += frameTime;
 
-      // 修正ループ: 固定タイムステップで更新を行う
-      while (accumulator >= TIME_STEP_NANO) {
-        updateCallback.run();
-        accumulator -= TIME_STEP_NANO;
-      }
+        // 修正ループ: 固定タイムステップで更新を行う
+        while (accumulator >= TIME_STEP_NANO) {
+          updateCallback.accept(TIME_STEP);
+          accumulator -= TIME_STEP_NANO;
+        }
 
-      // 描画処理
-      // renderCallback.run();
+        // 描画処理はEDTに委譲する
+        requestRender();
 
-      // フレームレート制御: 次のフレームまで待機
-      long sleepTime = (TIME_STEP_NANO - (System.nanoTime() - now)) / 1_000_000;
-      if (sleepTime > 1) {
-        try {
-          Thread.sleep(sleepTime);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
+        // フレームレート制御: 次のフレームまで待機
+        long sleepTime = (TIME_STEP_NANO - (System.nanoTime() - now)) / 1_000_000;
+        if (sleepTime > 1) {
+          try {
+            Thread.sleep(sleepTime);
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+          }
         }
       }
+    } finally {
+      synchronized (this) {
+        thread = null;
+      }
     }
+  }
+
+  private void requestRender() {
+    if (renderCallback == null) {
+      return;
+    }
+    if (!renderPending.compareAndSet(false, true)) {
+      return;
+    }
+    SwingUtilities.invokeLater(() -> {
+      try {
+        renderCallback.run();
+      } finally {
+        renderPending.set(false);
+      }
+    });
   }
 }

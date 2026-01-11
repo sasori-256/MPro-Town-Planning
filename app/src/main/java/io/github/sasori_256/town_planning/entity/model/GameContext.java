@@ -2,6 +2,7 @@ package io.github.sasori_256.town_planning.entity.model;
 
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.entity.building.Building;
+import io.github.sasori_256.town_planning.entity.disaster.Disaster;
 import io.github.sasori_256.town_planning.entity.resident.Resident;
 import io.github.sasori_256.town_planning.map.model.GameMap;
 
@@ -31,6 +32,8 @@ public interface GameContext {
   Stream<Building> getBuildingEntities();
 
   Stream<Resident> getResidentEntities();
+
+  Stream<Disaster> getDisasterEntities();
 
   double getDeltaTime(); // 前フレームからの経過時間（秒）
 

@@ -7,5 +7,7 @@ public interface Terrain {
 
   boolean isBuildable();
 
+  int getMoveCost();
+
   void draw();
 }

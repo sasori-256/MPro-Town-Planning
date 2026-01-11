@@ -3,201 +3,64 @@ package io.github.sasori_256.town_planning.common.ui;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics;
-import java.awt.Image;
-import java.awt.MediaTracker;
-import java.awt.Toolkit;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
-import java.io.File;
-import java.util.HashMap;
-import java.util.Map;
-
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-
+import javax.swing.SwingUtilities;
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
-import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.MenuNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.NodeMenuInitializer;
 import io.github.sasori_256.town_planning.entity.Camera;
+import io.github.sasori_256.town_planning.entity.building.BuildingType;
+import io.github.sasori_256.town_planning.entity.model.GameModel;
+import io.github.sasori_256.town_planning.entity.resident.Resident;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
 import io.github.sasori_256.town_planning.map.model.GameMap;
 import io.github.sasori_256.town_planning.map.model.MapCell;
-
 
 /**
  * gameMapの内容を描画するクラス
  */
 class GameMapPanel extends JPanel {
-  /**
-   * 画像を格納するための内部クラス
-   */
-  private static final class ImageStorage {
-    final String name;
-    final Image image;
-    Point2D.Double size;
-    
-    public void loadSize() {
-      this.size.x = image.getWidth(null);
-      this.size.y = image.getHeight(null);
-    }
-    
-    ImageStorage(String name, Image image) {
-      this.name = name;
-      this.image = image;
-      this.size = new Point2D.Double(32, 32); // 仮の初期値
-      loadSize();
-    }
-  }
-  private final Map<String, ImageStorage> imageStorages = new HashMap<>();
-
-  /**
-   * 配列にすべての画像を読み込み、imageStoragesに格納する
-   * @implNote 画像は "src/main/resources/images/" フォルダから読み込まれる
-   * @see ImageStorage
-   */
-  private void loadImages() {
-    String PATH = getClass().getClassLoader().getResource("images").getPath();
-    
-    File dir = new File(PATH);
-    File[] files = dir.listFiles((d, name) -> name.endsWith(".png"));
-    MediaTracker tracker = new MediaTracker(this);
-    if (files != null) {
-      for (int i = 0; i < files.length; i++) {
-        File file = files[i];
-        String imageName = file.getName().replaceFirst("[.][^.]+$", "").toLowerCase(); // 拡張子を除去し、全部小文字にする
-        System.out.println("Loading image: " + file.getName());
-        Image img = Toolkit.getDefaultToolkit().getImage(file.getAbsolutePath());
-        imageStorages.put(imageName, new ImageStorage(imageName, img));
-        tracker.addImage(img, i);
-        try {
-          tracker.waitForID(i);
-        } catch (InterruptedException e) {
-          System.err.println("Error loading image: " + file.getName());
-        }
-
-      }
-    }
-  }
-
-  /**
-   * 名前から画像を取得する。見つからなければerror_terrainを、それもなければnullを返す
-   * @param name 画像の名前
-   * @return 画像のImageStorageオブジェクト、見つからなければエラー画像のImageStorageオブジェクト
-   * @see ImageStorage
-   */
-  private ImageStorage getImageByName(String name) {
-    name = name.toLowerCase(); // 名前を小文字に変換して統一
-    if (imageStorages.get(name) != null) {
-      return imageStorages.get(name);
-    }
-    if (name.equals("error_terrain") || name.equals("error_building")) {
-      return null; // エラー画像自体が見つからない場合はnullを返す
-    }
-    return getImageByName("error_terrain"); // 画像が見つからない場合はエラー画像を返す
-  }
 
   private final GameMap gameMap;
+  private final GameModel gameModel;
   private final Camera camera;
   private final CategoryNode root;
-  public GameMapPanel(GameMap gameMap, Camera camera, CategoryNode root) {
+  private final ImageManager imageManager;
+  private final PaintGameObject paintGameObject;
+  private final PaintUI paintUI;
+  private final ReadWriteLock stateLock;
+
+  public GameMapPanel(GameMap gameMap, GameModel gameModel, Camera camera, CategoryNode root,
+      ReadWriteLock stateLock) {
     this.gameMap = gameMap;
+    this.gameModel = gameModel;
     this.camera = camera;
     this.root = root;
+    this.imageManager = new ImageManager();
+    this.paintGameObject = new PaintGameObject();
+    this.stateLock = stateLock;
+    this.setLayout(null);
     setBackground(Color.BLACK);
-    loadImages(); // 画像の事前読み込み
-  }
-  /**
-   * 垂直方向の高さを持つ画像のシフト量を計算する
-   * @param imgPos 画像の元の中心位置
-   * @param imgSize 画像の元のサイズ
-   * @return シフト量
-   */
-  Point2D.Double calculateShiftImage(Point2D.Double imgPos, Point2D.Double imgSize, double cameraScale) {
-    double shiftX = imgPos.x;
-    double aspectRatio = imgSize.y / imgSize.x;
-    double shiftY = imgPos.y - (aspectRatio*2 - 1) * cameraScale / 2;
-    return new Point2D.Double(shiftX, shiftY);
-  }
-  /**
-   * 画像のスケールを計算する
-   * @return 画像のスケール
-   */
-  Point2D.Double calculateImageScale(double cameraScale) {
-    double imageWidth = 32 * cameraScale * 2;
-    double imageHeight = 32 * cameraScale;
-    return new Point2D.Double(imageWidth, imageHeight);
-  }
-  
-  /**
-   * 指定された座標の地形と建物を描画する
-   * @param g
-   * @param x
-   * @param y
-   */
-  void paintTerrainAndBuilding(Graphics g, int x, int y) {
-    Point2D.Double pos = new Point2D.Double(x, y);
-    MapCell cell = gameMap.getCell(new Point2D.Double(x, y));
-    Point2D.Double screenPos = camera.isoToScreen(pos);
-    Point2D.Double imageScale = calculateImageScale(camera.getScale());
-    // 地形の描画
-    String terrainName = cell.getTerrain().getDisplayName();
-    ImageStorage terrainImage = getImageByName(terrainName);
-    if("error_terrain".equals(terrainImage.name)){
-      System.err.println("Warning: Image not found: " + terrainName + ".png at (" + x + ", " + y + ")");
-    }
-    g.drawImage(terrainImage.image, (int)screenPos.x, (int)screenPos.y, (int)(imageScale.x), (int)(imageScale.y), this);
-    // 建物の描画
-    String buildingName = cell.getBuilding().getType().getImageName();
-    if(buildingName.equals("none")){ // 建物がない場合はスキップ
-      return;
-    }
-    ImageStorage buildingImage = getImageByName(buildingName);
-    Point2D.Double imageSize = buildingImage.size;
-    Point2D.Double shiftedScreenPos = calculateShiftImage(screenPos, imageSize, camera.getScale());
-    if("error_building".equals(buildingImage.name)){
-      System.err.println("Warning: Image not found: " + buildingName + ".png at (" + x + ", " + y + ")");
-    }
-    g.drawImage(buildingImage.image, (int)shiftedScreenPos.x, (int)shiftedScreenPos.y, (int)(imageScale.x), (int)(imageScale.y), this);
-  }
-
-  /**
-   * ゲーム上のUIを描画する
-   * @param g 描画に使用するGraphicsオブジェクト
-   * @param mode UIのモード(view, creative, disaster)
-   */
-  void paintUI(Graphics g, String mode, CategoryNode root) {
-    switch (mode) {
-      case "creative":
-        // CreativeモードのUI描画
-        MenuNode creativeRoot = root.getChildren().get(0); // 創造モードのルートノード
-        int i = 1;
-        for (MenuNode building : creativeRoot.getChildren()) {
-          
-          
-
-        }
-        break;
-        case "disaster":
-          // DisasterモードのUI描画
-          MenuNode disasterRoot = root.getChildren().get(1); // 天災モードのルートノード
-        for (MenuNode disasterBuilding : disasterRoot.getChildren()) {
-          g.drawString(disasterBuilding.getName(), 10, 20); // 仮の描画位置
-          for (MenuNode disasterNode : disasterBuilding.getChildren()) {
-            g.drawString(" - " + disasterNode.getName(), 20, 40); // 仮の描画位置
-          }
-        }
-        break;
-      default:
-      case "view":
-        // ViewモードのUI描画
-        break;
-    }
+    this.paintUI = new PaintUI(imageManager, this, root);
+    paintUI.paint();
   }
 
   /**
    * gameMapの内容を描画する
+   *
    * @param g 描画に使用するGraphicsオブジェクト
    * @implNote 画像ファイルが見つからない場合、"Warning Image not found: imageName.png at (x,y)"
    *           という警告が出力されます。
@@ -205,38 +68,178 @@ class GameMapPanel extends JPanel {
    */
   @Override
   public void paintComponent(Graphics g) {
-    super.paintComponent(g);
-    for (int y = 0; y < gameMap.getHeight(); y++) {
-      for (int x = 0; x < gameMap.getWidth(); x++) {
-        paintTerrainAndBuilding(g, x, y);
-      }
-    }
-    String mode = "creative"; // TODO: 実際のモードを取得する
-    paintUI(g, mode, root);
 
+    super.paintComponent(g);
+    Lock readLock = stateLock.readLock();
+    readLock.lock();
+    try {
+      int maxZ = gameMap.getWidth() + gameMap.getHeight();
+
+      // 地形と床系タイルを描画し、アクタ系タイルを収集
+      List<DrawEntry> actors = new ArrayList<>();
+      for (int z = 0; z < maxZ; z++) {
+        for (int x = 0; x <= z; x++) {
+          int y = z - x;
+          if (x < gameMap.getWidth() && y < gameMap.getHeight() && isInsideCameraView(x, y)) {
+            Point2D.Double pos = new Point2D.Double(x, y);
+            paintGameObject.paintTerrain(g, pos, gameMap, camera, imageManager, this);
+
+            MapCell cell = gameMap.getCell(pos);
+            if (cell.getBuilding() == null) {
+              continue;
+            }
+            BuildingType.DrawGroup group = cell.getBuilding().getType()
+                .getDrawGroup(cell.getLocalX(), cell.getLocalY());
+            if (group == BuildingType.DrawGroup.FLOOR) {
+              paintGameObject.paintBuilding(g, pos, gameMap, camera, imageManager, this);
+            } else if (group == BuildingType.DrawGroup.ACTOR) {
+              actors.add(DrawEntry.forBuilding(pos));
+            }
+          }
+        }
+      }
+
+      gameModel.getResidentEntities().forEach(resident -> {
+        Point2D.Double pos = resident.getPosition();
+        int x = (int) Math.floor(pos.getX());
+        int y = (int) Math.floor(pos.getY());
+        if (x < 0 || y < 0 || x >= gameMap.getWidth() || y >= gameMap.getHeight()) {
+          return;
+        }
+        if (!isInsideCameraView(x, y)) {
+          return;
+        }
+        actors.add(DrawEntry.forResident(resident));
+      });
+
+      actors.sort(DrawEntry.DEPTH_ORDER);
+      for (DrawEntry entry : actors) {
+        if (entry.kind == DrawKind.BUILDING_TILE) {
+          paintGameObject.paintBuilding(g, entry.pos, gameMap, camera, imageManager, this);
+        } else if (entry.kind == DrawKind.RESIDENT) {
+          paintGameObject.paintResident(g, entry.resident, camera, imageManager, this);
+        }
+      }
+    } finally {
+      readLock.unlock();
+    }
+  }
+
+  boolean isInsideCameraView(int x, int y) {
+    Point2D.Double screenPos = camera.isoToScreen(new Point2D.Double(x + 0, y));
+    int panelWidth = this.getWidth();
+    int panelHeight = this.getHeight();
+    double cameraScale = camera.getScale();
+    int margin = (int) (cameraScale * 32);
+    // 画面外にある場合は描画しない
+    if (screenPos.x < -margin || screenPos.x > panelWidth + margin || screenPos.y < -margin
+        || screenPos.y > panelHeight + margin) {
+      return false;
+    }
+    return true;
+  }
+
+  public void repaintUI() {
+    this.paintUI.repaintUI();
+  }
+
+  private enum DrawKind {
+    BUILDING_TILE,
+    RESIDENT
+  }
+
+  private static final class DrawEntry {
+    private static final Comparator<DrawEntry> DEPTH_ORDER = Comparator
+        .comparingDouble((DrawEntry entry) -> entry.depth)
+        .thenComparingDouble(entry -> entry.y)
+        .thenComparingDouble(entry -> entry.x)
+        .thenComparingInt(entry -> entry.kind == DrawKind.BUILDING_TILE ? 0 : 1);
+
+    private final double x;
+    private final double y;
+    private final double depth;
+    private final DrawKind kind;
+    private final Point2D.Double pos;
+    private final Resident resident;
+
+    private static DrawEntry forBuilding(Point2D.Double pos) {
+      return new DrawEntry(DrawKind.BUILDING_TILE, pos, null);
+    }
+
+    private static DrawEntry forResident(Resident resident) {
+      return new DrawEntry(DrawKind.RESIDENT, resident.getPosition(), resident);
+    }
+
+    private DrawEntry(DrawKind kind, Point2D.Double pos, Resident resident) {
+      this.kind = kind;
+      this.pos = new Point2D.Double(pos.getX(), pos.getY());
+      this.x = this.pos.getX();
+      this.y = this.pos.getY();
+      this.depth = this.x + this.y;
+      this.resident = resident;
+    }
   }
 }
+
 /**
  * ゲームウィンドウを表すクラス
  * ウィンドウサイズ: 640*640
  * タイトル: "Town Planning Game"
+ *
  * @see GameMapPanel
  */
 public class GameWindow extends JFrame {
-  public GameWindow(MouseListener listener, GameMap gameMap, Camera camera, int width, int height, EventBus eventBus) {
-    addMouseListener(listener);
+  /**
+   * ゲーム描画ウィンドウを初期化する。
+   *
+   * @param listener          入力イベントのリスナー
+   * @param gameModel         ゲーム状態を管理するモデル
+   * @param gameMap           ゲームマップ
+   * @param camera            カメラ
+   * @param width             ウィンドウ幅
+   * @param height            ウィンドウ高さ
+   * @param eventBus          イベントバス
+   * @param gameMapController マップ操作コントローラ
+   * @param stateLock         状態ロック
+   */
+  public <T extends MouseListener & MouseMotionListener & MouseWheelListener & KeyListener> GameWindow(
+      T listener,
+      GameModel gameModel,
+      GameMap gameMap,
+      Camera camera,
+      int width,
+      int height,
+      EventBus eventBus,
+      GameMapController gameMapController,
+      ReadWriteLock stateLock) {
     setTitle("Town Planning Game");
     setSize(width, height);
-    //GameMap gameMap = generateTestMap();
-    GameMapController gameMapController = new GameMapController(camera);
+    // GameMap gameMap = generateTestMap();
     CategoryNode root = NodeMenuInitializer.setup(gameMapController, gameMap);
 
-    GameMapPanel gameMapPanel = new GameMapPanel(gameMap, camera, root);
+    GameMapPanel gameMapPanel = new GameMapPanel(gameMap, gameModel, camera, root, stateLock);
+    gameMapPanel.addMouseListener(listener);
+    gameMapPanel.addMouseMotionListener(listener);
+    gameMapPanel.addMouseWheelListener(listener);
+    gameMapPanel.addKeyListener(listener);
+    gameMapPanel.setFocusable(true);
     eventBus.subscribe(MapUpdatedEvent.class, event -> {
-      gameMapPanel.repaint();
+      if (SwingUtilities.isEventDispatchThread()) {
+        gameMapPanel.repaint();
+      } else {
+        SwingUtilities.invokeLater(gameMapPanel::repaint);
+      }
     });
     this.add(gameMapPanel, BorderLayout.CENTER);
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    this.addComponentListener(new ComponentAdapter() {
+      @Override
+      public void componentResized(java.awt.event.ComponentEvent e) {
+        gameMapPanel.repaintUI();
+        camera.setScreenSize(getWidth(), getHeight());
+        // MEMO:ウィンドウリサイズ時の処理を追加する場合はここに記載 Cameraの位置修正とか
+      }
+    });
     setVisible(true);
   }
 }

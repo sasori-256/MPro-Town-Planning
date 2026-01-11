@@ -51,7 +51,7 @@ public class ImageManager extends Component {
       for (int i = 0; i < files.length; i++) {
         File file = files[i];
         String imageName = file.getName().replaceFirst("[.][^.]+$", "").toLowerCase();
-        System.out.println("Loading image: " + imageName);
+        // System.out.println("Loading image: " + imageName);
         try {
           BufferedImage img = ImageIO.read(file);
           tracker.addImage(img, 0);
@@ -96,7 +96,7 @@ public class ImageManager extends Component {
     } else {
       storage = this.imageStorages.get("error");
       if (storage != null) {
-        System.out.println("Warning: Image not found: " + name + ".png, returning error image.");
+        // System.out.println("Warning: Image not found: " + name + ".png, returning error image.");
         return storage;
       } else {
         System.err.println("Fatal: Error image not found: error.png");

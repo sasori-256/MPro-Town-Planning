@@ -33,6 +33,7 @@ class GameMapPanel extends JPanel {
   private final Camera camera;
   private final CategoryNode root;
   private final ImageManager imageManager;
+  private final AnimationManager animationManager;
   private final PaintGameObject paintGameObject;
   private final PaintUI paintUI;
   private final ReadWriteLock stateLock;
@@ -42,12 +43,26 @@ class GameMapPanel extends JPanel {
     this.camera = camera;
     this.root = root;
     this.imageManager = new ImageManager();
+    this.animationManager = new AnimationManager();
     this.paintGameObject = new PaintGameObject();
     this.stateLock = stateLock;
     this.setLayout(null);
     setBackground(Color.BLACK);
     this.paintUI = new PaintUI(imageManager, this, root);
     paintUI.paint();
+    add(animationManager);
+    // 子コンポーネントをオーバーレイ表示するため、animationManager をパネル全体に広げる
+    animationManager.setOpaque(false);
+    animationManager.setBounds(0, 0, this.getWidth(), this.getHeight());
+    // リサイズ時に animationManager のサイズを更新する
+    this.addComponentListener(new java.awt.event.ComponentAdapter() {
+      @Override
+      public void componentResized(java.awt.event.ComponentEvent e) {
+        
+      }
+    });
+    revalidate();
+    repaint();
   }
 
   /**
@@ -98,6 +113,10 @@ class GameMapPanel extends JPanel {
   public void repaintUI() {
     this.paintUI.repaintUI();
   }
+
+  public AnimationManager getAnimationManager() {
+    return this.animationManager;
+  }
 }
 
 /**
@@ -136,6 +155,7 @@ public class GameWindow extends JFrame {
       public void componentResized(java.awt.event.ComponentEvent e) {
         gameMapPanel.repaintUI();
         camera.setScreenSize(getWidth(), getHeight());
+        gameMapPanel.getAnimationManager().setBounds(0, 0, getWidth(), getHeight());
         // MEMO:ウィンドウリサイズ時の処理を追加する場合はここに記載 Cameraの位置修正とか
       }
     });

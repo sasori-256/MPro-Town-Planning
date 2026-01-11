@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JButton;
-import javax.swing.JPanel;
 
 import io.github.sasori_256.town_planning.common.ui.ImageManager.ImageStorage;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.BuildingNode;
@@ -20,19 +19,19 @@ import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.
  */
 public class PaintUI {
   private final ImageManager imageManager;
-  private final JPanel panel;
+  private final GameMapPanel panel;
   private CategoryNode root;
   // private GameMapController gameMapController;
   private double UIScale = 1;
 
-  public PaintUI(ImageManager imageManager, JPanel panel, CategoryNode root) {
+  public PaintUI(ImageManager imageManager, GameMapPanel panel, CategoryNode root) {
     this.imageManager = imageManager;
     this.panel = panel;
     this.root = root;
     // this.gameMapController = gameMapController;
   }
 
-  private String selectedModeName = "view"; // UIのモード(view, creative, disaster)
+  private String selectedModeName = ""; // UIのモード(view, creative, disaster)
   private String selectedCategoryName = "";
   private String selectedObjectName = "";
   private MenuNode selectedCategoryNode = null;

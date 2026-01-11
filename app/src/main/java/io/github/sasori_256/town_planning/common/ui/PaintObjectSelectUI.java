@@ -35,7 +35,7 @@ public class PaintObjectSelectUI {
   private String selectedCategoryName = "";
   private String selectedObjectName = "";
   private MenuNode selectedCategoryNode = null;
-  private List<List<JButton>> createdButtons = new ArrayList<>(
+  private List<List<CustomButton>> createdButtons = new ArrayList<>(
       List.of(new ArrayList<>(), new ArrayList<>(), new ArrayList<>())); // レベルごとに作成されたボタンを保持するリスト
   // レベル0: モード選択ボタン
   // レベル1: カテゴリ選択ボタン
@@ -44,8 +44,8 @@ public class PaintObjectSelectUI {
   private void createButtonIfNotExists(String buttonText, int xPos, int yPos, int width, int height,
       ActionListener actionListener, MenuNode objectNode, int level) {
     boolean exists = false;
-    for (JButton button : createdButtons.get(level)) {
-      if (button.getText().equals(buttonText)) {
+    for (CustomButton button : createdButtons.get(level)) {
+      if (button.getTextContent().equals(buttonText)) {
         exists = true;
         break;
       }
@@ -64,14 +64,16 @@ public class PaintObjectSelectUI {
           break;
       }
       String imageName = prefix + buttonText.toLowerCase();
-      CustomButton button = new CustomButton(buttonText); // 画像が見つからない場合はテキストだけのボタンを使用
-      button.setFocusable(false); // mapPannelでのキーイベントを受け取るため、ボタンにフォーカスしないようにフォーカスを外す
       ImageStorage imageStorage = imageManager.getImageStorage(imageName);
+      CustomButton button;
       if (imageStorage == null || imageStorage.getName() == null || imageStorage.getName().equals("error")) {
         // System.err.println("Warning: Image not found: " + imageName);
+        button = new CustomButton(buttonText); // 画像が見つからない場合はテキストだけのボタンを使用
       } else {
-        button.setImage(imageStorage.getImage(), width, height);
+        button = new CustomButton(buttonText, imageStorage); // 画像が見つかった場合は画像だけのボタンを使用
+        // button.setImage(imageStorage.getImage(), width, height);
       }
+      button.setFocusable(false); // mapPannelでのキーイベントを受け取るため、ボタンにフォーカスしないようにフォーカスを外す
       button.setCustomBounds(xPos, yPos, width, height);
       // ボタンの画像を指定
       button.addActionListener(actionListener);

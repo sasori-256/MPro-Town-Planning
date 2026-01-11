@@ -24,7 +24,11 @@ public class PlaceBuildingHandler
     Point2D.Double roundedPoint = new Point2D.Double(Math.round(isoPoint.x), Math.round(isoPoint.y));
     BaseGameEntity entity = entityGenerator.apply(roundedPoint);
     if (entity instanceof Building building) {
-      gameModel.constructBuilding(roundedPoint, building.getType());
+      boolean constructed = gameModel.constructBuilding(roundedPoint, building.getType());
+      if (!constructed) {
+        System.err.println("Error: Failed to construct building of type " + building.getType()
+            + " at position " + roundedPoint + ".");
+      }
     } else {
       System.err.println("Error: Trying to place a building that is not a Building.");
     }

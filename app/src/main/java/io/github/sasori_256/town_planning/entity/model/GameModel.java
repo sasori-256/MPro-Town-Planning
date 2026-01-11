@@ -468,9 +468,6 @@ public class GameModel implements GameContext, Updatable {
 
     for (HouseNeed need : needs) {
       while (need.remaining > 0 && !movers.isEmpty()) {
-        if (movers.isEmpty()) {
-          break;
-        }
         Resident resident = movers.remove(movers.size() - 1);
         Point2D.Double newHome = need.house.building.getPosition();
         resident.requestRelocation(newHome);

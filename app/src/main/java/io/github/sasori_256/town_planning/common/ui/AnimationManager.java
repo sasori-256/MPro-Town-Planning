@@ -31,23 +31,23 @@ import javax.swing.Timer;
  * - 再生はループ再生します
  */
 public class AnimationManager extends JComponent {
-	private final Map<String, AnimationStorage> animations = new HashMap<>();
-	private final List<PlayingAnimation> playing = new ArrayList<>();
+    private final Map<String, AnimationStorage> animations = new HashMap<>();
+    private final List<PlayingAnimation> playing = new ArrayList<>();
 
-	// 汎用タイマーで repaint をトリガーする（UI スレッドで動く）
-	private Timer timer;
+    // 汎用タイマーで repaint をトリガーする（UI スレッドで動く）
+    private Timer timer;
 
-	public AnimationManager() {
-		this.loadAnimations();
-		// デフォルトで透過描画（必要なら true に変更してください）
-		this.setOpaque(false);
-	}
+    public AnimationManager() {
+        this.loadAnimations();
+        // デフォルトで透過描画（必要なら true に変更してください）
+        this.setOpaque(false);
+    }
 
-	/** resources/animations にある画像を読み込む */
-	public void loadAnimations() {
-		URL animationsUrl = this.getClass().getClassLoader().getResource("animations");
-		String path = animationsUrl != null ? animationsUrl.getPath() : null;
-		File dir = path != null ? new File(path) : null;
+    /** resources/animations にある画像を読み込む */
+    public void loadAnimations() {
+        URL animationsUrl = this.getClass().getClassLoader().getResource("animations");
+        String path = animationsUrl != null ? animationsUrl.getPath() : null;
+        File dir = path != null ? new File(path) : null;
 
 		List<File> fileList = new ArrayList<>();
 		if (dir != null && dir.exists()) {
@@ -116,9 +116,13 @@ public class AnimationManager extends JComponent {
 	}
 
 	/**
-	 * 指定した名前のアニメーションを指定フレームレートで x,y に描画する（ループ再生）
+	 * 指定した名前のアニメーションを指定フレームレートで x,y に描画する（doLoop が true の場合はループ再生）
 	 * 
-	 * @param name アニメーション名（拡張子・番号なし、小文字大文字不問）
+	 * @param name     アニメーション名（拡張子・番号なし、小文字大文字不問）
+	 * @param frameRate 1 秒あたりのフレーム数（0 以下の場合は 1 として扱われます）
+	 * @param x        描画位置の X 座標
+	 * @param y        描画位置の Y 座標
+	 * @param doLoop   true の場合は最後のフレームまで再生した後に先頭に戻ってループ再生し、false の場合は 1 回のみ再生します
 	 */
 	public PlayingAnimation play(String name, int frameRate, double x, double y, boolean doLoop) {
 		if (name == null)

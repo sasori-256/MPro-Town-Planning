@@ -37,6 +37,26 @@ public interface GameContext {
 
   double getDeltaTime(); // 前フレームからの経過時間（秒）
 
+  /**
+   * 現在のゲーム内日数を返す。
+   */
+  int getDay();
+
+  /**
+   * 1日の経過秒を返す。
+   */
+  double getTimeOfDaySeconds();
+
+  /**
+   * 1日の経過率(0.0-1.0)を返す。
+   */
+  double getTimeOfDayNormalized();
+
+  /**
+   * 1日の長さ(秒)を返す。
+   */
+  double getDayLengthSeconds();
+
   // Entity Lifecycle
 
   <T extends BaseGameEntity> void spawnEntity(T entity);

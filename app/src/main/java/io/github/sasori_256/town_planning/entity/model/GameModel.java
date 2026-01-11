@@ -69,9 +69,7 @@ public class GameModel implements GameContext, Updatable {
   private final List<Disaster> disasterEntities = new CopyOnWriteArrayList<>();
 
   private int souls = 100;
-  private int day = 1;
-  private double dayTimer = 0;
-  private static final double DAY_LENGTH = 10.0; // 10秒で1日
+  private final GameTime gameTime = new GameTime();
   private static final int MIN_RESIDENTS_PER_HOUSE = 2;
   // UPDATE_STEP is 1/30s and ANIMATION_STEP is 1/6s, so animations advance every
   // 5 update steps.
@@ -142,6 +140,26 @@ public class GameModel implements GameContext, Updatable {
   @Override
   public double getDeltaTime() {
     return withReadLock(() -> lastDeltaTime);
+  }
+
+  @Override
+  public int getDay() {
+    return withReadLock(() -> gameTime.getDayCount());
+  }
+
+  @Override
+  public double getTimeOfDaySeconds() {
+    return withReadLock(() -> gameTime.getTimeOfDaySeconds());
+  }
+
+  @Override
+  public double getTimeOfDayNormalized() {
+    return withReadLock(() -> gameTime.getTimeOfDayNormalized());
+  }
+
+  @Override
+  public double getDayLengthSeconds() {
+    return withReadLock(() -> gameTime.getDayLengthSeconds());
   }
 
   /**
@@ -526,10 +544,6 @@ public class GameModel implements GameContext, Updatable {
   }
 
   // getters / setters
-  public int getDay() {
-    return withReadLock(() -> day);
-  }
-
   public GameMap getGameMap() {
     return gameMap;
   }
@@ -550,22 +564,8 @@ public class GameModel implements GameContext, Updatable {
 
   public void setDay(int day) {
     withWriteLock(() -> {
-      this.day = day;
+      gameTime.setDayCount(day);
     });
-  }
-
-  public double getDayTimer() {
-    return withReadLock(() -> dayTimer);
-  }
-
-  public void setDayTimer(double dayTimer) {
-    withWriteLock(() -> {
-      this.dayTimer = dayTimer;
-    });
-  }
-
-  public static double getDayLength() {
-    return DAY_LENGTH;
   }
 
   public double getLastDeltaTime() {
@@ -623,7 +623,7 @@ public class GameModel implements GameContext, Updatable {
    * The update process:
    * <ol>
    * <li>Acquire write lock</li>
-   * <li>Update day timer and game state</li>
+   * <li>Update game time and state</li>
    * <li>Update all residents, buildings, and disasters (which may queue
    * spawn/remove operations)</li>
    * <li>Advance animations</li>
@@ -642,12 +642,14 @@ public class GameModel implements GameContext, Updatable {
       try {
         this.lastDeltaTime = dt;
 
-        dayTimer += dt;
-        if (dayTimer >= DAY_LENGTH) {
-          dayTimer = 0;
-          day++;
-          eventBus.publish(new DayPassedEvent(day));
-          rebalanceResidents();
+        int previousDay = gameTime.getDayCount();
+        int daysAdvanced = gameTime.advance(dt);
+        if (daysAdvanced > 0) {
+          int currentDay = gameTime.getDayCount();
+          for (int dayNumber = previousDay + 1; dayNumber <= currentDay; dayNumber++) {
+            eventBus.publish(new DayPassedEvent(dayNumber));
+            rebalanceResidents();
+          }
         }
 
         for (Resident resident : residentEntities) {

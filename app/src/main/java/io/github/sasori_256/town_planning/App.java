@@ -26,6 +26,8 @@ public class App {
     GameModel gameModel = new GameModel(MAP_WIDTH, MAP_HEIGHT, eventBus);
     GameMap gameMap = gameModel.getGameMap();
     Point2D.Double homePos = new Point2D.Double(0, 0);
+
+    // テスト用に(0, 0)に2人住んでいる家を生成
     Building home = new Building(homePos, BuildingType.RED_ROOFED_HOUSE);
     if (gameMap.placeBuilding(homePos, home)) {
       home.setCurrentPopulation(2);
@@ -35,6 +37,7 @@ public class App {
       gameModel.spawnEntity(new Resident(new Point2D.Double(homePos.getX(), homePos.getY()),
           ResidentType.CITIZEN, ResidentState.AT_HOME, homePos));
     }
+
     Camera camera = new Camera(1, WIDTH, HEIGHT, MAP_WIDTH, MAP_HEIGHT, eventBus);
     ReadWriteLock stateLock = gameModel.getStateLock();
     GameMapController gameMapController = new GameMapController(camera, stateLock);

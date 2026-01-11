@@ -106,7 +106,8 @@ public class PaintGameObject {
    * @param camera       カメラ
    * @param imageManager 画像取得用マネージャー
    * @param panel        描画対象のパネル
-  */
+   * @param snapToGrid   座標をグリッド中央に丸めるかの真偽値
+   */
   private void paint(Graphics g, Point2D.Double pos, String name, Camera camera,
       ImageManager imageManager, JPanel panel, boolean snapToGrid) {
     Graphics2D g2d = (Graphics2D) g;
@@ -129,4 +130,3 @@ public class PaintGameObject {
     }
   }
 }
-

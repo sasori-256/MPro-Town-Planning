@@ -57,7 +57,8 @@ public class AnimationManager extends JComponent {
 			while (!stack.isEmpty()) {
 				File current = stack.pop();
 				File[] children = current.listFiles();
-				if (children == null) continue;
+				if (children == null)
+					continue;
 				for (File child : children) {
 					if (child.isDirectory()) {
 						stack.push(child);
@@ -99,7 +100,8 @@ public class AnimationManager extends JComponent {
 			for (FileWithIndex fi : list) {
 				try {
 					BufferedImage img = ImageIO.read(fi.file);
-					if (img != null) frames.add(img);
+					if (img != null)
+						frames.add(img);
 				} catch (Exception ex) {
 					System.err.println("Error loading animation frame: " + fi.file.getName());
 					ex.printStackTrace();
@@ -115,27 +117,39 @@ public class AnimationManager extends JComponent {
 
 	/**
 	 * 指定した名前のアニメーションを指定フレームレートで x,y に描画する（ループ再生）
+	 * 
 	 * @param name アニメーション名（拡張子・番号なし、小文字大文字不問）
 	 */
-	public void play(String name, int frameRate, double x, double y) {
-		if (name == null) return;
+	public PlayingAnimation play(String name, int frameRate, double x, double y, boolean doLoop) {
+		if (name == null)
+			return null;
 		AnimationStorage storage = this.animations.get(name.toLowerCase());
 		if (storage == null) {
 			System.err.println("Animation not found: " + name);
-			return;
+			return null;
 		}
-    System.out.println("Start animation: " + name + " at (" + x + "," + y + ") with frameRate " + frameRate);
-		if (frameRate <= 0) frameRate = 1;
-		PlayingAnimation pa = new PlayingAnimation(storage, frameRate, x, y, System.currentTimeMillis());
+		System.out.println("Start animation: " + name + " at (" + x + "," + y + ") with frameRate " + frameRate);
+		if (frameRate <= 0)
+			frameRate = 1;
+		PlayingAnimation pa = new PlayingAnimation(storage, frameRate, x, y, doLoop, System.currentTimeMillis());
 		synchronized (this.playing) {
 			this.playing.add(pa);
 		}
 		ensureTimerRunning();
 		this.repaint();
+		return pa;
+	}
+
+	public void stop(PlayingAnimation pa) {
+		if (pa == null)
+			return;
+		synchronized (this.playing) {
+			this.playing.remove(pa);
+		}
 	}
 
 	private void ensureTimerRunning() {
-    // TODO: オリジナルのタイマーを持つのではなく、GameLoopから呼び出されるように変更する
+		// TODO: オリジナルのタイマーを持つのではなく、GameLoopから呼び出されるように変更する
 		if (this.timer == null) {
 			// 40ms 毎に repaint（最終描画タイミングは各アニメーションの fps を尊重する）
 			this.timer = new Timer(40, e -> this.repaint());
@@ -154,6 +168,10 @@ public class AnimationManager extends JComponent {
 			Iterator<PlayingAnimation> it = this.playing.iterator();
 			while (it.hasNext()) {
 				PlayingAnimation pa = it.next();
+				if (pa.isFinished(now)) {
+					it.remove();
+					continue;
+				}
 				BufferedImage img = pa.getCurrentFrame(now);
 				if (img != null) {
 					g.drawImage(img, (int) Math.round(pa.x), (int) Math.round(pa.y), null);
@@ -198,23 +216,35 @@ public class AnimationManager extends JComponent {
 		final int frameRate;
 		final double x;
 		final double y;
+		final boolean doLoop;
 		final long startMs;
 		final long frameDurationMs;
 
-		PlayingAnimation(AnimationStorage storage, int frameRate, double x, double y, long startMs) {
+		PlayingAnimation(AnimationStorage storage, int frameRate, double x, double y, boolean doLoop, long startMs) {
 			this.storage = storage;
 			this.frameRate = frameRate;
 			this.x = x;
 			this.y = y;
+			this.doLoop = doLoop;
 			this.startMs = startMs;
 			this.frameDurationMs = Math.max(1, 1000L / frameRate);
 		}
 
 		BufferedImage getCurrentFrame(long nowMs) {
-			if (storage == null || storage.frames.isEmpty()) return null;
+			if (storage == null || storage.frames.isEmpty())
+				return null;
 			long elapsed = Math.max(0, nowMs - this.startMs);
 			int idx = (int) ((elapsed / this.frameDurationMs) % storage.frames.size());
 			return storage.frames.get(idx);
+		}
+
+		boolean isFinished(long nowMs) {
+			if (doLoop)
+				return false;
+			long elapsed = Math.max(0, nowMs - this.startMs);
+			int totalFrames = storage.frames.size();
+			long totalDuration = totalFrames * frameDurationMs;
+			return elapsed >= totalDuration;
 		}
 	}
 }

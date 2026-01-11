@@ -1,4 +1,4 @@
-package io.github.sasori_256.town_planning.common.ui.gameObjectSelect.view;
+package io.github.sasori_256.town_planning.common.ui;
 
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -6,8 +6,6 @@ import java.util.List;
 
 import javax.swing.JButton;
 
-import io.github.sasori_256.town_planning.common.ui.CustomButton;
-import io.github.sasori_256.town_planning.common.ui.ImageManager;
 import io.github.sasori_256.town_planning.common.ui.ImageManager.ImageStorage;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.BuildingNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;

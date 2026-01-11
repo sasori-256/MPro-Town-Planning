@@ -33,7 +33,8 @@ public class ImageManager extends Component {
       while (!stack.isEmpty()) {
         File current = stack.pop();
         File[] children = current.listFiles();
-        if (children == null) continue;
+        if (children == null)
+          continue;
         for (File child : children) {
           if (child.isDirectory()) {
             stack.push(child);

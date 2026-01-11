@@ -92,5 +92,6 @@
     "java.edit.validateAllOpenBuffersOnChanges": false,
     "java.editor.reloadChangedSources": "ask",
     "java.foldingRange.enabled": true,
-    "java.selectionRange.enabled": true
+    "java.selectionRange.enabled": true,
+    "editor.formatOnSave": true,
 }

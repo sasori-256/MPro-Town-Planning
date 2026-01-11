@@ -22,6 +22,7 @@ import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.NodeMenuInitializer;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.view.PaintObjectSelectUI;
+import io.github.sasori_256.town_planning.common.ui.resourceViewer.view.PaintResourceViewerUI;
 import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
 import io.github.sasori_256.town_planning.entity.model.GameModel;
@@ -42,6 +43,7 @@ class GameMapPanel extends JPanel {
   private final ImageManager imageManager;
   private final PaintGameObject paintGameObject;
   private final PaintObjectSelectUI paintObjectSelectUI;
+  private final PaintResourceViewerUI paintResourceViewerUI;
   private final ReadWriteLock stateLock;
 
   public GameMapPanel(GameMap gameMap, GameModel gameModel, Camera camera, CategoryNode root,
@@ -56,6 +58,8 @@ class GameMapPanel extends JPanel {
     this.setLayout(null);
     setBackground(Color.BLACK);
     this.paintObjectSelectUI = new PaintObjectSelectUI(imageManager, this, root);
+    this.paintResourceViewerUI = new PaintResourceViewerUI(imageManager, this, 1.0);
+
     paintObjectSelectUI.paint();
   }
 

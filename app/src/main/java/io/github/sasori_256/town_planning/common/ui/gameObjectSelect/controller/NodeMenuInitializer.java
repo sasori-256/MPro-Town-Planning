@@ -51,7 +51,7 @@ public class NodeMenuInitializer {
             });
 
             DisasterNode disasterNode = new DisasterNode(type, (point) -> new Disaster(point, type),
-                gameMapController, mapContext);
+                gameMapController, gameModel, mapContext);
             categoryNode.add(disasterNode);
         }
         return root;

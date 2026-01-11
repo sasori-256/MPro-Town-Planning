@@ -9,7 +9,7 @@ import java.awt.image.RescaleOp;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 
-class CustomButton extends JButton {
+public class CustomButton extends JButton {
   private int originalWidth;
   private int originalHeight;
   private int centerX;

@@ -21,6 +21,7 @@ import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.NodeMenuInitializer;
+import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.view.PaintObjectSelectUI;
 import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
 import io.github.sasori_256.town_planning.entity.model.GameModel;
@@ -41,7 +42,7 @@ class GameMapPanel extends JPanel {
   private final ImageManager imageManager;
   private final AnimationManager animationManager;
   private final PaintGameObject paintGameObject;
-  private final PaintUI paintUI;
+  private final PaintObjectSelectUI paintObjectSelectUI;
   private final ReadWriteLock stateLock;
 
   public GameMapPanel(GameMap gameMap, GameModel gameModel, Camera camera, CategoryNode root,
@@ -56,8 +57,8 @@ class GameMapPanel extends JPanel {
     this.stateLock = stateLock;
     this.setLayout(null);
     setBackground(Color.BLACK);
-    this.paintUI = new PaintUI(imageManager, this, root);
-    paintUI.paint();
+    this.paintObjectSelectUI = new PaintObjectSelectUI(imageManager, this, root);
+    paintObjectSelectUI.paint();
     add(animationManager);
     // 子コンポーネントをオーバーレイ表示するため、animationManager をパネル全体に広げる
     animationManager.setOpaque(false);
@@ -66,7 +67,7 @@ class GameMapPanel extends JPanel {
     this.addComponentListener(new java.awt.event.ComponentAdapter() {
       @Override
       public void componentResized(java.awt.event.ComponentEvent e) {
-        
+
       }
     });
     revalidate();
@@ -155,12 +156,13 @@ class GameMapPanel extends JPanel {
   }
 
   public void repaintUI() {
-    this.paintUI.repaintUI();
+    this.paintObjectSelectUI.repaintUI();
   }
 
   public AnimationManager getAnimationManager() {
     return this.animationManager;
   }
+
   private enum DrawKind {
     BUILDING_TILE,
     RESIDENT

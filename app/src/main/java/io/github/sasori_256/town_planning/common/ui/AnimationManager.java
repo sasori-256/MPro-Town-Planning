@@ -46,8 +46,8 @@ public class AnimationManager extends JComponent {
 	/** resources/animations にある画像を読み込む */
 	public void loadAnimations() {
 		URL animationsUrl = this.getClass().getClassLoader().getResource("animations");
-		String PATH = animationsUrl != null ? animationsUrl.getPath() : null;
-		File dir = PATH != null ? new File(PATH) : null;
+		String path = animationsUrl != null ? animationsUrl.getPath() : null;
+		File dir = path != null ? new File(path) : null;
 
 		List<File> fileList = new ArrayList<>();
 		if (dir != null && dir.exists()) {
@@ -194,8 +194,8 @@ public class AnimationManager extends JComponent {
 	public static final class AnimationStorage {
 		public final String name;
 		public final List<BufferedImage> frames;
-		public int width;
-		public int height;
+		public final int width;
+		public final int height;
 
 		AnimationStorage(String name, List<BufferedImage> frames) {
 			this.name = name;

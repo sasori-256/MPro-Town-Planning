@@ -83,6 +83,8 @@ public class Disaster extends BaseGameEntity {
 
   /**
    * アニメーションがループするかを返す。
+   *
+   * @return ループするならtrue
    */
   public boolean isAnimationLoop() {
     return animationLoop;

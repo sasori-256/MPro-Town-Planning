@@ -4,7 +4,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.Objects;
 
 /**
  * 型安全なイベントバスの実装。
@@ -40,11 +42,22 @@ public class EventBus {
    * @return 購読解除用のSubscriptionオブジェクト
    */
   public <T> Subscription subscribe(Class<T> eventType, Consumer<T> listener) {
+    Objects.requireNonNull(eventType, "eventType");
+    Objects.requireNonNull(listener, "listener");
     List<Consumer<?>> list = listeners.computeIfAbsent(eventType, k -> new CopyOnWriteArrayList<>());
     list.add(listener);
 
     // 購読解除用のアクションを返す
-    return () -> list.remove(listener);
+    AtomicBoolean removed = new AtomicBoolean(false);
+    return () -> {
+      if (!removed.compareAndSet(false, true)) {
+        return;
+      }
+      list.remove(listener);
+      if (list.isEmpty()) {
+        listeners.remove(eventType, list);
+      }
+    };
   }
 
   /**
@@ -61,8 +74,10 @@ public class EventBus {
    * 引数では、SoulChangedEvent(currentSoul)のようにフィールドを変更したときの数値など、伝達するべき値を引数に入れる。
    *
    * @param event 発行するイベントオブジェクト
+   * @implNote リスナー内の例外は捕捉し、後続リスナーの実行は継続する。
    */
   public void publish(Object event) {
+    Objects.requireNonNull(event, "event");
     Class<?> type = event.getClass();
     List<Consumer<?>> list = listeners.get(type);
     if (list != null) {

@@ -265,6 +265,8 @@ public enum BuildingType {
 
   /**
    * アニメーションを持つ建物かを返す。
+   *
+   * @return アニメーションを持つ場合はtrue
    */
   public boolean hasAnimation() {
     return this == PLAZA;

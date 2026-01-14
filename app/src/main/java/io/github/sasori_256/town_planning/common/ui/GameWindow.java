@@ -18,6 +18,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import io.github.sasori_256.town_planning.common.event.EventBus;
+import io.github.sasori_256.town_planning.common.event.Subscription;
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.NodeMenuInitializer;
@@ -187,19 +188,19 @@ class GameMapPanel extends JPanel {
   }
 
   private static final class DrawEntry {
-      private static final Comparator<DrawEntry> DEPTH_ORDER = Comparator
-          .comparingDouble((DrawEntry entry) -> entry.depth)
-          .thenComparingDouble(entry -> entry.y)
-          .thenComparingDouble(entry -> entry.x)
-          .thenComparingInt(entry -> {
-            if (entry.kind == DrawKind.BUILDING_TILE) {
-              return 0;
-            }
-            if (entry.kind == DrawKind.RESIDENT) {
-              return 1;
-            }
-            return 2;
-          });
+    private static final Comparator<DrawEntry> DEPTH_ORDER = Comparator
+        .comparingDouble((DrawEntry entry) -> entry.depth)
+        .thenComparingDouble(entry -> entry.y)
+        .thenComparingDouble(entry -> entry.x)
+        .thenComparingInt(entry -> {
+          if (entry.kind == DrawKind.BUILDING_TILE) {
+            return 0;
+          }
+          if (entry.kind == DrawKind.RESIDENT) {
+            return 1;
+          }
+          return 2;
+        });
 
     private final double x;
     private final double y;
@@ -276,7 +277,8 @@ public class GameWindow extends JFrame {
     gameMapPanel.addMouseWheelListener(listener);
     gameMapPanel.addKeyListener(listener);
     gameMapPanel.setFocusable(true);
-    eventBus.subscribe(MapUpdatedEvent.class, event -> {
+    // TODO: onCloseなる関数でWindowのフレーム破棄時にunsubscribeするようにする
+    Subscription mapSub = eventBus.subscribe(MapUpdatedEvent.class, event -> {
       if (SwingUtilities.isEventDispatchThread()) {
         gameMapPanel.repaint();
       } else {
@@ -301,5 +303,3 @@ public class GameWindow extends JFrame {
     setVisible(true);
   }
 }
-
-

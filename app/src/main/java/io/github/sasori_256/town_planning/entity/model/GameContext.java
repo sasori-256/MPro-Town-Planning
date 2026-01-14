@@ -35,6 +35,8 @@ public interface GameContext {
 
   Stream<Disaster> getDisasterEntities();
 
+  int getSouls();
+
   double getDeltaTime(); // 前フレームからの経過時間（秒）
 
   // Entity Lifecycle

@@ -286,6 +286,7 @@ public class GameModel implements GameContext, Updatable {
     });
   }
 
+  @Override
   public int getSouls() {
     return withReadLock(() -> souls);
   }

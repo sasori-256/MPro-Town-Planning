@@ -58,7 +58,7 @@ class GameMapPanel extends JPanel {
     this.setLayout(null);
     setBackground(Color.BLACK);
     this.paintObjectSelectUI = new PaintObjectSelectUI(imageManager, this, root);
-    this.paintResourceViewerUI = new PaintResourceViewerUI(imageManager, this, 1.0);
+    this.paintResourceViewerUI = new PaintResourceViewerUI(gameModel, imageManager, this, 1.0);
 
     paintObjectSelectUI.paint();
   }

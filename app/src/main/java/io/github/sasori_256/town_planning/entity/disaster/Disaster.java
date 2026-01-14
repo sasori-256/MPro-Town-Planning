@@ -62,6 +62,8 @@ public class Disaster extends BaseGameEntity {
 
   /**
    * アニメーション名を返す。
+   *
+   * @return アニメーション名
    */
   public String getAnimationName() {
     return animationName;

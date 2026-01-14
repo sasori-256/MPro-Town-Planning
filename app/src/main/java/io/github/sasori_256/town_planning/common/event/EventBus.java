@@ -15,7 +15,25 @@ public class EventBus {
 
   /**
    * イベントを購読する。
-   * 
+   *
+   * <h2>購読方法</h2>
+   *
+   * イベントを購読(値の変更などを検知)したいオブジェクトに対して以下を適用する。
+   *
+   * ```java
+   * Subscription sub =
+   * eventBus.subscribe(購読したいイベント.class, event -> {
+   * イベント発生時に実行される処理;
+   * });
+   * ```
+   *
+   * また、Windowパネルなどが破棄されるときにはunsubscribeが必要になる。
+   * unsubscribeのための関数はsubに入っているので、そこからunsubscribeを実行すれば良い。
+   *
+   * ```java
+   * sub.unsubscribe();
+   * ```
+   *
    * @param <T>       イベントの型
    * @param eventType 購読したいイベントのクラスオブジェクト
    * @param listener  イベント発生時に実行される処理
@@ -31,7 +49,17 @@ public class EventBus {
 
   /**
    * イベントを発行する。
-   * 
+   *
+   * <h2>発行方法</h2>
+   *
+   * 以下により発行したいイベントとその引数を指定することでイベントの発行が可能。
+   *
+   * ```java
+   * eventBus.publish(発行したいイベントのRecordクラス(必要な引数));
+   * ```
+   *
+   * 引数では、SoulChangedEvent(currentSoul)のようにフィールドを変更したときの数値など、伝達するべき値を引数に入れる。
+   *
    * @param event 発行するイベントオブジェクト
    */
   public void publish(Object event) {

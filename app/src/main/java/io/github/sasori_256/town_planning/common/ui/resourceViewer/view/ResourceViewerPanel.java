@@ -14,7 +14,7 @@ import io.github.sasori_256.town_planning.common.ui.CustomPanel;
  * CustomPanels
  */
 public class ResourceViewerPanel extends CustomPanel {
-    JLabel valueLabel;
+    private JLabel valueLabel;
 
     public ResourceViewerPanel(String displayValue, Image bgImage) {
         super(bgImage);

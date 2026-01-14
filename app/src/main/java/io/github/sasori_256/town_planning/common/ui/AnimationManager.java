@@ -21,6 +21,9 @@ import javax.imageio.ImageIO;
 public class AnimationManager {
   private final Map<String, AnimationStorage> animations = new HashMap<>();
 
+  /**
+   * アニメーションマネージャを生成し、画像を読み込む。
+   */
   public AnimationManager() {
     this.loadAnimations();
   }

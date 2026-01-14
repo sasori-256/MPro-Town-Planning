@@ -48,30 +48,66 @@ public enum DisasterType {
     this(displayName, imageName, cost, radius, damage, category, null);
   }
 
+  /**
+   * 表示名を返す。
+   *
+   * @return 表示名
+   */
   public String getDisplayName() {
     return displayName;
   }
 
+  /**
+   * 画像名を返す。
+   *
+   * @return 画像名
+   */
   public String getImageName() {
     return imageName;
   }
 
+  /**
+   * 発生コストを返す。
+   *
+   * @return コスト
+   */
   public int getCost() {
     return cost;
   }
 
+  /**
+   * 影響範囲の半径を返す。
+   *
+   * @return 半径
+   */
   public int getRadius() {
     return radius;
   }
 
+  /**
+   * 与えるダメージ量を返す。
+   *
+   * @return ダメージ量
+   */
   public int getDamage() {
     return damage;
   }
 
+  /**
+   * カテゴリを返す。
+   *
+   * @return カテゴリ
+   */
   public CategoryType getCategory() {
     return category;
   }
 
+  /**
+   * 目標位置に応じたアクションを生成する。
+   *
+   * @param targetPos 目標位置
+   * @return 生成したアクション。未設定ならnull
+   */
   public GameAction createAction(Point2D.Double targetPos) {
     return actionFactory == null ? null : actionFactory.apply(targetPos, this);
   }

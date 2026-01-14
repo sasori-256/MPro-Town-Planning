@@ -25,16 +25,46 @@ import java.util.stream.Stream;
  * DI (Dependency Injection) のような役割を果たす。
  */
 public interface GameContext {
+  /**
+   * イベントバスを返す。
+   *
+   * @return イベントバス
+   */
   EventBus getEventBus();
 
+  /**
+   * マップを返す。
+   *
+   * @return マップ
+   */
   GameMap getMap();
 
+  /**
+   * 建物エンティティのストリームを返す。
+   *
+   * @return 建物エンティティのストリーム
+   */
   Stream<Building> getBuildingEntities();
 
+  /**
+   * 住民エンティティのストリームを返す。
+   *
+   * @return 住民エンティティのストリーム
+   */
   Stream<Resident> getResidentEntities();
 
+  /**
+   * 災害エンティティのストリームを返す。
+   *
+   * @return 災害エンティティのストリーム
+   */
   Stream<Disaster> getDisasterEntities();
 
+  /**
+   * 前フレームからの経過時間(秒)を返す。
+   *
+   * @return 経過時間(秒)
+   */
   double getDeltaTime(); // 前フレームからの経過時間（秒）
 
   /**
@@ -59,8 +89,20 @@ public interface GameContext {
 
   // Entity Lifecycle
 
+  /**
+   * エンティティを生成してゲームに追加する。
+   *
+   * @param entity 追加するエンティティ
+   * @param <T>    エンティティ型
+   */
   <T extends BaseGameEntity> void spawnEntity(T entity);
 
+  /**
+   * エンティティをゲームから削除する。
+   *
+   * @param entity 削除するエンティティ
+   * @param <T>    エンティティ型
+   */
   <T extends BaseGameEntity> void removeEntity(T entity);
 
 }

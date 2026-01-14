@@ -12,6 +12,7 @@ import io.github.sasori_256.town_planning.entity.resident.ResidentState;
  * 住民のライフサイクル（加齢、死亡）を管理するEffect。
  */
 public class ResidentLifeCycleEffect implements UpdateStrategy, GameEffect {
+  /** {@inheritDoc} */
   @Override
   public void update(GameContext context, BaseGameEntity self) {
     if (!(self instanceof Resident)) {
@@ -43,7 +44,7 @@ public class ResidentLifeCycleEffect implements UpdateStrategy, GameEffect {
 
   private void die(GameContext context, BaseGameEntity self) {
     Resident resident = (Resident) self;
-    resident.setState(ResidentState.DEAD);
+    resident.markDead();
 
     // 死亡イベント発行
     context.getEventBus().publish(new ResidentDiedEvent(resident));

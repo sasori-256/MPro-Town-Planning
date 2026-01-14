@@ -80,6 +80,9 @@ public class ImageManager extends Component {
 
   }
 
+  /**
+   * 画像マネージャを生成し、画像を読み込む。
+   */
   public ImageManager() {
     this.loadImages();
   }
@@ -115,6 +118,9 @@ public class ImageManager extends Component {
     final BufferedImage image;
     Point2D.Double size = new Point2D.Double(); // サイズは読み取り直しが必要な場合があるため、finalにしない
 
+    /**
+     * 画像サイズを読み込む。
+     */
     public void loadSize() {
       if (this.image == null) {
         System.err.println("Cannot load size for null image: " + this.name);
@@ -129,16 +135,32 @@ public class ImageManager extends Component {
       }
     }
 
+    /**
+     * 画像情報を生成する。
+     *
+     * @param name  画像名
+     * @param image 画像
+     */
     public ImageStorage(String name, BufferedImage image) {
       this.name = name;
       this.image = image;
       this.loadSize();
     }
 
+    /**
+     * 画像名を返す。
+     *
+     * @return 画像名
+     */
     public String getName() {
       return name;
     }
 
+    /**
+     * 画像を返す。
+     *
+     * @return 画像
+     */
     public BufferedImage getImage() {
       return image;
     }

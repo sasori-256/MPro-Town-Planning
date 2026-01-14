@@ -7,7 +7,11 @@ import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.entity.resident.strategy.ResidentBehaviorAction;
 import io.github.sasori_256.town_planning.entity.resident.strategy.ResidentLifeCycleEffect;
 
+/**
+ * 住民エンティティを表すクラス。
+ */
 public class Resident extends BaseGameEntity {
+  private static final double DEATH_ANIMATION_DURATION = 0.4;
   private final ResidentType type;
   private Point2D.Double homePosition;
   private Point2D.Double relocationTarget;
@@ -15,6 +19,7 @@ public class Resident extends BaseGameEntity {
   private int faith;
   private int layerIndex;
   private ResidentState state;
+  private double deathAnimationElapsed;
 
   /**
    * 住民を生成する。
@@ -33,6 +38,7 @@ public class Resident extends BaseGameEntity {
     this.faith = residentType.getInitialFaith();
     this.layerIndex = 0;
     this.state = state;
+    this.deathAnimationElapsed = 0.0;
 
     CompositeUpdateStrategy strategy = new CompositeUpdateStrategy();
     strategy.setAction(new ResidentBehaviorAction());
@@ -52,23 +58,54 @@ public class Resident extends BaseGameEntity {
     this(position, residentType, state, position);
   }
 
+  /**
+   * 年齢を設定する。
+   *
+   * @param age 年齢
+   */
   public void setAge(double age) {
     this.age = Math.max(0.0, age);
   }
 
+  /**
+   * 信仰度を設定する。
+   *
+   * @param faith 信仰度
+   */
   public void setFaith(int faith) {
     this.faith = Math.max(0, faith);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setLayerIndex(int layerIndex) {
     this.layerIndex = layerIndex;
   }
 
+  /**
+   * 状態を設定する。
+   *
+   * @param state 住民状態
+   */
   public void setState(ResidentState state) {
+    if (state == ResidentState.DEAD && this.state != ResidentState.DEAD) {
+      this.deathAnimationElapsed = 0.0;
+    }
     this.state = state;
   }
 
+  /**
+   * 死亡状態にする。
+   */
+  public void markDead() {
+    setState(ResidentState.DEAD);
+  }
+
+  /**
+   * 住民種別を返す。
+   *
+   * @return 住民種別
+   */
   public ResidentType getType() {
     return this.type;
   }
@@ -124,24 +161,75 @@ public class Resident extends BaseGameEntity {
     this.relocationTarget = null;
   }
 
+  /**
+   * 年齢を返す。
+   *
+   * @return 年齢
+   */
   public double getAge() {
     return this.age;
   }
 
+  /**
+   * 最大年齢を返す。
+   *
+   * @return 最大年齢
+   */
   public double getMaxAge() {
     return this.type.getMaxAge();
   }
 
+  /**
+   * 信仰度を返す。
+   *
+   * @return 信仰度
+   */
   public int getFaith() {
     return this.faith;
   }
 
+  /** {@inheritDoc} */
   @Override
   public int getLayerIndex() {
     return this.layerIndex;
   }
 
+  /**
+   * 現在の状態を返す。
+   *
+   * @return 住民状態
+   */
   public ResidentState getState() {
     return this.state;
+  }
+
+  /**
+   * 死亡アニメーションの進行度を返す。
+   *
+   * @return 0.0-1.0 の範囲
+   */
+  public double getDeathAnimationProgress() {
+    if (state != ResidentState.DEAD) {
+      return 0.0;
+    }
+    if (DEATH_ANIMATION_DURATION <= 0.0) {
+      return 1.0;
+    }
+    return Math.min(1.0, deathAnimationElapsed / DEATH_ANIMATION_DURATION);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void advanceAnimation(double dt) {
+    if (state != ResidentState.DEAD) {
+      return;
+    }
+    if (deathAnimationElapsed >= DEATH_ANIMATION_DURATION) {
+      return;
+    }
+    if (dt <= 0.0) {
+      return;
+    }
+    deathAnimationElapsed = Math.min(DEATH_ANIMATION_DURATION, deathAnimationElapsed + dt);
   }
 }

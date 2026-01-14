@@ -46,6 +46,15 @@ class GameMapPanel extends JPanel {
   private final PaintObjectSelectUI paintObjectSelectUI;
   private final ReadWriteLock stateLock;
 
+  /**
+   * マップ描画パネルを生成する。
+   *
+   * @param gameMap   マップ
+   * @param gameModel ゲームモデル
+   * @param camera    カメラ
+   * @param root      ルートカテゴリ
+   * @param stateLock 状態ロック
+   */
   public GameMapPanel(GameMap gameMap, GameModel gameModel, Camera camera, CategoryNode root,
       ReadWriteLock stateLock) {
     this.gameMap = gameMap;
@@ -164,6 +173,9 @@ class GameMapPanel extends JPanel {
     return true;
   }
 
+  /**
+   * UIを再描画する。
+   */
   public void repaintUI() {
     this.paintObjectSelectUI.repaintUI();
   }
@@ -274,6 +286,11 @@ public class GameWindow extends JFrame {
     this.add(gameMapPanel, BorderLayout.CENTER);
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     this.addComponentListener(new ComponentAdapter() {
+      /**
+       * ウィンドウサイズ変更時の処理を行う。
+       *
+       * @param e イベント
+       */
       @Override
       public void componentResized(java.awt.event.ComponentEvent e) {
         gameMapPanel.repaintUI();

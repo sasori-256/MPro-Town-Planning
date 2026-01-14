@@ -15,15 +15,25 @@ public abstract class BaseGameEntity implements GameEntity, Animatable, Lifecycl
   protected Point2D.Double position;
 
   // Layer Indices
-  public static final int LAYER_BACKGROUND = 0; // 背景層
-  public static final int LAYER_GROUND = 5; // 地面層
-  public static final int LAYER_DEFAULT = 10; // 通常のオブジェクト層
-  public static final int LAYER_AID = 20; // 空中オブジェクト層
-  public static final int LAYER_UI = 100; // UI層
+  /** 背景層。 */
+  public static final int LAYER_BACKGROUND = 0;
+  /** 地面層。 */
+  public static final int LAYER_GROUND = 5;
+  /** 通常のオブジェクト層。 */
+  public static final int LAYER_DEFAULT = 10;
+  /** 空中オブジェクト層。 */
+  public static final int LAYER_AID = 20;
+  /** UI層。 */
+  public static final int LAYER_UI = 100;
 
   // Strategies
   private UpdateStrategy updateStrategy;
 
+  /**
+   * 位置を指定してエンティティを生成する。
+   *
+   * @param position 初期位置
+   */
   public BaseGameEntity(Point2D.Double position) {
     this.layerIndex = LAYER_DEFAULT;
     this.position = position;
@@ -32,47 +42,60 @@ public abstract class BaseGameEntity implements GameEntity, Animatable, Lifecycl
     };
   }
 
+  /** {@inheritDoc} */
   @Override
   public int getLayerIndex() {
     return this.layerIndex;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setLayerIndex(int layerIndex) {
     this.layerIndex = layerIndex;
   }
 
+  /** {@inheritDoc} */
   @Override
   public Point2D.Double getPosition() {
     return position;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setPosition(Point2D.Double position) {
     this.position = position;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void setUpdateStrategy(UpdateStrategy updateStrategy) {
     this.updateStrategy = updateStrategy;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void onSpawn(GameContext context) {
     // デフォルトでは何もしない (必要に応じてオーバーライド)
   }
 
+  /** {@inheritDoc} */
   @Override
   public void onRemove(GameContext context) {
     // デフォルトでは何もしない (必要に応じてオーバーライド)
   }
 
+  /**
+   * エンティティの更新処理を行う。
+   *
+   * @param context ゲームコンテキスト
+   */
   public void update(GameContext context) {
     if (updateStrategy != null) {
       updateStrategy.update(context, this);
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void advanceAnimation(double dt) {
     // No-op by default

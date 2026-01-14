@@ -11,12 +11,17 @@ import io.github.sasori_256.town_planning.entity.model.GameModel;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
 import io.github.sasori_256.town_planning.map.model.MapContext;
 
+/**
+ * メニューノードを組み立てるユーティリティ。
+ */
 public class NodeMenuInitializer {
     /**
-     * ノードメニューの初期化を行う。創造モードと天災モードの親のrootノードを返す。
-     * @param gameMapController ゲームマップコントローラー
-     * @param gameModel ゲームモデル
-     * @return 創造モードと天災モードの親となるrootのCategoryNode
+     * ノードメニューの初期化を行う。
+     * 創造モードと天災モードの親となるルートノードを返す。
+     *
+     * @param gameMapController ゲームマップコントローラ
+     * @param gameModel         ゲームモデル
+     * @return ルートのCategoryNode
      */
     public static CategoryNode setup(GameMapController gameMapController, GameModel gameModel) {
         CategoryNode root = new CategoryNode("root");

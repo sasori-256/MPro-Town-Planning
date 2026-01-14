@@ -1,15 +1,22 @@
 package io.github.sasori_256.town_planning.common.ui;
 
+import java.awt.AlphaComposite;
+import java.awt.Color;
+import java.awt.Composite;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+import java.util.HashMap;
+import java.util.Map;
 import javax.swing.JPanel;
 import io.github.sasori_256.town_planning.common.ui.ImageManager.ImageStorage;
 import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.entity.building.Building;
 import io.github.sasori_256.town_planning.entity.disaster.Disaster;
 import io.github.sasori_256.town_planning.entity.resident.Resident;
+import io.github.sasori_256.town_planning.entity.resident.ResidentState;
 import io.github.sasori_256.town_planning.map.model.GameMap;
 import io.github.sasori_256.town_planning.map.model.MapCell;
 
@@ -17,6 +24,9 @@ import io.github.sasori_256.town_planning.map.model.MapCell;
  * 建物を描画するためのクラス
  */
 public class PaintGameObject {
+  private static final double DEAD_ROTATION_DEGREES = 90.0;
+  private static final float DEAD_HUE_SHIFT = 0.5f;
+  private final Map<String, BufferedImage> deadTintCache = new HashMap<>();
   /**
    * 垂直方向の高さを持つ画像のシフト量を計算する
    *
@@ -110,9 +120,18 @@ public class PaintGameObject {
     if (imageName == null) {
       return;
     }
+    ImageStorage imageStorage = imageManager.getImageStorage(imageName);
+    if (imageStorage == null || imageStorage.image == null) {
+      return;
+    }
     Point2D.Double pos = resident.getPosition();
+    if (resident.getState() == ResidentState.DEAD) {
+      paintDeadResident((Graphics2D) g, pos, imageStorage, imageName, camera, panel,
+          resident.getDeathAnimationProgress());
+      return;
+    }
     // Residents move with sub-tile positions, so don't snap to grid.
-    paint(g, pos, imageName, camera, imageManager, panel, false);
+    paintImage(g, pos, imageStorage.image, camera, panel, false);
   }
 
   /**
@@ -198,5 +217,97 @@ public class PaintGameObject {
     int width = (int) (imageSize.x * cameraScale);
     int height = (int) (imageSize.y * cameraScale);
     g2d.drawImage(image, xPos, yPos, width, height, panel);
+  }
+
+  private void paintDeadResident(Graphics2D g2d, Point2D.Double pos, ImageStorage imageStorage,
+      String imageName, Camera camera, JPanel panel, double progress) {
+    if (imageStorage == null || imageStorage.image == null) {
+      return;
+    }
+    double clamped = Math.max(0.0, Math.min(1.0, progress));
+    BufferedImage baseImage = imageStorage.image;
+    Point2D.Double imageSize = new Point2D.Double(baseImage.getWidth(), baseImage.getHeight());
+    Point2D.Double screenPos = camera.isoToScreen(pos);
+    double cameraScale = camera.getScale();
+    Point2D.Double posShift = calculateShiftImage(imageSize, cameraScale);
+    int xPos = (int) Math.round(screenPos.x + posShift.x);
+    int yPos = (int) Math.round(screenPos.y + posShift.y);
+    int width = (int) (imageSize.x * cameraScale);
+    int height = (int) (imageSize.y * cameraScale);
+    if (width <= 0 || height <= 0) {
+      return;
+    }
+
+    double angle = Math.toRadians(DEAD_ROTATION_DEGREES * clamped);
+    double pivotX = xPos + width / 2.0;
+    double pivotY = yPos + height;
+    AffineTransform originalTransform = g2d.getTransform();
+    Composite originalComposite = g2d.getComposite();
+    g2d.rotate(angle, pivotX, pivotY);
+
+    float baseAlpha = (float) (1.0 - clamped);
+    if (baseAlpha > 0.0f) {
+      g2d.setComposite(AlphaComposite.SrcOver.derive(baseAlpha));
+      g2d.drawImage(baseImage, xPos, yPos, width, height, panel);
+    }
+    BufferedImage tinted = getDeadTintedImage(imageName, baseImage);
+    float tintAlpha = (float) clamped;
+    if (tinted != null && tintAlpha > 0.0f) {
+      g2d.setComposite(AlphaComposite.SrcOver.derive(tintAlpha));
+      g2d.drawImage(tinted, xPos, yPos, width, height, panel);
+    }
+
+    g2d.setComposite(originalComposite);
+    g2d.setTransform(originalTransform);
+  }
+
+  private BufferedImage getDeadTintedImage(String imageName, BufferedImage baseImage) {
+    if (imageName == null || baseImage == null) {
+      return null;
+    }
+    BufferedImage cached = deadTintCache.get(imageName);
+    if (cached != null) {
+      return cached;
+    }
+    BufferedImage tinted = createHueShiftedImage(baseImage, DEAD_HUE_SHIFT);
+    if (tinted != null) {
+      deadTintCache.put(imageName, tinted);
+    }
+    return tinted;
+  }
+
+  private BufferedImage createHueShiftedImage(BufferedImage baseImage, float hueShift) {
+    int width = baseImage.getWidth();
+    int height = baseImage.getHeight();
+    if (width <= 0 || height <= 0) {
+      return null;
+    }
+    BufferedImage shifted = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+    float shift = hueShift % 1.0f;
+    if (shift < 0.0f) {
+      shift += 1.0f;
+    }
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        int argb = baseImage.getRGB(x, y);
+        int alpha = (argb >>> 24) & 0xFF;
+        if (alpha == 0) {
+          shifted.setRGB(x, y, 0);
+          continue;
+        }
+        int r = (argb >> 16) & 0xFF;
+        int g = (argb >> 8) & 0xFF;
+        int b = argb & 0xFF;
+        float[] hsb = Color.RGBtoHSB(r, g, b, null);
+        float newHue = hsb[0] + shift;
+        if (newHue > 1.0f) {
+          newHue -= 1.0f;
+        }
+        int rgb = Color.HSBtoRGB(newHue, hsb[1], hsb[2]);
+        int tintedArgb = (alpha << 24) | (rgb & 0x00FFFFFF);
+        shifted.setRGB(x, y, tintedArgb);
+      }
+    }
+    return shifted;
   }
 }

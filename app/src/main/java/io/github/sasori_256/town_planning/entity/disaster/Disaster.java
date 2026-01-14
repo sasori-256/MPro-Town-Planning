@@ -62,6 +62,8 @@ public class Disaster extends BaseGameEntity {
 
   /**
    * アニメーション名を返す。
+   *
+   * @return アニメーション名
    */
   public String getAnimationName() {
     return animationName;
@@ -69,6 +71,8 @@ public class Disaster extends BaseGameEntity {
 
   /**
    * アニメーションのフレーム番号を返す。
+   *
+   * @return フレーム番号
    */
   public int getAnimationFrameIndex() {
     if (animationFrameRate <= 0) {
@@ -79,6 +83,8 @@ public class Disaster extends BaseGameEntity {
 
   /**
    * アニメーションがループするかを返す。
+   *
+   * @return ループするならtrue
    */
   public boolean isAnimationLoop() {
     return animationLoop;

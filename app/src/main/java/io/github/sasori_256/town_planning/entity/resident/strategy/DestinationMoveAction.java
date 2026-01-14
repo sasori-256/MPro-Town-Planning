@@ -116,6 +116,7 @@ public class DestinationMoveAction implements GameAction {
     return new Point2D.Double(destination.getX(), destination.getY());
   }
 
+  /** {@inheritDoc} */
   @Override
   public void execute(GameContext context, BaseGameEntity self) {
     lastStatus = MoveStatus.IDLE;

@@ -11,6 +11,9 @@ import javax.swing.JButton;
 
 import io.github.sasori_256.town_planning.common.ui.ImageManager.ImageStorage;
 
+/**
+ * 画像表示や押下アニメーション付きのボタン。
+ */
 public class CustomButton extends JButton {
   private int originalWidth;
   private int originalHeight;
@@ -39,6 +42,11 @@ public class CustomButton extends JButton {
     this.setVerticalTextPosition(JButton.BOTTOM);
   }
 
+  /**
+   * テキストのみのボタンを生成する。
+   *
+   * @param text 表示テキスト
+   */
   public CustomButton(String text) {
     this.textContent = text;
     this.originalImage = null;
@@ -48,6 +56,12 @@ public class CustomButton extends JButton {
     textPositionOptimize();
   }
 
+  /**
+   * 画像付きのボタンを生成する。
+   *
+   * @param text         表示テキスト
+   * @param imageStorage 画像情報
+   */
   public CustomButton(String text, ImageStorage imageStorage) {
     this.textContent = text;
     this.originalImage = imageStorage.getImage();
@@ -56,10 +70,23 @@ public class CustomButton extends JButton {
     setImage(imageStorage.getImage(), (int) imageStorage.size.x, (int) imageStorage.size.y);
   }
 
+  /**
+   * 元のテキストを返す。
+   *
+   * @return テキスト
+   */
   public String getTextContent() {
     return textContent;
   }
 
+  /**
+   * 表示位置とサイズを設定し、内部の基準座標を更新する。
+   *
+   * @param x      左上X
+   * @param y      左上Y
+   * @param width  幅
+   * @param height 高さ
+   */
   public void setCustomBounds(int x, int y, int width, int height) {
     super.setBounds(x, y, width, height);
     this.setPreferredSize(new Dimension(width, height));
@@ -80,6 +107,13 @@ public class CustomButton extends JButton {
     }
   }
 
+  /**
+   * 表示画像とサイズを設定する。
+   *
+   * @param image 画像
+   * @param width 幅
+   * @param height 高さ
+   */
   public void setImage(Image image, int width, int height) {
     // 通常のボタンの外観を非表示にする
     this.setContentAreaFilled(false);
@@ -217,6 +251,7 @@ public class CustomButton extends JButton {
     animationThread.start();
   }
 
+  /** {@inheritDoc} */
   @Override
   public void removeNotify() { // コンポーネントが破棄されるときにアニメーションを停止
     if (animationThread != null && animationThread.isAlive()) {

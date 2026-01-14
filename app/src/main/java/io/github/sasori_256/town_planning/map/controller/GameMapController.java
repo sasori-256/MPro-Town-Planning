@@ -20,6 +20,9 @@ import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.map.controller.handler.*;
 
+/**
+ * マップ操作に関する入力イベントを扱うコントローラ。
+ */
 public class GameMapController implements MouseListener, MouseMotionListener, KeyListener, MouseWheelListener {
   private Camera camera;
   private final ReadWriteLock stateLock;
@@ -27,6 +30,12 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
   private Function<Point2D.Double, ? extends BaseGameEntity> selectedEntityGenerator;
   private Point previousMiddleMousePos;
 
+  /**
+   * マップコントローラを生成する。
+   *
+   * @param camera    カメラ
+   * @param stateLock 状態ロック
+   */
   public GameMapController(Camera camera, ReadWriteLock stateLock) {
     this.camera = camera;
     this.stateLock = stateLock;
@@ -36,17 +45,27 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
 
   /**
    * GameMap上でのクリック時の動作を設定する
-   * 
+   *
    * @param action
    */
   public void setActionOnClick(BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> action) {
     this.actionOnClick = action;
   }
 
+  /**
+   * 選択中のエンティティ生成関数を設定する。
+   *
+   * @param entityGenerator 生成関数
+   */
   public void setSelectedEntityGenerator(Function<Point2D.Double, ? extends BaseGameEntity> entityGenerator) {
     this.selectedEntityGenerator = entityGenerator;
   }
 
+  /**
+   * クリック時の処理を行う。
+   *
+   * @param e マウスイベント
+   */
   @Override
   public void mouseClicked(MouseEvent e) {
     if (SwingUtilities.isLeftMouseButton(e)) {
@@ -61,6 +80,11 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
     }
   }
 
+  /**
+   * マウス押下時の処理を行う。
+   *
+   * @param e マウスイベント
+   */
   @Override
   public void mousePressed(MouseEvent e) {
     if (SwingUtilities.isMiddleMouseButton(e)) {
@@ -68,6 +92,11 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
     }
   }
 
+  /**
+   * マウス解放時の処理を行う。
+   *
+   * @param e マウスイベント
+   */
   @Override
   public void mouseReleased(MouseEvent e) {
     if (SwingUtilities.isMiddleMouseButton(e)) {
@@ -75,6 +104,11 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
     }
   }
 
+  /**
+   * マウスドラッグ時の処理を行う。
+   *
+   * @param e マウスイベント
+   */
   @Override
   public void mouseDragged(MouseEvent e) {
     if (SwingUtilities.isMiddleMouseButton(e) && previousMiddleMousePos != null) {
@@ -86,6 +120,11 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
     }
   }
 
+  /**
+   * マウスホイール操作時の処理を行う。
+   *
+   * @param e マウスイベント
+   */
   @Override
   public void mouseWheelMoved(MouseWheelEvent e) {
     int notches = e.getWheelRotation();
@@ -96,18 +135,38 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
     }
   }
 
+  /**
+   * マウスが領域に入った際の処理を行う。
+   *
+   * @param e マウスイベント
+   */
   @Override
   public void mouseEntered(MouseEvent e) {
   }
 
+  /**
+   * マウスが領域から出た際の処理を行う。
+   *
+   * @param e マウスイベント
+   */
   @Override
   public void mouseExited(MouseEvent e) {
   }
 
+  /**
+   * マウス移動時の処理を行う。
+   *
+   * @param e マウスイベント
+   */
   @Override
   public void mouseMoved(MouseEvent e) {
   }
 
+  /**
+   * キー押下時の処理を行う。
+   *
+   * @param e キーイベント
+   */
   @Override
   public void keyPressed(KeyEvent e) {
     int k = e.getKeyCode();
@@ -129,10 +188,20 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
     }
   }
 
+  /**
+   * キー解放時の処理を行う。
+   *
+   * @param e キーイベント
+   */
   @Override
   public void keyReleased(KeyEvent e) {
   }
 
+  /**
+   * キー入力時の処理を行う。
+   *
+   * @param e キーイベント
+   */
   @Override
   public void keyTyped(KeyEvent e) {
   }

@@ -24,6 +24,13 @@ public class PaintObjectSelectUI {
   // private GameMapController gameMapController;
   private double UIScale = 1;
 
+  /**
+   * UI描画クラスを生成する。
+   *
+   * @param imageManager 画像マネージャ
+   * @param panel        描画先パネル
+   * @param root         ルートカテゴリ
+   */
   public PaintObjectSelectUI(ImageManager imageManager, GameMapPanel panel, CategoryNode root) {
     this.imageManager = imageManager;
     this.panel = panel;
@@ -157,8 +164,9 @@ public class PaintObjectSelectUI {
 
   /**
    * オブジェクトの選択状態を変更する
-   * 
-   * @param objectName
+   *
+   * @param objectName 表示名
+   * @param objectNode 対象ノード
    */
   public void setSelectedObject(String objectName, MenuNode objectNode) {
     if (!(objectNode instanceof BuildingNode || objectNode instanceof DisasterNode)) {
@@ -284,8 +292,8 @@ public class PaintObjectSelectUI {
 
   /**
    * UIのスケールを設定する
-   * 
-   * @param scale
+   *
+   * @param scale UIスケール
    */
   public void setUIScale(double scale) {
     UIScale = scale;

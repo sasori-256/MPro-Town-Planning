@@ -9,12 +9,22 @@ import io.github.sasori_256.town_planning.entity.model.GameModel;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
 import io.github.sasori_256.town_planning.map.model.MapContext;
 
+/**
+ * クリック位置に災害を発生させるハンドラ。
+ */
 public class ActionDisasterHandler
     implements BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> {
   private final GameModel gameModel;
   private final GameMapController gameMapController;
   private final MapContext mapContext;
 
+  /**
+   * 災害発生ハンドラを生成する。
+   *
+   * @param gameModel         ゲームモデル
+   * @param gameMapController マップコントローラ
+   * @param mapContext        マップ参照
+   */
   public ActionDisasterHandler(GameModel gameModel, GameMapController gameMapController,
       MapContext mapContext) {
     this.gameModel = gameModel;
@@ -23,6 +33,12 @@ public class ActionDisasterHandler
   }
 
   @Override
+  /**
+   * クリック位置に災害発生を試みる。
+   *
+   * @param isoPoint        クリック位置(アイソメトリック座標)
+   * @param entityGenerator 生成関数
+   */
   public void accept(Point2D.Double isoPoint, Function<Point2D.Double, ? extends BaseGameEntity> entityGenerator) {
     if (entityGenerator == null) {
       return;

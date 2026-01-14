@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 
 import io.github.sasori_256.town_planning.common.event.events.DisasterOccurredEvent;
 import io.github.sasori_256.town_planning.common.event.events.ResidentDiedEvent;
+import io.github.sasori_256.town_planning.entity.disaster.Disaster;
 import io.github.sasori_256.town_planning.entity.disaster.DisasterType;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.entity.model.GameAction;
@@ -19,12 +20,21 @@ import io.github.sasori_256.town_planning.entity.resident.ResidentState;
  * 生成されてから一定時間後に着弾し、範囲ダメージを与える。
  */
 public class MeteorDisasterAction implements GameAction {
+  private static final String IMPACT_ANIMATION_NAME = "meteor_impact";
+  private static final int IMPACT_ANIMATION_FPS = 6;
+  private static final double IMPACT_EFFECT_DURATION = 1.0;
   private final Point2D.Double targetPos;
   private final DisasterType type;
   private double timer;
   private final double impactTime;
   private boolean impacted;
 
+  /**
+   * 隕石災害アクションを生成する。
+   *
+   * @param targetPos 着弾目標位置
+   * @param type      災害種別
+   */
   public MeteorDisasterAction(Point2D.Double targetPos, DisasterType type) {
     this.targetPos = new Point2D.Double(targetPos.x, targetPos.y);
     this.type = type;
@@ -33,12 +43,17 @@ public class MeteorDisasterAction implements GameAction {
     this.impacted = false;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void execute(GameContext context, BaseGameEntity self) {
+    if (!(self instanceof Disaster)) {
+      return;
+    }
+    Disaster disaster = (Disaster) self;
     if (impacted) {
       // 着弾後の余韻（エフェクト消滅待ちなど）
       timer += context.getDeltaTime();
-      if (timer > impactTime + 1.0) { // 着弾後1秒で消滅
+      if (timer > impactTime + IMPACT_EFFECT_DURATION) { // 着弾後1秒で消滅
         context.removeEntity(self);
       }
       return;
@@ -53,13 +68,14 @@ public class MeteorDisasterAction implements GameAction {
     self.setPosition(new Point2D.Double(targetPos.getX(), currentY));
 
     if (timer >= impactTime) {
-      impact(context, self);
+      impact(context, disaster);
     }
   }
 
-  private void impact(GameContext context, BaseGameEntity self) {
+  private void impact(GameContext context, Disaster disaster) {
     impacted = true;
-    self.setPosition(targetPos);
+    disaster.setPosition(targetPos);
+    disaster.setAnimation(IMPACT_ANIMATION_NAME, IMPACT_ANIMATION_FPS, false, true);
 
     // 範囲内のエンティティを検索
     // getEntities() がなくなったため、ResidentとBuildingをそれぞれ取得して結合
@@ -77,7 +93,7 @@ public class MeteorDisasterAction implements GameAction {
         Resident resident = (Resident) target;
         if (resident.getState() != ResidentState.DEAD) {
           // 即死させる
-          resident.setState(ResidentState.DEAD);
+          resident.markDead();
           // ResidentDiedEventを発行
           context.getEventBus().publish(new ResidentDiedEvent(resident));
         }

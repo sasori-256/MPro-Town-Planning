@@ -5,6 +5,9 @@ import java.awt.geom.Point2D;
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
 import io.github.sasori_256.town_planning.common.event.EventBus;
 
+/**
+ * 画面表示用のカメラを管理するクラス。
+ */
 public class Camera {
   private double scale;
   private int cellHeight;
@@ -53,35 +56,77 @@ public class Camera {
     this.eventBus = eventBus;
   }
 
+  /**
+   * 現在の拡大率を返す。
+   *
+   * @return 拡大率
+   */
   public double getScale() {
     return scale;
   }
 
+  /**
+   * セルの高さ(ピクセル)を返す。
+   *
+   * @return セルの高さ
+   */
   public int getCellHeight() {
     return cellHeight;
   }
 
+  /**
+   * セルの幅(ピクセル)を返す。
+   *
+   * @return セルの幅
+   */
   public int getCellWidth() {
     return cellWidth;
   }
 
+  /**
+   * 画面オフセットXを返す。
+   *
+   * @return オフセットX
+   */
   public int getOffsetX() {
     return offsetX;
   }
 
+  /**
+   * 画面オフセットYを返す。
+   *
+   * @return オフセットY
+   */
   public int getOffsetY() {
     return offsetY;
   }
 
+  /**
+   * アイソ原点のスクリーン座標を返す。
+   *
+   * @return アイソ原点のスクリーン座標
+   */
   public Point2D.Double getIsoOriginByScreen() {
     return isoOriginByScreen;
   }
 
+  /**
+   * 画面オフセットを設定する。
+   *
+   * @param offsetX オフセットX
+   * @param offsetY オフセットY
+   */
   public void setOffset(int offsetX, int offsetY) {
     this.offsetX = offsetX;
     this.offsetY = offsetY;
   }
 
+  /**
+   * 画面サイズを設定し、内部計算を更新する。
+   *
+   * @param screenWidth  画面幅
+   * @param screenHeight 画面高さ
+   */
   public void setScreenSize(int screenWidth, int screenHeight) {
     this.screenWidth = screenWidth;
     this.screenHeight = screenHeight;
@@ -100,6 +145,9 @@ public class Camera {
     }
   }
 
+  /**
+   * 現在のズームレベルを適用する。
+   */
   public void applyZoomLevel() {
     Point2D.Double centerScreen = new Point2D.Double(this.screenWidth / 2.0, this.screenHeight / 2.0);
     Point2D.Double centerIso = screenToIso(centerScreen);
@@ -116,6 +164,11 @@ public class Camera {
     this.offsetY = (int) (centerScreen.y - newCenterScreen.y);
   }
 
+  /**
+   * 拡大率を設定する。
+   *
+   * @param scale 拡大率
+   */
   public void setScale(double scale) {
     this.zoomLevel = Math.clamp((int) Math.round(scale / ZOOM_STEP), MIN_ZOOM_LEVEL, MAX_ZOOM_LEVEL);
     applyZoomLevel();
@@ -167,6 +220,12 @@ public class Camera {
     return 0 <= centerIso.x && centerIso.x <= this.mapWidth - 1 && 0 <= centerIso.y && centerIso.y <= this.mapHeight - 1;
   }
 
+  /**
+   * 画面を平行移動する。
+   *
+   * @param dx 移動量X
+   * @param dy 移動量Y
+   */
   public void pan(int dx, int dy) {
     if (isValidOffset(dx, dy)){
       this.offsetX += dx;
@@ -177,22 +236,37 @@ public class Camera {
   }
 
   // TODO: カメラ移動を滑らかにする
+  /**
+   * 上方向へ移動する。
+   */
   public void moveUp() {
     pan(0, 10);
   }
 
+  /**
+   * 下方向へ移動する。
+   */
   public void moveDown() {
     pan(0, -10);
   }
 
+  /**
+   * 左方向へ移動する。
+   */
   public void moveLeft() {
     pan(10, 0);
   }
 
+  /**
+   * 右方向へ移動する。
+   */
   public void moveRight() {
     pan(-10, 0);
   }
 
+  /**
+   * ズームインする。
+   */
   public void zoomIn() {
     if (this.zoomLevel < MAX_ZOOM_LEVEL){
       this.zoomLevel += 1;
@@ -202,6 +276,9 @@ public class Camera {
     }
   }
 
+  /**
+   * ズームアウトする。
+   */
   public void zoomOut() {
     if (this.zoomLevel > MIN_ZOOM_LEVEL){
       this.zoomLevel -= 1;

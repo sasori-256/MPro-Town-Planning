@@ -33,29 +33,22 @@ import io.github.sasori_256.town_planning.map.model.GameMap;
 /**
  * ゲームの環境情報を管理するモデルクラス。
  * GameContextの実装であり、GameLoopのホストでもある。
- * 
- * <h2>Thread Safety and Locking</h2>
- * This class uses a ReadWriteLock to ensure thread-safe access to game state.
- * To prevent nested locking issues and potential deadlocks, entity lifecycle
- * operations
- * (spawnEntity/removeEntity) are automatically deferred when called during the
- * update cycle.
- * 
+ *
+ * <h2>スレッド安全性とロック</h2>
+ * 本クラスはReadWriteLockで状態アクセスを保護する。
+ * ネストしたロック取得やデッドロックを避けるため、更新サイクル中に呼ばれた
+ * エンティティの生成・削除はキューに積み、更新後にまとめて処理する。
+ *
  * <p>
- * During the update cycle:
+ * 更新サイクル中の挙動:
  * <ul>
- * <li>Calls to spawnEntity() are queued and processed after all entity updates
- * complete</li>
- * <li>Calls to removeEntity() are queued and processed after all entity updates
- * complete</li>
- * <li>This prevents entity update methods from attempting to acquire locks that
- * are already held</li>
+ * <li>spawnEntity() の呼び出しはキューに積まれ、全更新後に処理される</li>
+ * <li>removeEntity() の呼び出しはキューに積まれ、全更新後に処理される</li>
+ * <li>更新処理中に再ロックを取りに行くことを避けられる</li>
  * </ul>
- * 
+ *
  * <p>
- * This design allows entity update strategies to safely call GameContext
- * methods like
- * removeEntity() without causing deadlocks or nested lock acquisitions.
+ * この設計により、update内から removeEntity() を呼んでもロック競合を起こしにくい。
  */
 public class GameModel implements GameContext, SimulationStep {
   private final EventBus eventBus;
@@ -89,6 +82,13 @@ public class GameModel implements GameContext, SimulationStep {
   private final List<BaseGameEntity> entitiesToSpawn = new CopyOnWriteArrayList<>();
   private final List<BaseGameEntity> entitiesToRemove = new CopyOnWriteArrayList<>();
 
+  /**
+   * ゲームモデルを生成する。
+   *
+   * @param mapWidth  マップの横幅
+   * @param mapHeight マップの縦幅
+   * @param eventBus  イベントバス
+   */
   public GameModel(int mapWidth, int mapHeight, EventBus eventBus) {
     this.eventBus = eventBus;
 
@@ -104,6 +104,11 @@ public class GameModel implements GameContext, SimulationStep {
     this.gameLoop = null;
   }
 
+  /**
+   * ゲームループを起動する。
+   *
+   * @param renderCallback 描画コールバック
+   */
   public void startGameLoop(Runnable renderCallback) {
     DoubleConsumer updateCallback = this::step;
     // GameLoopのインスタンスは新しいものが作られるため、既存のgameLoopフィールドとの整合性は要検討
@@ -113,72 +118,79 @@ public class GameModel implements GameContext, SimulationStep {
 
   // --- GameContext Implementation ---
 
+  /** {@inheritDoc} */
   @Override
   public EventBus getEventBus() {
     return eventBus;
   }
 
+  /** {@inheritDoc} */
   @Override
   public GameMap getMap() {
     return gameMap;
   }
 
   // GameContextの定義に合わせて実装
+  /** {@inheritDoc} */
   @Override
   public Stream<Building> getBuildingEntities() {
     return buildingEntities.stream();
   }
 
+  /** {@inheritDoc} */
   @Override
   public Stream<Resident> getResidentEntities() {
     return residentEntities.stream();
   }
 
+  /** {@inheritDoc} */
   @Override
   public Stream<Disaster> getDisasterEntities() {
     return disasterEntities.stream();
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getDeltaTime() {
     return withReadLock(() -> lastDeltaTime);
   }
 
+  /** {@inheritDoc} */
   @Override
   public int getDay() {
     return withReadLock(() -> gameTime.getDayCount());
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getTimeOfDaySeconds() {
     return withReadLock(() -> gameTime.getTimeOfDaySeconds());
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getTimeOfDayNormalized() {
     return withReadLock(() -> gameTime.getTimeOfDayNormalized());
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getDayLengthSeconds() {
     return withReadLock(() -> gameTime.getDayLengthSeconds());
   }
 
   /**
-   * Spawns a new entity into the game world.
-   * 
+   * エンティティをゲーム世界に追加する。
+   *
    * <p>
-   * If called during an update cycle (i.e., from within an entity's update
-   * method),
-   * the spawn operation is automatically deferred and will be processed after all
-   * entity updates complete. This prevents nested lock acquisition and potential
-   * deadlocks.
-   * 
+   * 更新サイクル中に呼ばれた場合は、追加処理をキューに積み、
+   * 全更新後にまとめて処理する。これによりネストしたロック取得やデッドロックを回避する。
+   *
    * <p>
-   * If called outside an update cycle, the entity is spawned immediately.
-   * 
-   * @param entity The entity to spawn
-   * @param <T>    The entity type
+   * 更新サイクル外で呼ばれた場合は即時に追加される。
+   *
+   * @param entity 追加するエンティティ
+   * @param <T>    エンティティ型
    */
   @Override
   public <T extends BaseGameEntity> void spawnEntity(T entity) {
@@ -198,8 +210,8 @@ public class GameModel implements GameContext, SimulationStep {
   }
 
   /**
-   * Internal method to spawn an entity without acquiring locks.
-   * Should only be called when a write lock is already held.
+   * ロックを取得せずにエンティティを追加する内部処理。
+   * 書き込みロック取得済みの場面でのみ使用する。
    */
   private <T extends BaseGameEntity> void spawnEntityInternal(T entity) {
     if (entity instanceof Resident) {
@@ -212,24 +224,20 @@ public class GameModel implements GameContext, SimulationStep {
   }
 
   /**
-   * Removes an entity from the game world.
-   * 
+   * エンティティをゲーム世界から削除する。
+   *
    * <p>
-   * If called during an update cycle (i.e., from within an entity's update
-   * method),
-   * the remove operation is automatically deferred and will be processed after
-   * all
-   * entity updates complete. This prevents nested lock acquisition and potential
-   * deadlocks.
-   * 
+   * 更新サイクル中に呼ばれた場合は、削除処理をキューに積み、
+   * 全更新後にまとめて処理する。これによりネストしたロック取得やデッドロックを回避する。
+   *
    * <p>
-   * If called outside an update cycle, the entity is removed immediately.
-   * 
+   * 更新サイクル外で呼ばれた場合は即時に削除される。
+   *
    * <p>
-   * The entity's onRemove() lifecycle method will be called before removal.
-   * 
-   * @param entity The entity to remove
-   * @param <T>    The entity type
+   * 削除前にエンティティの onRemove() が呼び出される。
+   *
+   * @param entity 削除するエンティティ
+   * @param <T>    エンティティ型
    */
   @Override
   public <T extends BaseGameEntity> void removeEntity(T entity) {
@@ -259,6 +267,11 @@ public class GameModel implements GameContext, SimulationStep {
 
   // --- Game Logic API ---
 
+  /**
+   * 住民エンティティを追加する。
+   *
+   * @param entity 住民
+   */
   public void addResidentEntity(Resident entity) {
     withWriteLock(() -> {
       addResidentEntityInternal(entity);
@@ -266,8 +279,8 @@ public class GameModel implements GameContext, SimulationStep {
   }
 
   /**
-   * Internal method to add a resident entity without acquiring locks.
-   * Should only be called when a write lock is already held.
+   * ロックを取得せずに住民を追加する内部処理。
+   * 書き込みロック取得済みの場面でのみ使用する。
    */
   private void addResidentEntityInternal(Resident entity) {
     residentEntities.add(entity);
@@ -275,6 +288,11 @@ public class GameModel implements GameContext, SimulationStep {
     eventBus.publish(new ResidentBornEvent(entity.getPosition()));
   }
 
+  /**
+   * 建物エンティティを追加する。
+   *
+   * @param entity 建物
+   */
   public void addBuildingEntity(Building entity) {
     withWriteLock(() -> {
       addBuildingEntityInternal(entity);
@@ -282,8 +300,8 @@ public class GameModel implements GameContext, SimulationStep {
   }
 
   /**
-   * Internal method to add a building entity without acquiring locks.
-   * Should only be called when a write lock is already held.
+   * ロックを取得せずに建物を追加する内部処理。
+   * 書き込みロック取得済みの場面でのみ使用する。
    */
   private void addBuildingEntityInternal(Building entity) {
     buildingEntities.add(entity);
@@ -291,6 +309,11 @@ public class GameModel implements GameContext, SimulationStep {
     eventBus.publish(new MapUpdatedEvent(entity.getPosition()));
   }
 
+  /**
+   * 災害エンティティを追加する。
+   *
+   * @param entity 災害
+   */
   public void addDisasterEntity(Disaster entity) {
     withWriteLock(() -> {
       addDisasterEntityInternal(entity);
@@ -298,8 +321,8 @@ public class GameModel implements GameContext, SimulationStep {
   }
 
   /**
-   * Internal method to add a disaster entity without acquiring locks.
-   * Should only be called when a write lock is already held.
+   * ロックを取得せずに災害を追加する内部処理。
+   * 書き込みロック取得済みの場面でのみ使用する。
    */
   private void addDisasterEntityInternal(Disaster entity) {
     disasterEntities.add(entity);
@@ -307,6 +330,11 @@ public class GameModel implements GameContext, SimulationStep {
     eventBus.publish(new DisasterOccurredEvent(entity.getType()));
   }
 
+  /**
+   * 建物エンティティを削除する。
+   *
+   * @param entity 建物
+   */
   public void removeBuildingEntity(Building entity) {
     withWriteLock(() -> {
       gameMap.removeBuilding(entity.getPosition());
@@ -314,10 +342,20 @@ public class GameModel implements GameContext, SimulationStep {
     });
   }
 
+  /**
+   * 保有ソウル数を返す。
+   *
+   * @return ソウル数
+   */
   public int getSouls() {
     return withReadLock(() -> souls);
   }
 
+  /**
+   * ソウルを加算する。
+   *
+   * @param amount 追加量
+   */
   public void addSouls(int amount) {
     withWriteLock(() -> {
       addSoulsInternal(amount);
@@ -325,8 +363,8 @@ public class GameModel implements GameContext, SimulationStep {
   }
 
   /**
-   * Internal method to add souls without acquiring locks.
-   * Should only be called when a write lock is already held.
+   * ロックを取得せずにソウルを加算する内部処理。
+   * 書き込みロック取得済みの場面でのみ使用する。
    */
   private void addSoulsInternal(int amount) {
     this.souls += amount;
@@ -335,6 +373,9 @@ public class GameModel implements GameContext, SimulationStep {
 
   /**
    * 指定座標付近の死体から魂を刈り取る。
+   *
+   * @param pos 対象位置
+   * @return 収穫できた場合はtrue
    */
   public boolean harvestSoulAt(java.awt.geom.Point2D pos) {
     double harvestRadius = 1.0;
@@ -362,6 +403,13 @@ public class GameModel implements GameContext, SimulationStep {
     return false;
   }
 
+  /**
+   * 建物を建設する。
+   *
+   * @param pos  設置位置
+   * @param type 建物種別
+   * @return 建設できた場合はtrue
+   */
   public boolean constructBuilding(Point2D.Double pos, BuildingType type) {
     return withWriteLock(() -> {
       if (souls < type.getCost()) {
@@ -506,6 +554,7 @@ public class GameModel implements GameContext, SimulationStep {
       return new HomeKey((int) Math.round(pos.getX()), (int) Math.round(pos.getY()));
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean equals(Object obj) {
       if (this == obj) {
@@ -518,6 +567,7 @@ public class GameModel implements GameContext, SimulationStep {
       return x == other.x && y == other.y;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int hashCode() {
       return 31 * x + y;
@@ -552,34 +602,69 @@ public class GameModel implements GameContext, SimulationStep {
   }
 
   // getters / setters
+  /**
+   * マップを返す。
+   *
+   * @return マップ
+   */
   public GameMap getGameMap() {
     return gameMap;
   }
 
+  /**
+   * 状態ロックを返す。
+   *
+   * @return 状態ロック
+   */
   public ReadWriteLock getStateLock() {
     return stateLock;
   }
 
+  /**
+   * ゲームループを返す。
+   *
+   * @return ゲームループ
+   */
   public GameLoop getGameLoop() {
     return gameLoop;
   } // 現状、startGameLoopで新しいループが作られるので、このgetterの用途は不明
 
+  /**
+   * ソウル数を設定する。
+   *
+   * @param souls ソウル数
+   */
   public void setSouls(int souls) {
     withWriteLock(() -> {
       this.souls = souls;
     });
   }
 
+  /**
+   * 日数を設定する。
+   *
+   * @param day 日数
+   */
   public void setDay(int day) {
     withWriteLock(() -> {
       gameTime.setDayCount(day);
     });
   }
 
+  /**
+   * 直近のdelta timeを返す。
+   *
+   * @return delta time
+   */
   public double getLastDeltaTime() {
     return withReadLock(() -> lastDeltaTime);
   }
 
+  /**
+   * 直近のdelta timeを設定する。
+   *
+   * @param lastDeltaTime delta time
+   */
   public void setLastDeltaTime(double lastDeltaTime) {
     withWriteLock(() -> {
       this.lastDeltaTime = lastDeltaTime;
@@ -614,27 +699,24 @@ public class GameModel implements GameContext, SimulationStep {
   }
 
   /**
-   * Updates the game state for the current step.
+   * 現在ステップのゲーム状態を更新する。
    *
    * <p>
-   * This method acquires a write lock and updates all entities. To prevent nested
-   * locking issues, any calls to spawnEntity() or removeEntity() made during
-   * entity
-   * updates are automatically deferred and processed after all updates complete.
-   * 
+   * 書き込みロックを取得して全エンティティを更新する。
+   * 更新中の spawnEntity()/removeEntity() はキューに積み、更新後にまとめて処理する。
+   *
    * <p>
-   * The update process:
+   * 更新手順:
    * <ol>
-   * <li>Acquire write lock</li>
-   * <li>Update game time and state</li>
-   * <li>Update all residents, buildings, and disasters (which may queue
-   * spawn/remove operations)</li>
-   * <li>Advance animations</li>
-   * <li>Process all deferred spawn/remove operations</li>
-   * <li>Release write lock</li>
+   * <li>書き込みロックを取得</li>
+   * <li>ゲーム時間と状態を更新</li>
+   * <li>住民・建物・災害を更新（生成/削除はキューへ）</li>
+   * <li>アニメーションを進行</li>
+   * <li>遅延された生成/削除を処理</li>
+   * <li>書き込みロックを解放</li>
    * </ol>
-   * 
-   * @param dt Delta time in seconds since the last step
+   *
+   * @param dt 前回からの経過秒
    */
   @Override
   public void step(double dt) {
@@ -701,9 +783,8 @@ public class GameModel implements GameContext, SimulationStep {
   }
 
   /**
-   * Process deferred entity lifecycle operations that were queued during the
-   * update cycle.
-   * This method should only be called while holding the write lock.
+   * 更新サイクル中にキューされたエンティティの生成・削除を処理する。
+   * 書き込みロック取得済みの場面でのみ呼び出す。
    */
   private void processDeferredOperations() {
     // Process entities to remove first

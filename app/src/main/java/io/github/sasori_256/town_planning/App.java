@@ -15,7 +15,15 @@ import io.github.sasori_256.town_planning.entity.resident.ResidentType;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
 import io.github.sasori_256.town_planning.map.model.GameMap;
 
+/**
+ * アプリケーションのエントリーポイント。
+ */
 public class App {
+  /**
+   * ゲームを初期化して起動する。
+   *
+   * @param args 起動引数
+   */
   public static void main(String[] args) {
     final int WIDTH = 640;
     final int HEIGHT = 640;

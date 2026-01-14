@@ -26,11 +26,20 @@ public class GameLoop implements Runnable {
   private static final double TIME_STEP = 1.0 / 30.0;
   private static final long TIME_STEP_NANO = (long) (TIME_STEP * 1_000_000_000);
 
+  /**
+   * ゲームループを生成する。
+   *
+   * @param updateCallback 更新処理
+   * @param renderCallback 描画処理
+   */
   public GameLoop(DoubleConsumer updateCallback, Runnable renderCallback) {
     this.updateCallback = updateCallback;
     this.renderCallback = renderCallback;
   }
 
+  /**
+   * ゲームループを開始する。
+   */
   public synchronized void start() {
     if (thread == null) {
       try {
@@ -83,6 +92,9 @@ public class GameLoop implements Runnable {
     }
   }
 
+  /**
+   * ループ処理を実行する。
+   */
   @Override
   public void run() {
     long lastTime = System.nanoTime(); // 前フレームの時刻

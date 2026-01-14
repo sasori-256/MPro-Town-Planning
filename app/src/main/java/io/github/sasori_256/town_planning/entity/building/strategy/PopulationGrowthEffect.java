@@ -33,6 +33,7 @@ public class PopulationGrowthEffect implements GameEffect {
     this.timer = 0.0;
   }
 
+  /** {@inheritDoc} */
   @Override
   public void execute(GameContext context, BaseGameEntity self) {
     if (!(self instanceof Building)) {

@@ -7,14 +7,12 @@ import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.entity.model.GameAction;
 
 /**
- * Represents a disaster entity in the game world.
+ * 災害エンティティを表すクラス。
+ *
  * <p>
- * A {@code Disaster} is a {@link BaseGameEntity} placed at a specific position
- * on the map. Its concrete behavior and effects are defined by the associated
- * {@link DisasterType}, which is responsible for creating the
- * {@link GameAction}
- * that drives the disaster's update logic via a
- * {@link CompositeUpdateStrategy}.
+ * {@code Disaster} はマップ上の特定位置に配置される {@link BaseGameEntity} で、
+ * 具体的な挙動は {@link DisasterType} が生成する {@link GameAction} によって決まる。
+ * アクションは {@link CompositeUpdateStrategy} に設定され、更新処理で実行される。
  * </p>
  */
 public class Disaster extends BaseGameEntity {
@@ -25,19 +23,15 @@ public class Disaster extends BaseGameEntity {
   private double animationElapsedSeconds;
 
   /**
-   * Creates a new disaster entity at the specified position.
+   * 指定位置に災害エンティティを生成する。
+   *
    * <p>
-   * Initializes the disaster by creating a {@link CompositeUpdateStrategy} and
-   * populating it with a {@link GameAction} obtained from the disaster type's
-   * action factory. The {@code position} parameter is passed to the action
-   * factory
-   * to create position-specific disaster behavior.
+   * {@link CompositeUpdateStrategy} を生成し、災害種別のアクションファクトリから
+   * 得た {@link GameAction} を設定する。位置情報はアクション生成に渡される。
    * </p>
    *
-   * @param position     the position where the disaster occurs; used to create
-   *                     the disaster's action via the type's action factory
-   * @param disasterType the type defining the disaster's characteristics and
-   *                     behavior
+   * @param position     発生位置
+   * @param disasterType 災害種別
    */
   public Disaster(Point2D.Double position, DisasterType disasterType) {
     super(position);
@@ -57,6 +51,11 @@ public class Disaster extends BaseGameEntity {
     this.setUpdateStrategy(strategy);
   }
 
+  /**
+   * 災害種別を返す。
+   *
+   * @return 災害種別
+   */
   public DisasterType getType() {
     return this.type;
   }
@@ -102,6 +101,7 @@ public class Disaster extends BaseGameEntity {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public void advanceAnimation(double dt) {
     if (animationName == null || animationFrameRate <= 0) {

@@ -241,7 +241,7 @@ public class GameWindow extends JFrame {
       @Override
       public void componentResized(java.awt.event.ComponentEvent e) {
         gameMapPanel.repaintUI();
-        camera.setScreenSize(getWidth(), getHeight());
+        camera.setScreenSize(gameMapPanel.getWidth(), gameMapPanel.getHeight());
         // MEMO:ウィンドウリサイズ時の処理を追加する場合はここに記載 Cameraの位置修正とか
       }
     });

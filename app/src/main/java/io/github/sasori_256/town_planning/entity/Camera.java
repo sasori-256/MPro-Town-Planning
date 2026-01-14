@@ -32,11 +32,12 @@ public class Camera {
    * @param mapHeight    マップの高さ（セル数）
    * @param eventBus     イベントバス
    */
-  public Camera(double defaultScale, int screenWidth, int screenHeight, int mapWidth, int mapHeight, EventBus eventBus) {
-    if(defaultScale <= 0){
+  public Camera(double defaultScale, int screenWidth, int screenHeight, int mapWidth, int mapHeight,
+      EventBus eventBus) {
+    if (defaultScale <= 0) {
       throw new IllegalArgumentException("Default scale must be greater than 0.");
     }
-    if(mapWidth < 1 || mapHeight < 1){
+    if (mapWidth < 1 || mapHeight < 1) {
       throw new IllegalArgumentException("Map width and height must be at least 1.");
     }
     this.scale = defaultScale;
@@ -86,11 +87,12 @@ public class Camera {
     this.screenWidth = screenWidth;
     this.screenHeight = screenHeight;
     applyZoomLevel();
-    //画面外に行ってしまったときの対処
+    // 画面外に行ってしまったときの対処
     Point2D.Double centerIso = screenToIso(new Point2D.Double(screenWidth / 2.0, screenHeight / 2.0));
     int clampedX = (int) Math.clamp(centerIso.x, 0, this.mapWidth - 1);
     int clampedY = (int) Math.clamp(centerIso.y, 0, this.mapHeight - 1);
-    if (clampedX != (int) centerIso.x || clampedY != (int) centerIso.y){
+    System.out.println("Clamped Center Iso: (" + clampedX + ", " + clampedY + ")");
+    if (clampedX != (int) centerIso.x || clampedY != (int) centerIso.y) {
       this.offsetX = 0;
       this.offsetY = 0;
       Point2D.Double clampedCenterScreen = isoToScreen(new Point2D.Double(clampedX, clampedY));
@@ -133,7 +135,8 @@ public class Camera {
     double centerScreenX = (centerIsoX - centerIsoY) * (this.cellWidth / 2.0);
     double centerScreenY = (centerIsoX + centerIsoY) * (this.cellHeight / 2.0);
     this.isoOriginByScreen = new Point2D.Double(screenWidth / 2 - centerScreenX, screenHeight / 2 - centerScreenY);
-    // System.out.println("Screen Origin Updated: (" + this.isoOriginByScreen.x + ", " + this.isoOriginByScreen.y + ")");
+    // System.out.println("Screen Origin Updated: (" + this.isoOriginByScreen.x + ",
+    // " + this.isoOriginByScreen.y + ")");
   }
 
   /**
@@ -161,17 +164,20 @@ public class Camera {
     double screenY = (isoPos.x + isoPos.y) * (this.cellHeight / 2.0) + this.isoOriginByScreen.y + this.offsetY;
     return new Point2D.Double(screenX, screenY);
   }
-  
+
   private boolean isValidOffset(int dx, int dy) {
-    Point2D.Double centerIso = screenToIso(new Point2D.Double(this.screenWidth / 2.0 - dx, this.screenHeight / 2.0 - dy));
-    return 0 <= centerIso.x && centerIso.x <= this.mapWidth - 1 && 0 <= centerIso.y && centerIso.y <= this.mapHeight - 1;
+    Point2D.Double centerIso = screenToIso(
+        new Point2D.Double(this.screenWidth / 2.0 - dx, this.screenHeight / 2.0 - dy));
+    return 0 <= centerIso.x && centerIso.x <= this.mapWidth - 1 && 0 <= centerIso.y
+        && centerIso.y <= this.mapHeight - 1;
   }
 
   public void pan(int dx, int dy) {
-    if (isValidOffset(dx, dy)){
+    if (isValidOffset(dx, dy)) {
       this.offsetX += dx;
       this.offsetY += dy;
-      // System.out.println("Panned to Offset: (" + this.offsetX + ", " + this.offsetY + ")");
+      // System.out.println("Panned to Offset: (" + this.offsetX + ", " + this.offsetY
+      // + ")");
       eventBus.publish(new MapUpdatedEvent(new Point2D.Double(0, 0)));
     }
   }
@@ -194,7 +200,7 @@ public class Camera {
   }
 
   public void zoomIn() {
-    if (this.zoomLevel < MAX_ZOOM_LEVEL){
+    if (this.zoomLevel < MAX_ZOOM_LEVEL) {
       this.zoomLevel += 1;
       applyZoomLevel();
       // System.out.println("Zoomed In: New Scale = " + this.scale);
@@ -203,7 +209,7 @@ public class Camera {
   }
 
   public void zoomOut() {
-    if (this.zoomLevel > MIN_ZOOM_LEVEL){
+    if (this.zoomLevel > MIN_ZOOM_LEVEL) {
       this.zoomLevel -= 1;
       applyZoomLevel();
       // System.out.println("Zoomed Out: New Scale = " + this.scale);

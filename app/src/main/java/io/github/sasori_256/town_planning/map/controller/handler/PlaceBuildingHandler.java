@@ -27,13 +27,13 @@ public class PlaceBuildingHandler
     this.gameMapController = gameMapController;
   }
 
-  @Override
   /**
    * クリック位置に対して建物配置を試みる。
    *
    * @param isoPoint        クリック位置(アイソメトリック座標)
    * @param entityGenerator 生成関数
    */
+  @Override
   public void accept(Point2D.Double isoPoint, Function<Point2D.Double, ? extends BaseGameEntity> entityGenerator) {
     System.out.println("Placing building at: " + isoPoint);
     Point2D.Double roundedPoint = new Point2D.Double(Math.round(isoPoint.x), Math.round(isoPoint.y));

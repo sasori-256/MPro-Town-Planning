@@ -32,13 +32,13 @@ public class ActionDisasterHandler
     this.mapContext = mapContext;
   }
 
-  @Override
   /**
    * クリック位置に災害発生を試みる。
    *
    * @param isoPoint        クリック位置(アイソメトリック座標)
    * @param entityGenerator 生成関数
    */
+  @Override
   public void accept(Point2D.Double isoPoint, Function<Point2D.Double, ? extends BaseGameEntity> entityGenerator) {
     if (entityGenerator == null) {
       return;

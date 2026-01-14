@@ -18,6 +18,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import io.github.sasori_256.town_planning.common.event.EventBus;
+import io.github.sasori_256.town_planning.common.event.Subscription;
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.NodeMenuInitializer;
@@ -25,8 +26,10 @@ import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.view.PaintO
 import io.github.sasori_256.town_planning.common.ui.resourceViewer.view.PaintResourceViewerUI;
 import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
+import io.github.sasori_256.town_planning.entity.disaster.Disaster;
 import io.github.sasori_256.town_planning.entity.model.GameModel;
 import io.github.sasori_256.town_planning.entity.resident.Resident;
+import io.github.sasori_256.town_planning.entity.resident.ResidentState;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
 import io.github.sasori_256.town_planning.map.model.GameMap;
 import io.github.sasori_256.town_planning.map.model.MapCell;
@@ -41,11 +44,21 @@ class GameMapPanel extends JPanel {
   private final Camera camera;
   private final CategoryNode root;
   private final ImageManager imageManager;
+  private final AnimationManager animationManager;
   private final PaintGameObject paintGameObject;
   private final PaintObjectSelectUI paintObjectSelectUI;
   private final PaintResourceViewerUI paintResourceViewerUI;
   private final ReadWriteLock stateLock;
 
+  /**
+   * マップ描画パネルを生成する。
+   *
+   * @param gameMap   マップ
+   * @param gameModel ゲームモデル
+   * @param camera    カメラ
+   * @param root      ルートカテゴリ
+   * @param stateLock 状態ロック
+   */
   public GameMapPanel(GameMap gameMap, GameModel gameModel, Camera camera, CategoryNode root,
       ReadWriteLock stateLock) {
     this.gameMap = gameMap;
@@ -53,6 +66,7 @@ class GameMapPanel extends JPanel {
     this.camera = camera;
     this.root = root;
     this.imageManager = new ImageManager();
+    this.animationManager = new AnimationManager();
     this.paintGameObject = new PaintGameObject();
     this.stateLock = stateLock;
     this.setLayout(null);
@@ -61,6 +75,8 @@ class GameMapPanel extends JPanel {
     this.paintResourceViewerUI = new PaintResourceViewerUI(gameModel, imageManager, this, 1.0);
 
     paintObjectSelectUI.paint();
+    revalidate();
+    repaint();
   }
 
   /**
@@ -96,7 +112,8 @@ class GameMapPanel extends JPanel {
             BuildingType.DrawGroup group = cell.getBuilding().getType()
                 .getDrawGroup(cell.getLocalX(), cell.getLocalY());
             if (group == BuildingType.DrawGroup.FLOOR) {
-              paintGameObject.paintBuilding(g, pos, gameMap, camera, imageManager, this);
+              paintGameObject.paintBuilding(g, pos, gameMap, camera, imageManager,
+                  animationManager, this);
             } else if (group == BuildingType.DrawGroup.ACTOR) {
               actors.add(DrawEntry.forBuilding(pos));
             }
@@ -105,6 +122,10 @@ class GameMapPanel extends JPanel {
       }
 
       gameModel.getResidentEntities().forEach(resident -> {
+        ResidentState state = resident.getState();
+        if (state == ResidentState.AT_HOME) {
+          return;
+        }
         Point2D.Double pos = resident.getPosition();
         int x = (int) Math.floor(pos.getX());
         int y = (int) Math.floor(pos.getY());
@@ -117,12 +138,26 @@ class GameMapPanel extends JPanel {
         actors.add(DrawEntry.forResident(resident));
       });
 
+      gameModel.getDisasterEntities().forEach(disaster -> {
+        Point2D.Double pos = disaster.getPosition();
+        int x = (int) Math.floor(pos.getX());
+        int y = (int) Math.floor(pos.getY());
+        if (!isInsideCameraView(x, y)) {
+          return;
+        }
+        actors.add(DrawEntry.forDisaster(disaster));
+      });
+
       actors.sort(DrawEntry.DEPTH_ORDER);
       for (DrawEntry entry : actors) {
         if (entry.kind == DrawKind.BUILDING_TILE) {
-          paintGameObject.paintBuilding(g, entry.pos, gameMap, camera, imageManager, this);
+          paintGameObject.paintBuilding(g, entry.pos, gameMap, camera, imageManager,
+              animationManager, this);
         } else if (entry.kind == DrawKind.RESIDENT) {
           paintGameObject.paintResident(g, entry.resident, camera, imageManager, this);
+        } else if (entry.kind == DrawKind.DISASTER) {
+          paintGameObject.paintDisaster(g, entry.disaster, camera, imageManager,
+              animationManager, this);
         }
       }
     } finally {
@@ -144,13 +179,17 @@ class GameMapPanel extends JPanel {
     return true;
   }
 
+  /**
+   * UIを再描画する。
+   */
   public void repaintUI() {
     this.paintObjectSelectUI.repaintUI();
   }
 
   private enum DrawKind {
     BUILDING_TILE,
-    RESIDENT
+    RESIDENT,
+    DISASTER
   }
 
   private static final class DrawEntry {
@@ -158,7 +197,15 @@ class GameMapPanel extends JPanel {
         .comparingDouble((DrawEntry entry) -> entry.depth)
         .thenComparingDouble(entry -> entry.y)
         .thenComparingDouble(entry -> entry.x)
-        .thenComparingInt(entry -> entry.kind == DrawKind.BUILDING_TILE ? 0 : 1);
+        .thenComparingInt(entry -> {
+          if (entry.kind == DrawKind.BUILDING_TILE) {
+            return 0;
+          }
+          if (entry.kind == DrawKind.RESIDENT) {
+            return 1;
+          }
+          return 2;
+        });
 
     private final double x;
     private final double y;
@@ -166,22 +213,29 @@ class GameMapPanel extends JPanel {
     private final DrawKind kind;
     private final Point2D.Double pos;
     private final Resident resident;
+    private final Disaster disaster;
 
     private static DrawEntry forBuilding(Point2D.Double pos) {
-      return new DrawEntry(DrawKind.BUILDING_TILE, pos, null);
+      return new DrawEntry(DrawKind.BUILDING_TILE, pos, null, null);
     }
 
     private static DrawEntry forResident(Resident resident) {
-      return new DrawEntry(DrawKind.RESIDENT, resident.getPosition(), resident);
+      return new DrawEntry(DrawKind.RESIDENT, resident.getPosition(), resident, null);
     }
 
-    private DrawEntry(DrawKind kind, Point2D.Double pos, Resident resident) {
+    private static DrawEntry forDisaster(Disaster disaster) {
+      return new DrawEntry(DrawKind.DISASTER, disaster.getPosition(), null, disaster);
+    }
+
+    private DrawEntry(DrawKind kind, Point2D.Double pos, Resident resident,
+        Disaster disaster) {
       this.kind = kind;
       this.pos = new Point2D.Double(pos.getX(), pos.getY());
       this.x = this.pos.getX();
       this.y = this.pos.getY();
       this.depth = this.x + this.y;
       this.resident = resident;
+      this.disaster = disaster;
     }
   }
 }
@@ -220,7 +274,7 @@ public class GameWindow extends JFrame {
     setTitle("Town Planning Game");
     setSize(width, height);
     // GameMap gameMap = generateTestMap();
-    CategoryNode root = NodeMenuInitializer.setup(gameMapController, gameMap);
+    CategoryNode root = NodeMenuInitializer.setup(gameMapController, gameModel);
 
     GameMapPanel gameMapPanel = new GameMapPanel(gameMap, gameModel, camera, root, stateLock);
     gameMapPanel.addMouseListener(listener);
@@ -228,7 +282,8 @@ public class GameWindow extends JFrame {
     gameMapPanel.addMouseWheelListener(listener);
     gameMapPanel.addKeyListener(listener);
     gameMapPanel.setFocusable(true);
-    eventBus.subscribe(MapUpdatedEvent.class, event -> {
+    // TODO: onCloseなる関数でWindowのフレーム破棄時にunsubscribeするようにする
+    Subscription mapSub = eventBus.subscribe(MapUpdatedEvent.class, event -> {
       if (SwingUtilities.isEventDispatchThread()) {
         gameMapPanel.repaint();
       } else {
@@ -238,6 +293,11 @@ public class GameWindow extends JFrame {
     this.add(gameMapPanel, BorderLayout.CENTER);
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     this.addComponentListener(new ComponentAdapter() {
+      /**
+       * ウィンドウサイズ変更時の処理を行う。
+       *
+       * @param e イベント
+       */
       @Override
       public void componentResized(java.awt.event.ComponentEvent e) {
         gameMapPanel.repaintUI();

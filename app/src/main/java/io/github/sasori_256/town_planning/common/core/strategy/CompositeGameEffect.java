@@ -13,14 +13,25 @@ import java.util.List;
 public class CompositeGameEffect implements GameEffect {
   private final List<GameEffect> effects = new ArrayList<>();
 
+  /**
+   * エフェクトを追加する。
+   *
+   * @param effect エフェクト
+   */
   public void add(GameEffect effect) {
     effects.add(effect);
   }
 
+  /**
+   * エフェクトを削除する。
+   *
+   * @param effect エフェクト
+   */
   public void remove(GameEffect effect) {
     effects.remove(effect);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void execute(GameContext context, BaseGameEntity self) {
     // リストのコピーを作成してConcurrentModificationExceptionを防ぐ（簡易実装）

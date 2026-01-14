@@ -20,26 +20,108 @@ import java.util.concurrent.ThreadLocalRandom;
  * 他の動作（働く、祈るなど）と分離させたいのでGameActionとして実装（排他動作）。
  */
 public class DestinationMoveAction implements GameAction {
+  /**
+   * 移動処理の結果ステータス。
+   * execute() 呼び出しごとに更新される。
+   */
+  public enum MoveStatus {
+    /** 待機中。 */
+    IDLE,
+    /** 移動中。 */
+    MOVING,
+    /** 目的地に到着した。 */
+    ARRIVED,
+    /** 目的地に到達できなかった。 */
+    FAILED
+  }
+
   private static final double ARRIVAL_EPSILON = 1e-3;
   private static final double SEARCH_COOLDOWN = 0.5;
   private static final int MAX_RANDOM_TRIES = 20;
   private static final long COST_INF = 1_000_000L;
 
   private final double speed;
+  private final boolean autoDestination;
   private double searchCooldown;
   private Point2D.Double destination;
   private List<Point2D.Double> path;
   private int pathIndex;
+  private MoveStatus lastStatus;
 
+  /**
+   * 目的地を自動選択する移動アクションを作成する。
+   */
   public DestinationMoveAction() {
-    this.speed = 50.0; // ピクセル/秒
-    this.searchCooldown = 0.0;
+    this(true);
   }
 
+  /**
+   * 目的地の自動選択有無を指定して作成する。
+   *
+   * @param autoDestination trueなら目的地を自動選択する
+   */
+  public DestinationMoveAction(boolean autoDestination) {
+    // タイル単位で速度を管理し、タイルサイズ変更の影響を避ける。
+    this.speed = 2.0; // タイル/秒
+    this.autoDestination = autoDestination;
+    this.searchCooldown = 0.0;
+    this.lastStatus = MoveStatus.IDLE;
+  }
+
+  /**
+   * 目的地を設定する。
+   *
+   * @param destination 目的地
+   */
+  public void setDestination(Point2D.Double destination) {
+    if (destination == null) {
+      clearPath();
+      return;
+    }
+    this.destination = new Point2D.Double(destination.getX(), destination.getY());
+    this.path = null;
+    this.pathIndex = 0;
+    this.searchCooldown = 0.0;
+    this.lastStatus = MoveStatus.IDLE;
+  }
+
+  /**
+   * 目的地をクリアする。
+   */
+  public void clearDestination() {
+    clearPath();
+  }
+
+  /**
+   * 最後の移動状態を返す。
+   */
+  public MoveStatus getLastStatus() {
+    return lastStatus;
+  }
+
+  /**
+   * 目的地が設定されているかを返す。
+   */
+  public boolean hasDestination() {
+    return destination != null;
+  }
+
+  /**
+   * 現在の目的地を返す。
+   */
+  public Point2D.Double getDestination() {
+    if (destination == null) {
+      return null;
+    }
+    return new Point2D.Double(destination.getX(), destination.getY());
+  }
+
+  /** {@inheritDoc} */
   @Override
   public void execute(GameContext context, BaseGameEntity self) {
+    lastStatus = MoveStatus.IDLE;
     GameMap map = context.getMap();
-    if (map == null) {
+    if (map == null || self == null) {
       return;
     }
 
@@ -48,12 +130,16 @@ public class DestinationMoveAction implements GameAction {
       searchCooldown = Math.max(0.0, searchCooldown - dt);
     }
 
-    if (destination == null || path == null || pathIndex >= path.size()) {
+    if (destination == null) {
+      if (!autoDestination) {
+        return;
+      }
       if (searchCooldown > 0.0) {
         return;
       }
       if (!selectNewDestination(map, self)) {
         searchCooldown = SEARCH_COOLDOWN;
+        lastStatus = MoveStatus.FAILED;
         return;
       }
     }
@@ -61,7 +147,20 @@ public class DestinationMoveAction implements GameAction {
     if (!isCellWalkable(map, destination)) {
       clearPath();
       searchCooldown = SEARCH_COOLDOWN;
+      lastStatus = MoveStatus.FAILED;
       return;
+    }
+
+    if (path == null || pathIndex >= path.size()) {
+      List<Point2D.Double> newPath = findPath(map, self.getPosition(), destination);
+      if (newPath == null) {
+        clearPath();
+        searchCooldown = SEARCH_COOLDOWN;
+        lastStatus = MoveStatus.FAILED;
+        return;
+      }
+      path = newPath;
+      pathIndex = 0;
     }
 
     if (pathIndex < path.size()) {
@@ -70,17 +169,20 @@ public class DestinationMoveAction implements GameAction {
         if (!replanPath(map, self.getPosition())) {
           clearPath();
           searchCooldown = SEARCH_COOLDOWN;
+          lastStatus = MoveStatus.FAILED;
           return;
         }
       }
     }
 
     moveAlongPath(self, dt);
+    lastStatus = MoveStatus.MOVING;
 
     if (destination != null
         && self.getPosition().distance(destination) <= ARRIVAL_EPSILON) {
       self.setPosition(new Point2D.Double(destination.getX(), destination.getY()));
       clearPath();
+      lastStatus = MoveStatus.ARRIVED;
     }
   }
 

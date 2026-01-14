@@ -4,10 +4,9 @@ package io.github.sasori_256.town_planning.entity.resident;
  * 住民の属性定義。
  */
 public enum ResidentType {
-  CIVILIAN("civilian", "resident", 50, 10, 1.0f),
-  CITIZEN("citizen", "resident", 50, 10, 1.0f),
-  BELIEVER("believer", "resident", 60, 50, 1.5f),
-  HERETIC("heretic", "resident", 100, 0, 0.5f);
+  CITIZEN("citizen", "people_1", 50, 10, 1.0f),
+  BELIEVER("believer", "people_1", 60, 50, 1.5f),
+  HERETIC("heretic", "people_1", 100, 0, 0.5f);
 
   private final String displayName;
   private final String imageName;

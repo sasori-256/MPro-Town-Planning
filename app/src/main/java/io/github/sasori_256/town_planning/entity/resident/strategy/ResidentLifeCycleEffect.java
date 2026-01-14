@@ -2,16 +2,17 @@ package io.github.sasori_256.town_planning.entity.resident.strategy;
 
 import io.github.sasori_256.town_planning.common.core.strategy.UpdateStrategy;
 import io.github.sasori_256.town_planning.common.event.events.ResidentDiedEvent;
-import io.github.sasori_256.town_planning.entity.model.GameContext;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
+import io.github.sasori_256.town_planning.entity.model.GameContext;
+import io.github.sasori_256.town_planning.entity.model.GameEffect;
 import io.github.sasori_256.town_planning.entity.resident.Resident;
 import io.github.sasori_256.town_planning.entity.resident.ResidentState;
 
 /**
- * 住民のライフサイクル（加齢、死亡）を管理するStrategy。
+ * 住民のライフサイクル（加齢、死亡）を管理するEffect。
  */
-public class ResidentLifeCycleStrategy implements UpdateStrategy {
-
+public class ResidentLifeCycleEffect implements UpdateStrategy, GameEffect {
+  /** {@inheritDoc} */
   @Override
   public void update(GameContext context, BaseGameEntity self) {
     if (!(self instanceof Resident)) {
@@ -43,9 +44,21 @@ public class ResidentLifeCycleStrategy implements UpdateStrategy {
 
   private void die(GameContext context, BaseGameEntity self) {
     Resident resident = (Resident) self;
-    resident.setState(ResidentState.DEAD);
+    resident.markDead();
 
     // 死亡イベント発行
     context.getEventBus().publish(new ResidentDiedEvent(resident));
+  }
+
+  /**
+   * 住民のライフサイクルを進める。
+   * UpdateStrategy/GameEffect両方に対応するため、update() に委譲する。
+   *
+   * @param context ゲーム内の環境情報
+   * @param self    対象エンティティ
+   */
+  @Override
+  public void execute(GameContext context, BaseGameEntity self) {
+    update(context, self);
   }
 }

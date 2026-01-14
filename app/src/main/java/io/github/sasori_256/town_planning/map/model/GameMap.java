@@ -6,6 +6,9 @@ import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
 import io.github.sasori_256.town_planning.entity.building.Building;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
 
+/**
+ * ゲーム内のマップ状態を保持する実装。
+ */
 public class GameMap implements MapContext {
   private final int width;
   private final int height;
@@ -13,9 +16,11 @@ public class GameMap implements MapContext {
   private final EventBus eventBus;
 
   /**
-   * @param width
-   * @param height
-   * @param eventBus
+   * マップを生成する。
+   *
+   * @param width    横幅(セル数)
+   * @param height   縦幅(セル数)
+   * @param eventBus イベントバス
    */
   public GameMap(int width, int height, EventBus eventBus) {
     this.width = width;
@@ -31,6 +36,7 @@ public class GameMap implements MapContext {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean isValidPosition(Point2D.Double pos) {
     double x = pos.getX(); // 中心基準
@@ -39,6 +45,7 @@ public class GameMap implements MapContext {
         && y >= -0.5 && y < this.height - 0.5;
   }
 
+  /** {@inheritDoc} */
   @Override
   public MapCell getCell(Point2D.Double pos) {
     if (!isValidPosition(pos)) {
@@ -49,6 +56,7 @@ public class GameMap implements MapContext {
     return cells[(int) pos.getY()][(int) pos.getX()];
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean placeBuilding(Point2D.Double pos, Building building) {
     if (building == null) {
@@ -104,6 +112,7 @@ public class GameMap implements MapContext {
     return true;
   }
 
+  /** {@inheritDoc} */
   @Override
   public boolean removeBuilding(Point2D.Double pos) {
     int anchorX = (int) Math.round(pos.getX());
@@ -145,11 +154,13 @@ public class GameMap implements MapContext {
     return true;
   }
 
+  /** {@inheritDoc} */
   @Override
   public int getWidth() {
     return width;
   }
 
+  /** {@inheritDoc} */
   @Override
   public int getHeight() {
     return height;

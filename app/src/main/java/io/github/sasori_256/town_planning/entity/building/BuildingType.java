@@ -228,6 +228,51 @@ public enum BuildingType {
   }
 
   /**
+   * 指定タイルのアニメーション名を返す。
+   *
+   * @param localX 建物内のX座標
+   * @param localY 建物内のY座標
+   */
+  public String getAnimationName(int localX, int localY) {
+    if (localX < 0 || localY < 0 || localX >= width || localY >= height) {
+      return null;
+    }
+    if (this == PLAZA && localX == 1 && localY == 1) {
+      return "plaza_fountain_center";
+    }
+    return null;
+  }
+
+  /**
+   * 指定タイルのアニメーションフレームレートを返す。
+   *
+   * @param localX 建物内のX座標
+   * @param localY 建物内のY座標
+   */
+  public int getAnimationFrameRate(int localX, int localY) {
+    return getAnimationName(localX, localY) != null ? 6 : 0;
+  }
+
+  /**
+   * 指定タイルのアニメーションがループするかを返す。
+   *
+   * @param localX 建物内のX座標
+   * @param localY 建物内のY座標
+   */
+  public boolean isAnimationLoop(int localX, int localY) {
+    return getAnimationName(localX, localY) != null;
+  }
+
+  /**
+   * アニメーションを持つ建物かを返す。
+   *
+   * @return アニメーションを持つ場合はtrue
+   */
+  public boolean hasAnimation() {
+    return this == PLAZA;
+  }
+
+  /**
    * 建設コストを返す。
    */
   public int getCost() {

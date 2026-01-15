@@ -62,7 +62,6 @@ public class PaintResourceViewerUI {
                 resourcePanels.put(type, panel);
             }
         }
-        mapPanel.add(resourcePanel);
     }
 
 }

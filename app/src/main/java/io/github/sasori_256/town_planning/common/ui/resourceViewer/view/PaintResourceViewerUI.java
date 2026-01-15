@@ -20,16 +20,16 @@ public class PaintResourceViewerUI {
     private final EventBus eventBus;
     private final ImageManager imageManager;
     private final JPanel mapPanel;
-    private double UIScale;
+    private double uiScale;
 
     private Map<ResourceType, ResourceViewerPanel> resourcePanels = new HashMap<>();
 
-    public PaintResourceViewerUI(GameContext gameContext, ImageManager imageManager, JPanel mapPanel, double UIScale) {
+    public PaintResourceViewerUI(GameContext gameContext, ImageManager imageManager, JPanel mapPanel, double uiScale) {
         this.gameContext = gameContext;
         this.eventBus = gameContext.getEventBus();
         this.imageManager = imageManager;
         this.mapPanel = mapPanel;
-        this.UIScale = UIScale;
+        this.uiScale = uiScale;
         initUI();
         Subscription soulSub = this.eventBus.subscribe(SoulChangedEvent.class, (event) -> {
             ResourceViewerPanel resourcePanel = resourcePanels.get(ResourceType.SOUL);

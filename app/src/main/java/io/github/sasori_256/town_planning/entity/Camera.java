@@ -136,7 +136,6 @@ public class Camera {
     Point2D.Double centerIso = screenToIso(new Point2D.Double(screenWidth / 2.0, screenHeight / 2.0));
     int clampedX = (int) Math.clamp(centerIso.x, 0, this.mapWidth - 1);
     int clampedY = (int) Math.clamp(centerIso.y, 0, this.mapHeight - 1);
-    System.out.println("Clamped Center Iso: (" + clampedX + ", " + clampedY + ")");
     if (clampedX != (int) centerIso.x || clampedY != (int) centerIso.y) {
       this.offsetX = 0;
       this.offsetY = 0;

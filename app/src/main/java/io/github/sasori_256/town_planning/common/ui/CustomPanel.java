@@ -5,7 +5,7 @@ import java.awt.Image;
 import javax.swing.JPanel;
 
 /**
- * パネルにマウスホバーした時の処理などを共通化するために使用するカスタムパネル
+ * JPanelを継承し、背景画像付きの表示を行う。
  */
 public class CustomPanel extends JPanel {
     private final Image bgImage;

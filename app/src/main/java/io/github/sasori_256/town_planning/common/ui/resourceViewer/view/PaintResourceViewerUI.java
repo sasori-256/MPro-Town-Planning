@@ -15,6 +15,10 @@ import io.github.sasori_256.town_planning.common.ui.ImageManager.ImageStorage;
 import io.github.sasori_256.town_planning.common.ui.resourceViewer.ResourceType;
 import io.github.sasori_256.town_planning.entity.model.GameContext;
 
+/**
+ * リソースビューアのUIを担当するクラス。
+ * 魂、人数、経過日数を表示する。
+ */
 public class PaintResourceViewerUI {
     private final GameContext gameContext;
     private final EventBus eventBus;

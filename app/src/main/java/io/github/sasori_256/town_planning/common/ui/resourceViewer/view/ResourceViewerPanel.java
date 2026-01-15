@@ -10,8 +10,8 @@ import javax.swing.JLabel;
 import io.github.sasori_256.town_planning.common.ui.CustomPanel;
 
 /**
- * パネルにマウスホバーした時の処理などを共通化するために使用するカスタムパネル
- * CustomPanels
+ * 背景画像の上にリソースの値を表示するためのパネル。
+ * CustomPanelを継承し、背景画像付きの表示と値ラベルの配置を行う。
  */
 public class ResourceViewerPanel extends CustomPanel {
     private JLabel valueLabel;

@@ -8,7 +8,7 @@ import javax.swing.JPanel;
  * パネルにマウスホバーした時の処理などを共通化するために使用するカスタムパネル
  */
 public class CustomPanel extends JPanel {
-    private Image bgImage;
+    private final Image bgImage;
 
     /**
      * イメージを背景に持つカスタムパネル

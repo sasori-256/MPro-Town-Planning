@@ -60,6 +60,8 @@ public interface GameContext {
    */
   Stream<Disaster> getDisasterEntities();
 
+  int getSoul();
+
   /**
    * 前フレームからの経過時間(秒)を返す。
    *

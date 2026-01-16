@@ -61,7 +61,7 @@ public class GameModel implements GameContext, SimulationStep {
   private final List<Resident> residentEntities = new CopyOnWriteArrayList<>();
   private final List<Disaster> disasterEntities = new CopyOnWriteArrayList<>();
 
-  private int souls = 100;
+  private int soul = 100;
   private final GameTime gameTime = new GameTime();
   /**
    * 住民再配置で最低限成立させる世帯人数。
@@ -97,7 +97,7 @@ public class GameModel implements GameContext, SimulationStep {
     // Event Subscriptions
     // SoulHarvestedEventを購読
     this.eventBus.subscribe(SoulHarvestedEvent.class, event -> {
-      addSouls(event.amount());
+      addSoul(event.amount());
     });
 
     // GameLoopはstartGameLoopでインスタンス化されるためここではnull
@@ -347,8 +347,9 @@ public class GameModel implements GameContext, SimulationStep {
    *
    * @return ソウル数
    */
-  public int getSouls() {
-    return withReadLock(() -> souls);
+  @Override
+  public int getSoul() {
+    return withReadLock(() -> soul);
   }
 
   /**
@@ -356,9 +357,9 @@ public class GameModel implements GameContext, SimulationStep {
    *
    * @param amount 追加量
    */
-  public void addSouls(int amount) {
+  public void addSoul(int amount) {
     withWriteLock(() -> {
-      addSoulsInternal(amount);
+      addSoulInternal(amount);
     });
   }
 
@@ -366,9 +367,9 @@ public class GameModel implements GameContext, SimulationStep {
    * ロックを取得せずにソウルを加算する内部処理。
    * 書き込みロック取得済みの場面でのみ使用する。
    */
-  private void addSoulsInternal(int amount) {
-    this.souls += amount;
-    eventBus.publish(new SoulChangedEvent(souls));
+  private void addSoulInternal(int amount) {
+    this.soul += amount;
+    eventBus.publish(new SoulChangedEvent(soul));
   }
 
   /**
@@ -412,7 +413,7 @@ public class GameModel implements GameContext, SimulationStep {
    */
   public boolean constructBuilding(Point2D.Double pos, BuildingType type) {
     return withWriteLock(() -> {
-      if (souls < type.getCost()) {
+      if (soul < type.getCost()) {
         return false;
       }
 
@@ -420,7 +421,7 @@ public class GameModel implements GameContext, SimulationStep {
         return false;
       }
 
-      addSoulsInternal(-type.getCost());
+      addSoulInternal(-type.getCost());
 
       Building building = new Building(pos, type);
 
@@ -428,7 +429,7 @@ public class GameModel implements GameContext, SimulationStep {
         spawnEntityInternal(building);
         return true;
       } else {
-        addSoulsInternal(type.getCost());
+        addSoulInternal(type.getCost());
         return false;
       }
     });
@@ -632,11 +633,11 @@ public class GameModel implements GameContext, SimulationStep {
   /**
    * ソウル数を設定する。
    *
-   * @param souls ソウル数
+   * @param soul ソウル数
    */
-  public void setSouls(int souls) {
+  public void setSoul(int soul) {
     withWriteLock(() -> {
-      this.souls = souls;
+      this.soul = soul;
     });
   }
 

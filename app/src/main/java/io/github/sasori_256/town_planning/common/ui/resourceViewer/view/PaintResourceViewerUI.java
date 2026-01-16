@@ -19,20 +19,18 @@ import io.github.sasori_256.town_planning.entity.model.GameContext;
  * リソースビューアのUIを担当するクラス。
  * 魂、人数、経過日数を表示する。
  */
-public class PaintResourceViewerUI {
+public class PaintResourceViewerUI extends JPanel {
     private final GameContext gameContext;
     private final EventBus eventBus;
     private final ImageManager imageManager;
-    private final JPanel mapPanel;
     private double uiScale;
 
     private Map<ResourceType, ResourceViewerPanel> resourcePanels = new HashMap<>();
 
-    public PaintResourceViewerUI(GameContext gameContext, ImageManager imageManager, JPanel mapPanel, double uiScale) {
+    public PaintResourceViewerUI(GameContext gameContext, ImageManager imageManager, double uiScale) {
         this.gameContext = gameContext;
         this.eventBus = gameContext.getEventBus();
         this.imageManager = imageManager;
-        this.mapPanel = mapPanel;
         this.uiScale = uiScale;
         initUI();
         Subscription soulSub = this.eventBus.subscribe(SoulChangedEvent.class, (event) -> {
@@ -47,13 +45,11 @@ public class PaintResourceViewerUI {
 
     private void initUI() {
         int panelMargin = 10;
-        JPanel resourcePanel = new JPanel();
-        resourcePanel.setOpaque(false);
-        resourcePanel.setLayout(new BoxLayout(resourcePanel, BoxLayout.X_AXIS));
-        resourcePanel.setBounds(10, 10, (150 + panelMargin) * ResourceType.values().length, 50);
-        resourcePanel.setAlignmentY(JPanel.TOP_ALIGNMENT);
-        resourcePanel.setAlignmentX(JPanel.LEFT_ALIGNMENT);
-        mapPanel.add(resourcePanel);
+        this.setOpaque(false);
+        this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
+        this.setBounds(10, 10, (150 + panelMargin) * ResourceType.values().length, 50);
+        this.setAlignmentY(JPanel.TOP_ALIGNMENT);
+        this.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 
         for (ResourceType type : ResourceType.values()) {
             ImageStorage imageStorage = imageManager.getImageStorage(type.getImageName());
@@ -61,8 +57,8 @@ public class PaintResourceViewerUI {
                 System.err.println("\u001B[31mError: Image not found: " + type.getImageName() + "\u001B[0m");
             } else {
                 ResourceViewerPanel panel = new ResourceViewerPanel("0", imageStorage.getImage());
-                resourcePanel.add(panel);
-                resourcePanel.add(Box.createHorizontalStrut(panelMargin));
+                this.add(panel);
+                this.add(Box.createHorizontalStrut(panelMargin));
                 resourcePanels.put(type, panel);
             }
         }

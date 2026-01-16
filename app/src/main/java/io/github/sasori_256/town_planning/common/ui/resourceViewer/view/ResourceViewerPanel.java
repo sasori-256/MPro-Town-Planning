@@ -15,9 +15,11 @@ import io.github.sasori_256.town_planning.common.ui.CustomPanel;
  */
 public class ResourceViewerPanel extends CustomPanel {
     private JLabel valueLabel;
+    private final Image bgImage;
 
     public ResourceViewerPanel(String displayValue, Image bgImage) {
         super(bgImage);
+        this.bgImage = bgImage;
         initUI(displayValue);
     }
 
@@ -28,7 +30,11 @@ public class ResourceViewerPanel extends CustomPanel {
         // valueLabel.setFont(); TODO: フォント設定
         this.setLayout(new BorderLayout());
         this.add(valueLabel, BorderLayout.CENTER);
-        this.setPreferredSize(new Dimension(300, 100));
+        if (bgImage != null) {
+            this.setPreferredSize(new Dimension(bgImage.getWidth(null), bgImage.getHeight(null)));
+        } else {
+            this.setPreferredSize(new Dimension(300, 100));
+        }
     }
 
     public void setDisplayValue(String displayValue) {

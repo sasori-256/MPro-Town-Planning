@@ -38,7 +38,6 @@ public class GameMapPanel extends JPanel {
   private final AnimationManager animationManager;
   private final PaintGameObject paintGameObject;
   private final PaintObjectSelectUI paintObjectSelectUI;
-  private final PaintResourceViewerUI paintResourceViewerUI;
   private final ReadWriteLock stateLock;
 
   /**
@@ -63,8 +62,7 @@ public class GameMapPanel extends JPanel {
     this.setLayout(null);
     setBackground(Color.BLACK);
     this.paintObjectSelectUI = new PaintObjectSelectUI(imageManager, this, root);
-    this.paintResourceViewerUI = new PaintResourceViewerUI(gameModel, imageManager, this, 1.0);
-
+    this.add(new PaintResourceViewerUI(gameModel, imageManager, 1.0));
     paintObjectSelectUI.paint();
     revalidate();
     repaint();

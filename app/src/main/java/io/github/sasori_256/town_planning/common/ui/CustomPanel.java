@@ -13,7 +13,7 @@ public class CustomPanel extends JPanel {
     /**
      * イメージを背景に持つカスタムパネル
      * 
-     * @param bgImage
+     * @param bgImage 背景として描画するイメージ
      */
     public CustomPanel(Image bgImage) {
         super();

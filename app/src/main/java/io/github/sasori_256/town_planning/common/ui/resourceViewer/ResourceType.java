@@ -5,7 +5,7 @@ public enum ResourceType {
     RESIDENT("residentViewerUI"),
     DATE("dateViewerUI");
 
-    private String imageName;
+    private final String imageName;
 
     ResourceType(String imageName) {
         this.imageName = imageName;

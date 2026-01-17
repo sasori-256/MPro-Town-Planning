@@ -87,6 +87,34 @@ public interface GameContext {
    */
   double getDayLengthSeconds();
 
+  /**
+   * 現在の魂所持量を返す。
+   *
+   * @return 魂所持量
+   */
+  int getSoul();
+
+  /**
+   * 総住民数を返す。
+   *
+   * @return 総住民数
+   */
+  int getPopulationTotal();
+
+  /**
+   * 生存住民数を返す。
+   *
+   * @return 生存住民数
+   */
+  int getPopulationAlive();
+
+  /**
+   * 死亡住民数を返す。
+   *
+   * @return 死亡住民数
+   */
+  int getPopulationDead();
+
   // Entity Lifecycle
 
   /**

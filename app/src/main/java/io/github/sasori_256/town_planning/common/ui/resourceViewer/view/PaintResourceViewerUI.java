@@ -47,7 +47,7 @@ public class PaintResourceViewerUI extends JPanel {
         int panelMargin = 10;
         this.setOpaque(false);
         this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-        this.setBounds(10, 10, (150 + panelMargin) * ResourceType.values().length, 50);
+        this.setBounds(10, 10, (180 + panelMargin) * ResourceType.values().length, 60);
         this.setAlignmentY(JPanel.TOP_ALIGNMENT);
         this.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 

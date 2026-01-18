@@ -4,7 +4,8 @@ import java.awt.geom.Point2D;
 import java.util.concurrent.locks.ReadWriteLock;
 import javax.swing.SwingUtilities;
 import io.github.sasori_256.town_planning.common.event.EventBus;
-import io.github.sasori_256.town_planning.common.ui.GameWindow;
+import io.github.sasori_256.town_planning.common.ui.ImageManager;
+import io.github.sasori_256.town_planning.common.ui.main.GameWindow;
 import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.entity.building.Building;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
@@ -30,6 +31,8 @@ public class App {
     final int MAP_WIDTH = 100;
     final int MAP_HEIGHT = 100;
 
+    ImageManager imageManager = new ImageManager();
+
     EventBus eventBus = new EventBus();
     GameModel gameModel = new GameModel(MAP_WIDTH, MAP_HEIGHT, eventBus);
     GameMap gameMap = gameModel.getGameMap();
@@ -51,8 +54,8 @@ public class App {
     GameMapController gameMapController = new GameMapController(camera, stateLock);
     SwingUtilities.invokeLater(() -> {
       GameWindow gameWindow = new GameWindow(
-          gameMapController, gameModel, gameMap, camera, WIDTH, HEIGHT, eventBus, gameMapController,
-          stateLock);
+          gameModel, gameMap, camera, WIDTH, HEIGHT, eventBus, gameMapController,
+          stateLock, imageManager);
       gameModel.startGameLoop(gameWindow::repaint);
     });
   }

@@ -7,13 +7,13 @@ import java.util.List;
 import javax.swing.JButton;
 
 import io.github.sasori_256.town_planning.common.ui.CustomButton;
-import io.github.sasori_256.town_planning.map.view.GameMapPanel;
 import io.github.sasori_256.town_planning.common.ui.ImageManager;
 import io.github.sasori_256.town_planning.common.ui.ImageManager.ImageStorage;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.BuildingNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.DisasterNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.MenuNode;
+import io.github.sasori_256.town_planning.common.ui.main.seen.GameMapPanel;
 
 /**
  * ゲーム上のUIを描画するクラス

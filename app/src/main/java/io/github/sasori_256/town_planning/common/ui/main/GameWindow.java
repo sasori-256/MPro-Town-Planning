@@ -16,6 +16,7 @@ import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
 import io.github.sasori_256.town_planning.common.ui.ImageManager;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.NodeMenuInitializer;
+import io.github.sasori_256.town_planning.common.ui.main.seen.EndPanel;
 import io.github.sasori_256.town_planning.common.ui.main.seen.GameMapPanel;
 import io.github.sasori_256.town_planning.common.ui.main.seen.TitlePanel;
 import io.github.sasori_256.town_planning.entity.Camera;
@@ -107,10 +108,12 @@ public class GameWindow extends JFrame {
 
     JPanel titlePanel = createTitlePanel(nav);
     JPanel gameMapPanel = createGameMapPanel();
+    JPanel endPanel = createEndPanel();
     // 新しいシーンを追加する場合はここに記載。そのシーン内でシーンを切り替える場合はnavを渡す。
 
     this.mainPanel.add(titlePanel, "TITLE");
     this.mainPanel.add(gameMapPanel, "GAME_MAP");
+    this.mainPanel.add(endPanel, "END");
 
     this.add(this.mainPanel, BorderLayout.CENTER);
   }
@@ -157,5 +160,10 @@ public class GameWindow extends JFrame {
   private JPanel createTitlePanel(SceneNavigator sceneNavigator) {
     TitlePanel titlePanel = new TitlePanel(sceneNavigator, this.imageManager);
     return titlePanel;
+  }
+
+  private JPanel createEndPanel() {
+    EndPanel endPanel = new EndPanel();
+    return endPanel;
   }
 }

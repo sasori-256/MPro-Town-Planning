@@ -2,10 +2,11 @@ package io.github.sasori_256.town_planning.common.ui.main.seen;
 
 import java.awt.Dimension;
 
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import io.github.sasori_256.town_planning.common.ui.CustomButton;
 import io.github.sasori_256.town_planning.common.ui.CustomPanel;
 import io.github.sasori_256.town_planning.common.ui.ImageManager;
 import io.github.sasori_256.town_planning.common.ui.ImageManager.ImageStorage;
@@ -18,19 +19,41 @@ public class TitlePanel extends JPanel {
   public TitlePanel(SceneNavigator sceneNavigator, ImageManager imageManager) {
     this.sceneNavigator = sceneNavigator;
     this.imageManager = imageManager;
-    JButton startButton = new JButton("Start Game");
-    startButton.addActionListener(e -> {
-      sceneNavigator.changeScene("GAME_MAP");
-    });
-    ImageStorage imageStorage = imageManager.getImageStorage("title");
-    if (imageStorage == null || imageStorage.getImage() == null || imageStorage.getName().equals("error")) {
+    initCenterComponent();
+  }
+
+  private void initCenterComponent() {
+    JPanel centerPanel = new JPanel();
+    centerPanel.setOpaque(false);
+    centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
+    centerPanel.setAlignmentX(JPanel.CENTER_ALIGNMENT);
+
+    ImageStorage titleImageStorage = imageManager.getImageStorage("title");
+    if (titleImageStorage == null || titleImageStorage.getImage() == null
+        || titleImageStorage.getName().equals("error")) {
       System.err.println("\u001B[31mError: Image not found: " + "title" + "\u001B[0m");
     } else {
-      CustomPanel logoPanel = new CustomPanel(imageStorage.getImage());
+      CustomPanel logoPanel = new CustomPanel(titleImageStorage.getImage());
       logoPanel.setPreferredSize(
-          new Dimension(imageStorage.getImage().getWidth(null) * 2, imageStorage.getImage().getHeight(null) * 2));
-      this.add(logoPanel);
-      this.add(startButton);
+          new Dimension(titleImageStorage.getImage().getWidth(null) * 2,
+              titleImageStorage.getImage().getHeight(null) * 2));
+      logoPanel.setAlignmentX(JPanel.CENTER_ALIGNMENT);
+      centerPanel.add(logoPanel);
     }
+
+    ImageStorage startImageStorage = imageManager.getImageStorage("start_button");
+    if (startImageStorage == null || startImageStorage.getImage() == null
+        || startImageStorage.getName().equals("error")) {
+      System.err.println("\u001B[31mError: Image not found: " + "start_button" + "\u001B[0m");
+    } else {
+      JButton startButton = new CustomButton("Start Game", startImageStorage);
+      startButton.addActionListener(e -> {
+        sceneNavigator.changeScene("GAME_MAP");
+      });
+      startButton.setAlignmentX(JPanel.CENTER_ALIGNMENT);
+      centerPanel.add(startButton);
+      startButton.setBorder(null);
+    }
+    this.add(centerPanel);
   }
 }

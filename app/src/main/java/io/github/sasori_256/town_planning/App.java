@@ -26,7 +26,7 @@ public class App {
    * @param args 起動引数
    */
   public static void main(String[] args) {
-    final int WIDTH = 640;
+    final int WIDTH = 960;
     final int HEIGHT = 640;
     final int MAP_WIDTH = 100;
     final int MAP_HEIGHT = 100;

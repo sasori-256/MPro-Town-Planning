@@ -36,7 +36,7 @@ public class PaintResourceViewerUI extends JPanel {
         Subscription soulSub = this.eventBus.subscribe(SoulChangedEvent.class, (event) -> {
             ResourceViewerPanel resourcePanel = resourcePanels.get(ResourceType.SOUL);
             if (resourcePanel != null) {
-                resourcePanel.setDisplayValue(String.valueOf(event.currentSouls()));
+                resourcePanel.setDisplayValue(String.valueOf(event.currentSoul()));
                 resourcePanel.repaint();
             }
         });

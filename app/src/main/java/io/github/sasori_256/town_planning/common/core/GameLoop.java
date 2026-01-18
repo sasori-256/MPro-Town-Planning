@@ -96,11 +96,11 @@ public class GameLoop implements Runnable {
   }
 
   public void pause() {
-    paused.set(false);
+    paused.set(true);
   }
 
   public void resume() {
-    paused.set(true);
+    paused.set(false);
   }
 
   /**

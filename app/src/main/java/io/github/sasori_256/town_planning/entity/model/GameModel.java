@@ -74,9 +74,9 @@ public class GameModel implements GameContext, SimulationStep {
    * @param mapHeight マップの縦幅
    * @param eventBus  イベントバス
    */
-  public GameModel(int mapWidth, int mapHeight, EventBus eventBus) {
+  public GameModel(int mapWidth, int mapHeight, long seed, EventBus eventBus) {
     this.eventBus = eventBus;
-    this.gameMap = new GameMap(mapWidth, mapHeight, eventBus);
+    this.gameMap = new GameMap(mapWidth, mapHeight, seed, eventBus);
 
     this.entityManager = new EntityManager(eventBus, stateLock);
     this.soulManager = new SoulManager(eventBus, stateLock, entityManager, INITIAL_SOUL);

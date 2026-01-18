@@ -5,6 +5,7 @@ import java.awt.geom.Point2D;
 import io.github.sasori_256.town_planning.common.core.strategy.CompositeUpdateStrategy;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.entity.resident.strategy.ResidentBehaviorAction;
+import io.github.sasori_256.town_planning.entity.resident.strategy.ResidentCorpseCleanupEffect;
 import io.github.sasori_256.town_planning.entity.resident.strategy.ResidentLifeCycleEffect;
 
 /**
@@ -43,6 +44,7 @@ public class Resident extends BaseGameEntity {
     CompositeUpdateStrategy strategy = new CompositeUpdateStrategy();
     strategy.setAction(new ResidentBehaviorAction());
     strategy.addEffect(new ResidentLifeCycleEffect());
+    strategy.addEffect(new ResidentCorpseCleanupEffect());
     this.setUpdateStrategy(strategy);
   }
 

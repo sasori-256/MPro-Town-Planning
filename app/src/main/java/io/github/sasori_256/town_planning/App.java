@@ -27,8 +27,8 @@ public class App {
   public static void main(String[] args) {
     final int WIDTH = 640;
     final int HEIGHT = 640;
-    final int MAP_WIDTH = 100;
-    final int MAP_HEIGHT = 100;
+    final int MAP_WIDTH = 50;
+    final int MAP_HEIGHT = 50;
 
     EventBus eventBus = new EventBus();
     GameModel gameModel = new GameModel(MAP_WIDTH, MAP_HEIGHT, eventBus);
@@ -51,8 +51,8 @@ public class App {
     GameMapController gameMapController = new GameMapController(camera, stateLock);
     SwingUtilities.invokeLater(() -> {
       GameWindow gameWindow = new GameWindow(
-          gameMapController, gameModel, gameMap, camera, WIDTH, HEIGHT, eventBus, gameMapController,
-          stateLock);
+          // TODO: gameMapを引数に渡すのが冗長なのでgameModelからgetするように変更する
+          gameMapController, gameModel, gameMap, camera, WIDTH, HEIGHT, eventBus, gameMapController, stateLock);
       gameModel.startGameLoop(gameWindow::repaint);
     });
   }

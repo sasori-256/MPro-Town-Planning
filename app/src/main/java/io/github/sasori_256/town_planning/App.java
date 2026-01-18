@@ -52,7 +52,7 @@ public class App {
     SwingUtilities.invokeLater(() -> {
       GameWindow gameWindow = new GameWindow(
           // TODO: gameMapを引数に渡すのが冗長なのでgameModelからgetするように変更する
-          gameMapController, gameModel, gameMap, camera, WIDTH, HEIGHT, eventBus, stateLock);
+          gameMapController, gameModel, gameMap, camera, WIDTH, HEIGHT, eventBus, gameMapController, stateLock);
       gameModel.startGameLoop(gameWindow::repaint);
     });
   }

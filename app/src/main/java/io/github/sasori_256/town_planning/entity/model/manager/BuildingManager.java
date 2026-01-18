@@ -6,6 +6,9 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Supplier;
 
 import io.github.sasori_256.town_planning.common.event.EventBus;
+import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailedEvent;
+import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailureReason;
+import io.github.sasori_256.town_planning.common.event.events.EntitySpawnKind;
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
 import io.github.sasori_256.town_planning.entity.building.Building;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
@@ -55,11 +58,18 @@ public class BuildingManager {
    */
   public boolean constructBuilding(GameContext context, Point2D.Double pos, BuildingType type) {
     return withWriteLock(() -> {
+      String detail = "type=" + type + ", cost=" + type.getCost();
       if (!soulManager.canAffordInternal(type.getCost())) {
+        publishSpawnFailure(pos, EntitySpawnFailureReason.INSUFFICIENT_SOUL, detail);
         return false;
       }
 
-      if (!gameMap.isValidPosition(pos) || !gameMap.getCell(pos).canBuild()) {
+      if (!gameMap.isValidPosition(pos)) {
+        publishSpawnFailure(pos, EntitySpawnFailureReason.INVALID_POSITION, detail);
+        return false;
+      }
+      if (!gameMap.getCell(pos).canBuild()) {
+        publishSpawnFailure(pos, EntitySpawnFailureReason.PLACEMENT_BLOCKED, detail);
         return false;
       }
 
@@ -72,6 +82,7 @@ public class BuildingManager {
       }
 
       soulManager.addSoulInternal(type.getCost());
+      publishSpawnFailure(pos, EntitySpawnFailureReason.PLACEMENT_BLOCKED, detail);
       return false;
     });
   }
@@ -104,5 +115,10 @@ public class BuildingManager {
     } finally {
       writeLock.unlock();
     }
+  }
+
+  private void publishSpawnFailure(Point2D.Double pos, EntitySpawnFailureReason reason,
+      String detail) {
+    eventBus.publish(new EntitySpawnFailedEvent(EntitySpawnKind.BUILDING, reason, pos, detail));
   }
 }

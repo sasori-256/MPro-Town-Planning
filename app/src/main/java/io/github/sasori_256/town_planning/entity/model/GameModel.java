@@ -8,6 +8,7 @@ import java.util.function.DoubleConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import io.github.sasori_256.town_planning.common.core.GameConfig;
 import io.github.sasori_256.town_planning.common.core.GameLoop;
 import io.github.sasori_256.town_planning.common.core.SimulationStep;
 import io.github.sasori_256.town_planning.common.event.EventBus;
@@ -86,6 +87,8 @@ public class GameModel implements GameContext, SimulationStep {
         entityManager);
 
     this.gameLoop = null;
+
+    GameConfig.preload();
   }
 
   /**

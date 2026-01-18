@@ -95,7 +95,7 @@ public interface GameContext {
   int getSoul();
 
   /**
-   * 総住民数を返す。
+   * 総住民数(生存者のみ)を返す。
    *
    * @return 総住民数
    */

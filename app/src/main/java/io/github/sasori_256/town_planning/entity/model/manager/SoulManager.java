@@ -9,8 +9,6 @@ import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.SoulChangedEvent;
 import io.github.sasori_256.town_planning.common.event.events.SoulHarvestedEvent;
 import io.github.sasori_256.town_planning.entity.model.GameContext;
-import io.github.sasori_256.town_planning.entity.resident.Resident;
-import io.github.sasori_256.town_planning.entity.resident.ResidentState;
 
 /**
  * 魂の所持量と魂回収処理を管理する。
@@ -130,23 +128,8 @@ public class SoulManager {
    * @return 収穫できた場合はtrue
    */
   public boolean harvestSoulAt(GameContext context, Point2D pos) {
-    double harvestRadius = 1.0;
-    Resident target = entityManager.findDeadResidentWithin(pos, harvestRadius);
-    if (target == null) {
-      return false;
-    }
-
-    if (target.getState() != ResidentState.DEAD) {
-      return false;
-    }
-
-    int soulAmount = 10;
-    int faith = target.getFaith();
-    soulAmount += faith / 5;
-
-    eventBus.publish(new SoulHarvestedEvent(soulAmount));
-    entityManager.removeEntity(target, context);
-    return true;
+    // 自動回収に移行したため、手動回収は一旦無効化する。
+    return false;
   }
 
   /**

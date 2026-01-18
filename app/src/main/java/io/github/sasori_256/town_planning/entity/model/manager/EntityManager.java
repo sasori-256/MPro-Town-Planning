@@ -162,7 +162,7 @@ public class EntityManager {
   private void addResidentInternal(Resident entity, GameContext context) {
     residentEntities.add(entity);
     entity.onSpawn(context);
-    eventBus.publish(new ResidentBornEvent(entity.getPosition()));
+    eventBus.publish(new ResidentBornEvent(entity.getPosition(), context.getPopulationAlive()));
   }
 
   /**

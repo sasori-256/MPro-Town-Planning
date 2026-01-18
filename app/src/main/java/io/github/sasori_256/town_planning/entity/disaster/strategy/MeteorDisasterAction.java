@@ -95,7 +95,7 @@ public class MeteorDisasterAction implements GameAction {
           // 即死させる
           resident.markDead();
           // ResidentDiedEventを発行
-          context.getEventBus().publish(new ResidentDiedEvent(resident));
+          context.getEventBus().publish(new ResidentDiedEvent(resident, context.getPopulationAlive()));
         }
       }
 

@@ -10,10 +10,16 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 
+import io.github.sasori_256.town_planning.common.core.GameConfig;
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.Subscription;
+import io.github.sasori_256.town_planning.common.event.events.ConfigLoadFailedEvent;
+import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailedEvent;
+import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailureReason;
+import io.github.sasori_256.town_planning.common.event.events.EntitySpawnKind;
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
 import io.github.sasori_256.town_planning.common.ui.ImageManager;
+import io.github.sasori_256.town_planning.common.ui.ToastManager;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.NodeMenuInitializer;
 import io.github.sasori_256.town_planning.common.ui.main.seen.EndPanel;
@@ -76,6 +82,11 @@ public class GameWindow extends JFrame {
     setSize(width, height);
     setupCardPanel();
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    ToastManager toastManager = new ToastManager(getLayeredPane(), getLayeredPane());
+    Subscription configSub = eventBus.subscribe(ConfigLoadFailedEvent.class,
+        event -> toastManager.show(buildConfigMessage(event), ToastManager.ToastType.ERROR));
+    Subscription spawnSub = eventBus.subscribe(EntitySpawnFailedEvent.class,
+        event -> toastManager.show(buildSpawnFailureMessage(event), ToastManager.ToastType.WARNING));
     this.addComponentListener(new ComponentAdapter() {
       /**
        * ウィンドウサイズ変更時の処理を行う。
@@ -90,6 +101,7 @@ public class GameWindow extends JFrame {
       }
     });
     setVisible(true);
+    GameConfig.reportErrors(eventBus);
   }
 
   /**
@@ -165,5 +177,48 @@ public class GameWindow extends JFrame {
   private JPanel createEndPanel() {
     EndPanel endPanel = new EndPanel();
     return endPanel;
+  }
+
+  private static String buildConfigMessage(ConfigLoadFailedEvent event) {
+    String code = event.code();
+    if ("CONFIG_NOT_FOUND".equals(code)) {
+      return "設定ファイルが見つかりません (game.properties)";
+    }
+    if ("CONFIG_LOAD_FAILED".equals(code)) {
+      return "設定ファイルの読み込みに失敗しました";
+    }
+    if ("CONFIG_PARSE_FAILED".equals(code)) {
+      return "設定値が不正です: " + safeDetail(event.message());
+    }
+    return "設定読み込みエラー: " + safeDetail(event.message());
+  }
+
+  private static String buildSpawnFailureMessage(EntitySpawnFailedEvent event) {
+    String kindName = describeKind(event.kind());
+    EntitySpawnFailureReason reason = event.reason();
+    if (reason == EntitySpawnFailureReason.INSUFFICIENT_SOUL) {
+      return kindName + "を生成できません: 魂が足りません";
+    }
+    if (reason == EntitySpawnFailureReason.INVALID_POSITION) {
+      return kindName + "を生成できません: 設置できない場所です";
+    }
+    if (reason == EntitySpawnFailureReason.PLACEMENT_BLOCKED) {
+      return kindName + "を生成できません: 設置場所が塞がっています";
+    }
+    if (reason == EntitySpawnFailureReason.INVALID_ENTITY) {
+      return kindName + "の生成に失敗しました: 対象が不正です";
+    }
+    return kindName + "の生成に失敗しました";
+  }
+
+  private static String describeKind(EntitySpawnKind kind) {
+    if (kind == EntitySpawnKind.DISASTER) {
+      return "災害";
+    }
+    return "建物";
+  }
+
+  private static String safeDetail(String detail) {
+    return detail == null || detail.isBlank() ? "詳細不明" : detail;
   }
 }

@@ -4,6 +4,9 @@ import java.awt.geom.Point2D;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import io.github.sasori_256.town_planning.entity.building.Building;
+import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailedEvent;
+import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailureReason;
+import io.github.sasori_256.town_planning.common.event.events.EntitySpawnKind;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.entity.model.GameModel;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
@@ -39,13 +42,13 @@ public class PlaceBuildingHandler
     Point2D.Double roundedPoint = new Point2D.Double(Math.round(isoPoint.x), Math.round(isoPoint.y));
     BaseGameEntity entity = entityGenerator.apply(roundedPoint);
     if (entity instanceof Building building) {
-      boolean constructed = gameModel.constructBuilding(roundedPoint, building.getType());
-      if (!constructed) {
-        System.err.println("Error: Failed to construct building of type " + building.getType()
-            + " at position " + roundedPoint + ".");
-      }
+      gameModel.constructBuilding(roundedPoint, building.getType());
     } else {
-      System.err.println("Error: Trying to place a building that is not a Building.");
+      gameModel.getEventBus().publish(new EntitySpawnFailedEvent(
+          EntitySpawnKind.BUILDING,
+          EntitySpawnFailureReason.INVALID_ENTITY,
+          roundedPoint,
+          "generated=" + (entity == null ? "null" : entity.getClass().getSimpleName())));
     }
     gameMapController.setSelectedEntityGenerator((point) -> null); // TODO:Buildingの連続配置をしたい場合、これじゃだめ
     gameMapController.setActionOnClick(new ClickGameMapHandler());

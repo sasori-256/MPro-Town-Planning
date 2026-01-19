@@ -47,7 +47,7 @@ public class ResidentLifeCycleEffect implements UpdateStrategy, GameEffect {
     resident.markDead();
 
     // 死亡イベント発行
-    context.getEventBus().publish(new ResidentDiedEvent(resident));
+    context.getEventBus().publish(new ResidentDiedEvent(resident, context.getPopulationAlive()));
   }
 
   /**

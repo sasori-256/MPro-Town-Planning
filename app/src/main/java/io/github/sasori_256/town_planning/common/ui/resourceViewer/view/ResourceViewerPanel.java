@@ -15,15 +15,13 @@ import io.github.sasori_256.town_planning.common.ui.CustomPanel;
  */
 public class ResourceViewerPanel extends CustomPanel {
     private JLabel valueLabel;
-    private final Image bgImage;
 
     public ResourceViewerPanel(String displayValue, Image bgImage) {
         super(bgImage);
-        this.bgImage = bgImage;
-        initUI(displayValue);
+        initUI(displayValue, bgImage);
     }
 
-    private void initUI(String displayValue) {
+    private void initUI(String displayValue, Image bgImage) {
         valueLabel = new JLabel(displayValue);
         valueLabel.setForeground(Color.BLACK);
         valueLabel.setHorizontalAlignment(JLabel.CENTER);

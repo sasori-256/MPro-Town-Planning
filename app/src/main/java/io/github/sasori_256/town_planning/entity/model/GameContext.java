@@ -60,8 +60,6 @@ public interface GameContext {
    */
   Stream<Disaster> getDisasterEntities();
 
-  int getSoul();
-
   /**
    * 前フレームからの経過時間(秒)を返す。
    *
@@ -88,6 +86,34 @@ public interface GameContext {
    * 1日の長さ(秒)を返す。
    */
   double getDayLengthSeconds();
+
+  /**
+   * 現在の魂所持量を返す。
+   *
+   * @return 魂所持量
+   */
+  int getSoul();
+
+  /**
+   * 総住民数(生存者のみ)を返す。
+   *
+   * @return 総住民数
+   */
+  int getPopulationTotal();
+
+  /**
+   * 生存住民数を返す。
+   *
+   * @return 生存住民数
+   */
+  int getPopulationAlive();
+
+  /**
+   * 死亡住民数を返す。
+   *
+   * @return 死亡住民数
+   */
+  int getPopulationDead();
 
   // Entity Lifecycle
 

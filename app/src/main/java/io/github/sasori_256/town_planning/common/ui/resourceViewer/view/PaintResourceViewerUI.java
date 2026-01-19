@@ -1,5 +1,6 @@
 package io.github.sasori_256.town_planning.common.ui.resourceViewer.view;
 
+import java.awt.Image;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,6 +10,9 @@ import javax.swing.JPanel;
 
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.Subscription;
+import io.github.sasori_256.town_planning.common.event.events.DayPassedEvent;
+import io.github.sasori_256.town_planning.common.event.events.ResidentDiedEvent;
+import io.github.sasori_256.town_planning.common.event.events.ResidentBornEvent;
 import io.github.sasori_256.town_planning.common.event.events.SoulChangedEvent;
 import io.github.sasori_256.town_planning.common.ui.ImageManager;
 import io.github.sasori_256.town_planning.common.ui.ImageManager.ImageStorage;
@@ -34,11 +38,16 @@ public class PaintResourceViewerUI extends JPanel {
         this.uiScale = uiScale;
         initUI();
         Subscription soulSub = this.eventBus.subscribe(SoulChangedEvent.class, (event) -> {
-            ResourceViewerPanel resourcePanel = resourcePanels.get(ResourceType.SOUL);
-            if (resourcePanel != null) {
-                resourcePanel.setDisplayValue(String.valueOf(event.currentSouls()));
-                resourcePanel.repaint();
-            }
+            updateValue(ResourceType.SOUL, String.valueOf(event.currentSoul()));
+        });
+        Subscription bornSub = this.eventBus.subscribe(ResidentBornEvent.class, (event) -> {
+            updateValue(ResourceType.RESIDENT, String.valueOf(event.populationAlive()));
+        });
+        Subscription diedSub = this.eventBus.subscribe(ResidentDiedEvent.class, (event) -> {
+            updateValue(ResourceType.RESIDENT, String.valueOf(event.populationAlive()));
+        });
+        Subscription daySub = this.eventBus.subscribe(DayPassedEvent.class, (event) -> {
+            updateValue(ResourceType.DATE, String.valueOf(event.dayNumber()));
         });
         // TODO: 他のリソースの購読も追加
     }
@@ -47,20 +56,57 @@ public class PaintResourceViewerUI extends JPanel {
         int panelMargin = 10;
         this.setOpaque(false);
         this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
-        this.setBounds(10, 10, (180 + panelMargin) * ResourceType.values().length, 60);
+        this.setBounds(10, 10, (150 + panelMargin) * ResourceType.values().length, 50);
         this.setAlignmentY(JPanel.TOP_ALIGNMENT);
         this.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 
+        // int defaultPanelWidth = 150;
+        // int totalWidth = 0;
         for (ResourceType type : ResourceType.values()) {
             ImageStorage imageStorage = imageManager.getImageStorage(type.getImageName());
             if (imageStorage == null || imageStorage.getImage() == null || imageStorage.getName().equals("error")) {
                 System.err.println("\u001B[31mError: Image not found: " + type.getImageName() + "\u001B[0m");
             } else {
-                ResourceViewerPanel panel = new ResourceViewerPanel("0", imageStorage.getImage());
+                Image panelImage = imageStorage.getImage();
+                // int panelWidth = panelImage.getWidth(null) > 0 ? panelImage.getWidth(null) :
+                // defaultPanelWidth;
+                // totalWidth += panelWidth + panelMargin;
+                String initialValue = resolveInitialValue(type);
+                ResourceViewerPanel panel = new ResourceViewerPanel(initialValue, panelImage);
                 this.add(panel);
                 this.add(Box.createHorizontalStrut(panelMargin));
                 resourcePanels.put(type, panel);
             }
+        }
+        // this.setBounds(10, 10, totalWidth, 50);
+    }
+
+    private String resolveInitialValue(ResourceType type) {
+        if (type == ResourceType.SOUL) {
+            return String.valueOf(gameContext.getSoul());
+        }
+        if (type == ResourceType.RESIDENT) {
+            return String.valueOf(gameContext.getPopulationAlive());
+        }
+        if (type == ResourceType.DATE) {
+            return String.valueOf(gameContext.getDay());
+        }
+        return "0";
+    }
+
+    private void updateValue(ResourceType type, String value) {
+        ResourceViewerPanel panel = resourcePanels.get(type);
+        if (panel == null) {
+            return;
+        }
+        if (javax.swing.SwingUtilities.isEventDispatchThread()) {
+            panel.setDisplayValue(value);
+            panel.repaint();
+        } else {
+            javax.swing.SwingUtilities.invokeLater(() -> {
+                panel.setDisplayValue(value);
+                panel.repaint();
+            });
         }
     }
 

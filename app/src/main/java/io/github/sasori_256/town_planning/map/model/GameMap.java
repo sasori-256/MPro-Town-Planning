@@ -21,17 +21,44 @@ public class GameMap implements MapContext {
    * @param width    横幅(セル数)
    * @param height   縦幅(セル数)
    * @param eventBus イベントバス
+   * @param seed     シード値
    */
-  public GameMap(int width, int height, EventBus eventBus) {
+  public GameMap(int width, int height, long seed, EventBus eventBus) {
     this.width = width;
     this.height = height;
     this.eventBus = eventBus;
     this.cells = new MapCell[height][width];
+    GenerateMapTerrain(seed);
+  }
 
-    // Cellsの初期化
+  /**
+   * マップの地形を生成する。
+   *
+   * @param seed シード値
+   */
+  private void GenerateMapTerrain(long seed) {
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
-        cells[y][x] = new MapCell(new Point2D.Double(x, y), TerrainType.GRASS);
+        // 0以上1以下に正規化されたノイズ値を取得
+        double noiseValue = (ImprovedNoise.noise(
+            (x + seed % 1000) / 10.0,
+            (y + seed % 1000) / 10.0,
+            seed / 1000.0) + 1) / 2.0;
+        // マップ端付近では高さを下げ、その値を元に地形タイプを決定
+        double altitude = noiseValue * Math.min(
+            1.0,
+            Math.min(
+                x < width / 2 ? (double) x / (width / 10) : (double) (width - x - 1) / (width / 10),
+                y < height / 2 ? (double) y / (height / 10) : (double) (height - y - 1) / (height / 10)));
+        TerrainType terrainType;
+        if (altitude < 0.4) {
+          terrainType = TerrainType.WATER;
+        } else if (altitude < 0.7) {
+          terrainType = TerrainType.GRASS;
+        } else {
+          terrainType = TerrainType.MOUNTAIN;
+        }
+        cells[y][x] = new MapCell(new Point2D.Double(x, y), terrainType);
       }
     }
   }

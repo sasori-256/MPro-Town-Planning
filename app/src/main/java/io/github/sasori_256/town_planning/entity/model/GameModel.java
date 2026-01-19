@@ -23,6 +23,8 @@ import io.github.sasori_256.town_planning.entity.model.manager.RelocationManager
 import io.github.sasori_256.town_planning.entity.model.manager.SoulManager;
 import io.github.sasori_256.town_planning.entity.model.manager.TimeManager;
 import io.github.sasori_256.town_planning.entity.resident.Resident;
+import io.github.sasori_256.town_planning.entity.resident.ResidentState;
+import io.github.sasori_256.town_planning.entity.resident.ResidentType;
 import io.github.sasori_256.town_planning.map.model.GameMap;
 import io.github.sasori_256.town_planning.map.model.TerrainType;
 
@@ -78,7 +80,6 @@ public class GameModel implements GameContext, SimulationStep {
   public GameModel(int mapWidth, int mapHeight, long seed, EventBus eventBus) {
     this.eventBus = eventBus;
     this.gameMap = new GameMap(mapWidth, mapHeight, seed, eventBus);
-    GenerateTownHall(seed); // マップ中央付近に町の中心を生成
 
     this.entityManager = new EntityManager(eventBus, stateLock);
     this.soulManager = new SoulManager(eventBus, stateLock, entityManager, INITIAL_SOUL);
@@ -91,6 +92,7 @@ public class GameModel implements GameContext, SimulationStep {
     this.gameLoop = null;
 
     GameConfig.preload();
+    GenerateTownHall(seed); // マップ中央付近に町の中心を生成
   }
 
   /**
@@ -421,7 +423,7 @@ public class GameModel implements GameContext, SimulationStep {
       }
     });
   }
-  
+
   /**
    * マップ中央付近に町の中心を生成する。
    * 
@@ -436,7 +438,7 @@ public class GameModel implements GameContext, SimulationStep {
     final int MAX_LOOP_COUNT = 10;
     // マップの中央を基準に正規分布に従ってオフセットを決定
     // 配置しようとした位置が海だった場合はseedを変えて再試行する
-    int offsetX, offsetY, townHallX = width/2, townHallY = height/2, loopCount = 0;
+    int offsetX, offsetY, townHallX = width / 2, townHallY = height / 2, loopCount = 0;
     boolean foundProperPos = false; // 陸地が見つかったかどうか
     while (loopCount < MAX_LOOP_COUNT) {
       offsetX = (int) Math.round(rand.nextGaussian() * width / 10);
@@ -457,7 +459,8 @@ public class GameModel implements GameContext, SimulationStep {
           townHallX = x;
           townHallY = y;
           foundProperPos = true;
-          System.out.println("Warning: マップ中央付近に適切な陸地が見つかりませんでした。最初に見つかった陸地に町の中心を配置します。");
+          System.out
+              .println("Warning: マップ中央付近に適切な陸地が見つかりませんでした。最初に見つかった陸地に町の中心を配置します。");
         }
       }
     }
@@ -468,20 +471,17 @@ public class GameModel implements GameContext, SimulationStep {
       townHallY = centerY;
     }
 
-    // TODO: 町の中心として一旦青い屋根の家を使用　正しい建物タイプに変更する必要あり
-    // TODO: 住民の初期スポーンもここで行うはずなのだが、(続)
-    // Exception in thread "main" java.lang.NullPointerException: Cannot invoke "io.github.sasori_256.town_planning.entity.model.manager.EntityManager.spawnEntity(io.github.sasori_256.town_planning.entity.model.BaseGameEntity, io.github.sasori_256.town_planning.entity.model.GameContext)" because "this.entityManager" is null
-    // エラーが発生するためコメントアウト中
+    // TODO: 町の中心として一旦青い屋根の家を使用 正しい建物タイプに変更する必要あり
+    // TODO: 町の中心に相当する建物タイプに置き換える。
     Point2D.Double townHallPos = new Point2D.Double(townHallX, townHallY);
     Building townHall = new Building(townHallPos, BuildingType.BLUE_ROOFED_HOUSE);
     if (gameMap.placeBuilding(townHallPos, townHall)) {
       townHall.setCurrentPopulation(2);
-      // spawnEntity(townHall);
-      // spawnEntity(new Resident(new Point2D.Double(townHallPos.y, townHallPos.x),
-          // ResidentType.CITIZEN, ResidentState.AT_HOME, townHallPos));
-      // spawnEntity(new Resident(new Point2D.Double(townHallPos.y, townHallPos.x),
-          // ResidentType.CITIZEN, ResidentState.AT_HOME, townHallPos));
+      spawnEntity(townHall);
+      spawnEntity(new Resident(new Point2D.Double(townHallPos.y, townHallPos.x), ResidentType.CITIZEN,
+          ResidentState.AT_HOME, townHallPos));
+      spawnEntity(new Resident(new Point2D.Double(townHallPos.y, townHallPos.x),
+          ResidentType.CITIZEN, ResidentState.AT_HOME, townHallPos));
     }
   }
 }
-

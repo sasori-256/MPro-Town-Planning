@@ -30,8 +30,8 @@ import io.github.sasori_256.town_planning.map.controller.GameMapController;
 import io.github.sasori_256.town_planning.map.model.GameMap;
 
 /**
- * ゲームウィンドウを表すクラス
- * ウィンドウサイズ: 640*640
+ * ゲームウィンドウを表すクラス。
+ * ウィンドウサイズは生成時の設定により決定される。
  * タイトル: "Town Planning Game"
  *
  * @see GameMapPanel
@@ -165,7 +165,7 @@ public class GameWindow extends JFrame {
   /**
    * TitlePanelを作成する。
    * 
-   * @param sceneNavigator
+   * @param sceneNavigator シーンの切り替えを行うためのSceneNavigator
    * @return TitlePanelのインスタンス
    */
   private JPanel createTitlePanel(SceneNavigator sceneNavigator) {

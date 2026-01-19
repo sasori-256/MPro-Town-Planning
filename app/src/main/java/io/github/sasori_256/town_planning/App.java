@@ -29,9 +29,10 @@ public class App {
     final int HEIGHT = 640;
     final int MAP_WIDTH = 50;
     final int MAP_HEIGHT = 50;
+    final long SEED = 0L;
 
     EventBus eventBus = new EventBus();
-    GameModel gameModel = new GameModel(MAP_WIDTH, MAP_HEIGHT, eventBus);
+    GameModel gameModel = new GameModel(MAP_WIDTH, MAP_HEIGHT, SEED, eventBus);
     GameMap gameMap = gameModel.getGameMap();
     Point2D.Double homePos = new Point2D.Double(0, 0);
 

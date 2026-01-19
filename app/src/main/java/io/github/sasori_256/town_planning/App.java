@@ -27,8 +27,8 @@ public class App {
   public static void main(String[] args) {
     final int WIDTH = 640;
     final int HEIGHT = 640;
-    final int MAP_WIDTH = 50;
-    final int MAP_HEIGHT = 50;
+    final int MAP_WIDTH = 10;
+    final int MAP_HEIGHT = 10;
     final long SEED = 0L;
 
     EventBus eventBus = new EventBus();

@@ -12,6 +12,13 @@ public interface Terrain {
   String getDisplayName();
 
   /**
+   * 地形の所属する種類名を返す。
+   * 
+   * @return 種類名
+   */
+  String getKind();
+
+  /**
    * 住民が歩行可能かを返す。
    *
    * @return 歩行可能ならtrue

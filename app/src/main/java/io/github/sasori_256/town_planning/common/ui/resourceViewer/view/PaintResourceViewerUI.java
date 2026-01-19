@@ -14,6 +14,7 @@ import io.github.sasori_256.town_planning.common.event.events.ResidentBornEvent;
 import io.github.sasori_256.town_planning.common.event.events.ResidentDiedEvent;
 import io.github.sasori_256.town_planning.common.event.events.SoulChangedEvent;
 import io.github.sasori_256.town_planning.common.ui.ImageManager;
+import java.awt.Image;
 import io.github.sasori_256.town_planning.common.ui.ImageManager.ImageStorage;
 import io.github.sasori_256.town_planning.common.ui.resourceViewer.ResourceType;
 import io.github.sasori_256.town_planning.entity.model.GameContext;
@@ -59,18 +60,25 @@ public class PaintResourceViewerUI extends JPanel {
         this.setAlignmentY(JPanel.TOP_ALIGNMENT);
         this.setAlignmentX(JPanel.LEFT_ALIGNMENT);
 
+        // int defaultPanelWidth = 150;
+        // int totalWidth = 0;
         for (ResourceType type : ResourceType.values()) {
             ImageStorage imageStorage = imageManager.getImageStorage(type.getImageName());
             if (imageStorage == null || imageStorage.getImage() == null || imageStorage.getName().equals("error")) {
                 System.err.println("\u001B[31mError: Image not found: " + type.getImageName() + "\u001B[0m");
             } else {
+                Image panelImage = imageStorage.getImage();
+                // int panelWidth = panelImage.getWidth(null) > 0 ? panelImage.getWidth(null) :
+                // defaultPanelWidth;
+                // totalWidth += panelWidth + panelMargin;
                 String initialValue = resolveInitialValue(type);
-                ResourceViewerPanel panel = new ResourceViewerPanel(initialValue, imageStorage.getImage());
+                ResourceViewerPanel panel = new ResourceViewerPanel(initialValue, panelImage);
                 this.add(panel);
                 this.add(Box.createHorizontalStrut(panelMargin));
                 resourcePanels.put(type, panel);
             }
         }
+        // this.setBounds(10, 10, totalWidth, 50);
     }
 
     private String resolveInitialValue(ResourceType type) {

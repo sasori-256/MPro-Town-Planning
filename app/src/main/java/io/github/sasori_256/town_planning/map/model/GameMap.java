@@ -1,6 +1,7 @@
 package io.github.sasori_256.town_planning.map.model;
 
 import java.awt.geom.Point2D;
+
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
 import io.github.sasori_256.town_planning.entity.building.Building;
@@ -20,15 +21,15 @@ public class GameMap implements MapContext {
    *
    * @param width    横幅(セル数)
    * @param height   縦幅(セル数)
-   * @param eventBus イベントバス
    * @param seed     シード値
+   * @param eventBus イベントバス
    */
   public GameMap(int width, int height, long seed, EventBus eventBus) {
     this.width = width;
     this.height = height;
     this.eventBus = eventBus;
     this.cells = new MapCell[height][width];
-    GenerateMapTerrain(seed);
+    GenerateMapTerrain(seed); // マップの地形を生成
   }
 
   /**

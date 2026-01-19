@@ -8,7 +8,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import javax.swing.border.Border;
 
 import io.github.sasori_256.town_planning.common.core.GameConfig;
 import io.github.sasori_256.town_planning.common.event.EventBus;
@@ -22,9 +21,9 @@ import io.github.sasori_256.town_planning.common.ui.ImageManager;
 import io.github.sasori_256.town_planning.common.ui.ToastManager;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.NodeMenuInitializer;
-import io.github.sasori_256.town_planning.common.ui.main.seen.EndPanel;
-import io.github.sasori_256.town_planning.common.ui.main.seen.GameMapPanel;
-import io.github.sasori_256.town_planning.common.ui.main.seen.TitlePanel;
+import io.github.sasori_256.town_planning.common.ui.main.scene.EndPanel;
+import io.github.sasori_256.town_planning.common.ui.main.scene.GameMapPanel;
+import io.github.sasori_256.town_planning.common.ui.main.scene.TitlePanel;
 import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.entity.model.GameModel;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
@@ -38,20 +37,19 @@ import io.github.sasori_256.town_planning.map.model.GameMap;
  * @see GameMapPanel
  */
 public class GameWindow extends JFrame {
-  JPanel mainPanel;
-  CardLayout cardLayout;
-  GameModel gameModel;
-  GameMap gameMap;
-  Camera camera;
-  EventBus eventBus;
-  GameMapController gameMapController;
-  ReadWriteLock stateLock;
-  ImageManager imageManager;
+  private JPanel mainPanel;
+  private CardLayout cardLayout;
+  private GameModel gameModel;
+  private GameMap gameMap;
+  private Camera camera;
+  private EventBus eventBus;
+  private GameMapController gameMapController;
+  private ReadWriteLock stateLock;
+  private ImageManager imageManager;
 
   /**
    * ゲーム描画ウィンドウを初期化する。
    *
-   * @param listener          入力イベントのリスナー
    * @param gameModel         ゲーム状態を管理するモデル
    * @param gameMap           ゲームマップ
    * @param camera            カメラ
@@ -60,6 +58,7 @@ public class GameWindow extends JFrame {
    * @param eventBus          イベントバス
    * @param gameMapController マップ操作コントローラ
    * @param stateLock         状態ロック
+   * @param imageManager      画像管理マネージャ
    */
   public GameWindow(
       GameModel gameModel,
@@ -110,11 +109,11 @@ public class GameWindow extends JFrame {
    * シーン切り替えのためのSceneNavigatorも設定する。
    */
   private void setupCardPanel() {
-    CardLayout cardLayout = new CardLayout();
-    this.mainPanel = new JPanel(cardLayout);
+    this.cardLayout = new CardLayout();
+    this.mainPanel = new JPanel(this.cardLayout);
 
     SceneNavigator nav = (sceneName) -> {
-      cardLayout.show(this.mainPanel, sceneName);
+      this.cardLayout.show(this.mainPanel, sceneName);
       repaintCurrentSceneUI();
     };
 

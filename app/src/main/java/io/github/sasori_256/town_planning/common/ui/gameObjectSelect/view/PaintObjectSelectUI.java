@@ -13,7 +13,7 @@ import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.DisasterNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.MenuNode;
-import io.github.sasori_256.town_planning.common.ui.main.seen.GameMapPanel;
+import io.github.sasori_256.town_planning.common.ui.main.scene.GameMapPanel;
 
 /**
  * ゲーム上のUIを描画するクラス

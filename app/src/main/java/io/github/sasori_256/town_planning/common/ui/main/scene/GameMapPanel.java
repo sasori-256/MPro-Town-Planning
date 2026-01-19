@@ -1,4 +1,4 @@
-package io.github.sasori_256.town_planning.common.ui.main.seen;
+package io.github.sasori_256.town_planning.common.ui.main.scene;
 
 import java.util.ArrayList;
 import java.util.Comparator;

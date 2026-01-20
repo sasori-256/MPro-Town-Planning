@@ -1,5 +1,6 @@
 package io.github.sasori_256.town_planning.common.ui.resourceViewer.view;
 
+import java.awt.Image;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,11 +11,10 @@ import javax.swing.JPanel;
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.Subscription;
 import io.github.sasori_256.town_planning.common.event.events.DayPassedEvent;
-import io.github.sasori_256.town_planning.common.event.events.ResidentBornEvent;
 import io.github.sasori_256.town_planning.common.event.events.ResidentDiedEvent;
+import io.github.sasori_256.town_planning.common.event.events.ResidentBornEvent;
 import io.github.sasori_256.town_planning.common.event.events.SoulChangedEvent;
 import io.github.sasori_256.town_planning.common.ui.ImageManager;
-import java.awt.Image;
 import io.github.sasori_256.town_planning.common.ui.ImageManager.ImageStorage;
 import io.github.sasori_256.town_planning.common.ui.resourceViewer.ResourceType;
 import io.github.sasori_256.town_planning.entity.model.GameContext;

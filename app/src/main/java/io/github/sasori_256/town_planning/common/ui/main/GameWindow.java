@@ -1,14 +1,14 @@
-package io.github.sasori_256.town_planning.common.ui;
+package io.github.sasori_256.town_planning.common.ui.main;
 
 import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Component;
 import java.awt.event.ComponentAdapter;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseWheelListener;
 import java.util.concurrent.locks.ReadWriteLock;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+
 import io.github.sasori_256.town_planning.common.core.GameConfig;
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.Subscription;
@@ -17,26 +17,39 @@ import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailedE
 import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailureReason;
 import io.github.sasori_256.town_planning.common.event.events.EntitySpawnKind;
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
+import io.github.sasori_256.town_planning.common.ui.ImageManager;
+import io.github.sasori_256.town_planning.common.ui.ToastManager;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.NodeMenuInitializer;
+import io.github.sasori_256.town_planning.common.ui.main.scene.EndPanel;
+import io.github.sasori_256.town_planning.common.ui.main.scene.GameMapPanel;
+import io.github.sasori_256.town_planning.common.ui.main.scene.TitlePanel;
 import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.entity.model.GameModel;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
 import io.github.sasori_256.town_planning.map.model.GameMap;
-import io.github.sasori_256.town_planning.map.view.GameMapPanel;
 
 /**
- * ゲームウィンドウを表すクラス
- * ウィンドウサイズ: 640*640
+ * ゲームウィンドウを表すクラス。
+ * ウィンドウサイズは生成時の設定により決定される。
  * タイトル: "Town Planning Game"
  *
  * @see GameMapPanel
  */
 public class GameWindow extends JFrame {
+  private JPanel mainPanel;
+  private CardLayout cardLayout;
+  private GameModel gameModel;
+  private GameMap gameMap;
+  private Camera camera;
+  private EventBus eventBus;
+  private GameMapController gameMapController;
+  private ReadWriteLock stateLock;
+  private ImageManager imageManager;
+
   /**
    * ゲーム描画ウィンドウを初期化する。
    *
-   * @param listener          入力イベントのリスナー
    * @param gameModel         ゲーム状態を管理するモデル
    * @param gameMap           ゲームマップ
    * @param camera            カメラ
@@ -45,9 +58,9 @@ public class GameWindow extends JFrame {
    * @param eventBus          イベントバス
    * @param gameMapController マップ操作コントローラ
    * @param stateLock         状態ロック
+   * @param imageManager      画像管理マネージャ
    */
-  public <T extends MouseListener & MouseMotionListener & MouseWheelListener & KeyListener> GameWindow(
-      T listener,
+  public GameWindow(
       GameModel gameModel,
       GameMap gameMap,
       Camera camera,
@@ -55,17 +68,88 @@ public class GameWindow extends JFrame {
       int height,
       EventBus eventBus,
       GameMapController gameMapController,
-      ReadWriteLock stateLock) {
+      ReadWriteLock stateLock,
+      ImageManager imageManager) {
+    this.gameModel = gameModel;
+    this.gameMap = gameMap;
+    this.camera = camera;
+    this.eventBus = eventBus;
+    this.gameMapController = gameMapController;
+    this.stateLock = stateLock;
+    this.imageManager = imageManager;
     setTitle("Town Planning Game");
     setSize(width, height);
-    // GameMap gameMap = generateTestMap();
-    CategoryNode root = NodeMenuInitializer.setup(gameMapController, gameModel);
+    setupCardPanel();
+    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    ToastManager toastManager = new ToastManager(getLayeredPane(), getLayeredPane());
+    Subscription configSub = eventBus.subscribe(ConfigLoadFailedEvent.class,
+        event -> toastManager.show(buildConfigMessage(event), ToastManager.ToastType.ERROR));
+    Subscription spawnSub = eventBus.subscribe(EntitySpawnFailedEvent.class,
+        event -> toastManager.show(buildSpawnFailureMessage(event), ToastManager.ToastType.WARNING));
+    this.addComponentListener(new ComponentAdapter() {
+      /**
+       * ウィンドウサイズ変更時の処理を行う。
+       *
+       * @param e イベント
+       */
+      @Override
+      public void componentResized(java.awt.event.ComponentEvent e) {
+        repaintCurrentSceneUI();
+        camera.setScreenSize(GameWindow.this.mainPanel.getWidth(), GameWindow.this.mainPanel.getHeight());
+        // MEMO:ウィンドウリサイズ時の処理を追加する場合はここに記載 Cameraの位置修正とか
+      }
+    });
+    setVisible(true);
+    GameConfig.reportErrors(eventBus);
+  }
 
-    GameMapPanel gameMapPanel = new GameMapPanel(gameMap, gameModel, camera, root, stateLock);
-    gameMapPanel.addMouseListener(listener);
-    gameMapPanel.addMouseMotionListener(listener);
-    gameMapPanel.addMouseWheelListener(listener);
-    gameMapPanel.addKeyListener(listener);
+  /**
+   * カードレイアウトの初期化を行う。
+   * 各シーンのパネルを作成し、メインパネルに追加する。
+   * シーン切り替えのためのSceneNavigatorも設定する。
+   */
+  private void setupCardPanel() {
+    this.cardLayout = new CardLayout();
+    this.mainPanel = new JPanel(this.cardLayout);
+
+    SceneNavigator nav = (sceneName) -> {
+      this.cardLayout.show(this.mainPanel, sceneName);
+      repaintCurrentSceneUI();
+    };
+
+    JPanel titlePanel = createTitlePanel(nav);
+    JPanel gameMapPanel = createGameMapPanel();
+    JPanel endPanel = createEndPanel();
+    // 新しいシーンを追加する場合はここに記載。そのシーン内でシーンを切り替える場合はnavを渡す。
+
+    this.mainPanel.add(titlePanel, "TITLE");
+    this.mainPanel.add(gameMapPanel, "GAME_MAP");
+    this.mainPanel.add(endPanel, "END");
+
+    this.add(this.mainPanel, BorderLayout.CENTER);
+  }
+
+  private void repaintCurrentSceneUI() {
+    for (Component comp : this.mainPanel.getComponents()) {
+      if (comp.isVisible() && comp instanceof UiRefreshable) {
+        ((UiRefreshable) comp).repaintUI();
+      }
+    }
+  }
+
+  /**
+   * GameMapPanelを作成する。
+   * 
+   * @return GameMapPanelのインスタンス
+   */
+  private JPanel createGameMapPanel() {
+    CategoryNode root = NodeMenuInitializer.setup(this.gameMapController, this.gameModel);
+    GameMapPanel gameMapPanel = new GameMapPanel(this.gameMap, this.gameModel, this.camera, root, this.stateLock,
+        this.imageManager);
+    gameMapPanel.addMouseListener(this.gameMapController);
+    gameMapPanel.addMouseMotionListener(this.gameMapController);
+    gameMapPanel.addMouseWheelListener(this.gameMapController);
+    gameMapPanel.addKeyListener(this.gameMapController);
     gameMapPanel.setFocusable(true);
     // TODO: onCloseなる関数でWindowのフレーム破棄時にunsubscribeするようにする
     Subscription mapSub = eventBus.subscribe(MapUpdatedEvent.class, event -> {
@@ -75,28 +159,23 @@ public class GameWindow extends JFrame {
         SwingUtilities.invokeLater(gameMapPanel::repaint);
       }
     });
-    ToastManager toastManager = new ToastManager(getLayeredPane(), getLayeredPane());
-    Subscription configSub = eventBus.subscribe(ConfigLoadFailedEvent.class,
-        event -> toastManager.show(buildConfigMessage(event), ToastManager.ToastType.ERROR));
-    Subscription spawnSub = eventBus.subscribe(EntitySpawnFailedEvent.class,
-        event -> toastManager.show(buildSpawnFailureMessage(event), ToastManager.ToastType.WARNING));
-    this.add(gameMapPanel, BorderLayout.CENTER);
-    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    this.addComponentListener(new ComponentAdapter() {
-      /**
-       * ウィンドウサイズ変更時の処理を行う。
-       *
-       * @param e イベント
-       */
-      @Override
-      public void componentResized(java.awt.event.ComponentEvent e) {
-        gameMapPanel.repaintUI();
-        camera.setScreenSize(gameMapPanel.getWidth(), gameMapPanel.getHeight());
-        // MEMO:ウィンドウリサイズ時の処理を追加する場合はここに記載 Cameraの位置修正とか
-      }
-    });
-    setVisible(true);
-    GameConfig.reportErrors(eventBus);
+    return gameMapPanel;
+  }
+
+  /**
+   * TitlePanelを作成する。
+   * 
+   * @param sceneNavigator シーンの切り替えを行うためのSceneNavigator
+   * @return TitlePanelのインスタンス
+   */
+  private JPanel createTitlePanel(SceneNavigator sceneNavigator) {
+    TitlePanel titlePanel = new TitlePanel(sceneNavigator, this.imageManager);
+    return titlePanel;
+  }
+
+  private JPanel createEndPanel() {
+    EndPanel endPanel = new EndPanel();
+    return endPanel;
   }
 
   private static String buildConfigMessage(ConfigLoadFailedEvent event) {

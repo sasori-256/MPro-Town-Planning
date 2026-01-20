@@ -1,4 +1,4 @@
-package io.github.sasori_256.town_planning.map.view;
+package io.github.sasori_256.town_planning.common.ui.main.scene;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -16,6 +16,7 @@ import io.github.sasori_256.town_planning.common.ui.ImageManager;
 import io.github.sasori_256.town_planning.common.ui.PaintGameObject;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.view.PaintObjectSelectUI;
+import io.github.sasori_256.town_planning.common.ui.main.UiRefreshable;
 import io.github.sasori_256.town_planning.common.ui.resourceViewer.view.PaintResourceViewerUI;
 import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
@@ -29,7 +30,7 @@ import io.github.sasori_256.town_planning.map.model.MapCell;
 /**
  * gameMapの内容を描画するクラス
  */
-public class GameMapPanel extends JPanel {
+public class GameMapPanel extends JPanel implements UiRefreshable {
   private final GameMap gameMap;
   private final GameModel gameModel;
   private final Camera camera;
@@ -49,13 +50,18 @@ public class GameMapPanel extends JPanel {
    * @param root      ルートカテゴリ
    * @param stateLock 状態ロック
    */
-  public GameMapPanel(GameMap gameMap, GameModel gameModel, Camera camera, CategoryNode root,
-      ReadWriteLock stateLock) {
+  public GameMapPanel(
+      GameMap gameMap,
+      GameModel gameModel,
+      Camera camera,
+      CategoryNode root,
+      ReadWriteLock stateLock,
+      ImageManager imageManager) {
     this.gameMap = gameMap;
     this.gameModel = gameModel;
     this.camera = camera;
     this.root = root;
-    this.imageManager = new ImageManager();
+    this.imageManager = imageManager;
     this.animationManager = new AnimationManager();
     this.paintGameObject = new PaintGameObject();
     this.stateLock = stateLock;
@@ -171,6 +177,7 @@ public class GameMapPanel extends JPanel {
   /**
    * UIを再描画する。
    */
+  @Override
   public void repaintUI() {
     this.paintObjectSelectUI.repaintUI();
   }

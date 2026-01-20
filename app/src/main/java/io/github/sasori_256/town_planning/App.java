@@ -5,7 +5,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 import javax.swing.SwingUtilities;
 
 import io.github.sasori_256.town_planning.common.event.EventBus;
-import io.github.sasori_256.town_planning.common.ui.GameWindow;
+import io.github.sasori_256.town_planning.common.ui.ImageManager;
+import io.github.sasori_256.town_planning.common.ui.main.GameWindow;
 import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.entity.model.GameModel;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
@@ -21,11 +22,13 @@ public class App {
    * @param args 起動引数
    */
   public static void main(String[] args) {
-    final int WIDTH = 640;
+    final int WIDTH = 960;
     final int HEIGHT = 640;
     final int MAP_WIDTH = 50;
     final int MAP_HEIGHT = 50;
     final long SEED = 0L;
+
+    ImageManager imageManager = new ImageManager();
 
     EventBus eventBus = new EventBus();
     GameModel gameModel = new GameModel(MAP_WIDTH, MAP_HEIGHT, SEED, eventBus);
@@ -37,7 +40,7 @@ public class App {
     SwingUtilities.invokeLater(() -> {
       GameWindow gameWindow = new GameWindow(
           // TODO: gameMapを引数に渡すのが冗長なのでgameModelからgetするように変更する
-          gameMapController, gameModel, gameMap, camera, WIDTH, HEIGHT, eventBus, gameMapController, stateLock);
+          gameModel, gameMap, camera, WIDTH, HEIGHT, eventBus, gameMapController, stateLock, imageManager);
       gameModel.startGameLoop(gameWindow::repaint);
     });
   }

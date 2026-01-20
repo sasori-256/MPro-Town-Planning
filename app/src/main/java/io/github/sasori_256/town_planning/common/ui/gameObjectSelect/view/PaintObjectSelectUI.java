@@ -78,13 +78,11 @@ public class PaintObjectSelectUI {
       CustomButton button;
       if (imageStorage == null || imageStorage.getName() == null || imageStorage.getName().equals("error")) {
         // System.err.println("Warning: Image not found: " + imageName);
-        button = new CustomButton(buttonText); // 画像が見つからない場合はテキストだけのボタンを使用
+        button = new CustomButton(buttonText, xPos, yPos, width, height); // 画像が見つからない場合はテキストだけのボタンを使用
       } else {
-        button = new CustomButton(buttonText, imageStorage); // 画像が見つかった場合は画像だけのボタンを使用
+        button = new CustomButton(buttonText, imageStorage, xPos, yPos, width, height); // 画像が見つかった場合は画像だけのボタンを使用
         // button.setImage(imageStorage.getImage(), width, height);
       }
-      button.setFocusable(false); // mapPanelでのキーイベントを受け取るため、ボタンにフォーカスしないようにフォーカスを外す
-      button.setCustomBounds(xPos, yPos, width, height);
       // ボタンの画像を指定
       button.addActionListener(actionListener);
       if (objectNode != null) {

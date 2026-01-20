@@ -3,7 +3,6 @@ package io.github.sasori_256.town_planning.common.ui.main.scene;
 import java.awt.Dimension;
 
 import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JPanel;
 
 import io.github.sasori_256.town_planning.common.ui.CustomButton;
@@ -46,7 +45,7 @@ public class TitlePanel extends JPanel {
         || startImageStorage.getName().equals("error")) {
       System.err.println("\u001B[31mError: Image not found: " + "start_button" + "\u001B[0m");
     } else {
-      JButton startButton = new CustomButton("Start Game", startImageStorage);
+      CustomButton startButton = new CustomButton("Start Game", startImageStorage, 0, 0);
       startButton.addActionListener(e -> {
         sceneNavigator.changeScene("GAME_MAP");
       });

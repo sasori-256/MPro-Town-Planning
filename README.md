@@ -35,8 +35,8 @@
 ## 使用素材
 本ソフトウェアには、以下のフォントが含まれています
 
-**フォント**：ラノベPOP V2
+**フォント**：ベストテンFONT
 
-**フリーダウンロード**：https://flopdesign.booth.pm/items/2328262
+**フリーダウンロード**：https://flopdesign.booth.pm/items/2747965
 
-Copyright(c) 2019 M+ FONTS PROJECT
+**コピーライト**：Copyright(c) 2021 M+ FONTS PROJECT

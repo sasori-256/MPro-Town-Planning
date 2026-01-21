@@ -22,7 +22,7 @@ public class FontManager {
 
   public void init() {
     try {
-      InputStream is = FontManager.class.getResourceAsStream("/fonts/LightNovelPOPv2.otf");
+      InputStream is = FontManager.class.getResourceAsStream("/fonts/BestTen-CRT.otf");
 
       if (is == null) {
         System.err.println("\u001B[31merror: Did not find font file\u001B[0m");

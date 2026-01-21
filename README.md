@@ -31,3 +31,12 @@
 ```bash
 ./gradlew build
 ```
+
+## 仕様素材
+本ソフトウェアには、以下のフォントが含まれています
+
+**フォント**：ラノベPOP V2
+
+**フリーダウンロード**：https://flopdesign.booth.pm/items/2328262
+
+Copyright(c) 2019 M+ FONTS PROJECT

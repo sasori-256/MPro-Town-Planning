@@ -7,6 +7,7 @@ import java.awt.Image;
 
 import javax.swing.JLabel;
 
+import io.github.sasori_256.town_planning.common.ui.CustomLabel;
 import io.github.sasori_256.town_planning.common.ui.CustomPanel;
 
 /**
@@ -14,17 +15,19 @@ import io.github.sasori_256.town_planning.common.ui.CustomPanel;
  * CustomPanelを継承し、背景画像付きの表示と値ラベルの配置を行う。
  */
 public class ResourceViewerPanel extends CustomPanel {
-    private JLabel valueLabel;
+    private CustomLabel valueLabel;
 
-    public ResourceViewerPanel(String displayValue, Image bgImage) {
+    public ResourceViewerPanel(String displayValue, String displayUnit, Image bgImage) {
         super(bgImage);
-        initUI(displayValue, bgImage);
+        initUI(displayValue, displayUnit, bgImage);
     }
 
-    private void initUI(String displayValue, Image bgImage) {
-        valueLabel = new JLabel(displayValue);
-        valueLabel.setForeground(Color.BLACK);
+    private void initUI(String displayValue, String displayUnit, Image bgImage) {
+        valueLabel = new CustomLabel(displayValue + " " + displayUnit);
+        valueLabel.setForeground(new Color(227, 201, 154));
         valueLabel.setHorizontalAlignment(JLabel.CENTER);
+        valueLabel.setOutline(Color.BLACK, 3.0f);
+        valueLabel.setTwoTone(new Color(227, 201, 154), new Color(186, 156, 123));
         // valueLabel.setFont(); TODO: フォント設定
         this.setLayout(new BorderLayout());
         this.add(valueLabel, BorderLayout.CENTER);
@@ -35,7 +38,7 @@ public class ResourceViewerPanel extends CustomPanel {
         }
     }
 
-    public void setDisplayValue(String displayValue) {
-        valueLabel.setText(displayValue);
+    public void setDisplayValue(String displayValue, String displayUnit) {
+        valueLabel.setText(displayValue + " " + displayUnit);
     }
 }

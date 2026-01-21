@@ -52,7 +52,7 @@ public class CustomLabel extends JLabel {
   @Override
   protected void paintComponent(Graphics g) {
     String text = this.getText();
-    if (!isOutlineEnabled && colorMode == ColorMode.NORMAL || text == null || text.isEmpty()) {
+    if ((!isOutlineEnabled && colorMode == ColorMode.NORMAL) || text == null || text.isEmpty()) {
       super.paintComponent(g);
       return;
     }

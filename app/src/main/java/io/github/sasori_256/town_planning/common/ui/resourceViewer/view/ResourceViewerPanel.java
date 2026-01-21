@@ -28,7 +28,6 @@ public class ResourceViewerPanel extends CustomPanel {
         valueLabel.setHorizontalAlignment(JLabel.CENTER);
         valueLabel.setOutline(Color.BLACK, 3.0f);
         valueLabel.setTwoTone(new Color(227, 201, 154), new Color(186, 156, 123));
-        // valueLabel.setFont(); TODO: フォント設定
         this.setLayout(new BorderLayout());
         this.add(valueLabel, BorderLayout.CENTER);
         if (bgImage != null) {

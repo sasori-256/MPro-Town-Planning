@@ -10,9 +10,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
 
+/**
+ * アプリケーション全体で使用するフォントを管理するクラス。
+ * ラノベPOPv2フォントを読み込み、UIManagerを通じてすべてのフォントに関する設定に適用する。
+ */
 public class FontManager {
 
   public FontManager() {
+    init();
+  }
+
+  public void init() {
     try {
       InputStream is = FontManager.class.getResourceAsStream("/fonts/LightNovelPOPv2.otf");
 

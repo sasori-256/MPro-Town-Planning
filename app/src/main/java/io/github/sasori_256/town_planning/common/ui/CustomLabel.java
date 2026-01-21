@@ -6,6 +6,10 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
 
+/**
+ * CustomLabel
+ * テキストの縁取りやグラデーション、二色塗りなどの機能を提供する。
+ */
 public class CustomLabel extends JLabel {
   private boolean isOutlineEnabled = false;
   private Color outlineColor = Color.BLACK;
@@ -31,6 +35,12 @@ public class CustomLabel extends JLabel {
     super(text, horizontalAlignment);
   }
 
+  /**
+   * フォントの縁取りを設定する。
+   * 
+   * @param color
+   * @param width
+   */
   public void setOutline(Color color, float width) {
     this.isOutlineEnabled = true;
     this.outlineColor = color;
@@ -38,6 +48,12 @@ public class CustomLabel extends JLabel {
     repaint();
   }
 
+  /**
+   * フォントをグラデーションで塗る。
+   * 
+   * @param topColor
+   * @param bottomColor
+   */
   public void setGradation(Color topColor, Color bottomColor) {
     this.colorMode = ColorMode.GRADATION;
     this.topColor = topColor;
@@ -45,6 +61,12 @@ public class CustomLabel extends JLabel {
     repaint();
   }
 
+  /**
+   * フォントを上下で二色に塗り分ける。
+   * 
+   * @param topColor
+   * @param bottomColor
+   */
   public void setTwoTone(Color topColor, Color bottomColor) {
     this.colorMode = ColorMode.TWO_TONE;
     this.topColor = topColor;

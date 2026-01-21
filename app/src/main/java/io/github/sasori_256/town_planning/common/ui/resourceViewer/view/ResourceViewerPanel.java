@@ -24,10 +24,9 @@ public class ResourceViewerPanel extends CustomPanel {
 
     private void initUI(String displayValue, String displayUnit, Image bgImage) {
         valueLabel = new CustomLabel(displayValue + " " + displayUnit);
-        valueLabel.setForeground(new Color(227, 201, 154));
         valueLabel.setHorizontalAlignment(JLabel.CENTER);
         valueLabel.setOutline(Color.BLACK, 3.0f);
-        valueLabel.setTwoTone(new Color(227, 201, 154), new Color(186, 156, 123));
+        valueLabel.setTwoTone(new Color(227, 201, 154), new Color(186, 156, 123)); // 薄い黄色と暗い黄色
         this.setLayout(new BorderLayout());
         this.add(valueLabel, BorderLayout.CENTER);
         if (bgImage != null) {

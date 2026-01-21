@@ -11,7 +11,10 @@ public class CustomLabel extends JLabel {
   private Color outlineColor = Color.BLACK;
   private float outlineWidth = 2.0f;
 
-  // 色を塗る方法のモード
+  /**
+   * Color fill mode.
+   * (色を塗る方法のモード)
+   */
   private enum ColorMode {
     NORMAL, GRADATION, TWO_TONE
   }

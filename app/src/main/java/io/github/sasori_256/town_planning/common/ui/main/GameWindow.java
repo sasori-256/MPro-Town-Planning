@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.event.ComponentAdapter;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import javax.swing.JFrame;
@@ -54,6 +56,9 @@ public class GameWindow extends JFrame {
   private Timer gameOverTimer;
   private final AtomicBoolean gameOverHandled = new AtomicBoolean(false);
   private ToastManager toastManager;
+  private Subscription configSub;
+  private Subscription spawnSub;
+  private Subscription gameOverSub;
   private Subscription mapSub;
 
   /**
@@ -79,8 +84,7 @@ public class GameWindow extends JFrame {
       ImageManager imageManager) {
     this.gameModel = gameModel;
     this.gameMap = gameModel.getMap();
-    this.camera = camera
-;
+    this.camera = camera;
     this.eventBus = eventBus;
     this.gameMapController = gameMapController;
     this.stateLock = stateLock;
@@ -92,11 +96,11 @@ public class GameWindow extends JFrame {
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
     this.toastManager = new ToastManager(getLayeredPane(), getLayeredPane());
-    Subscription configSub = eventBus.subscribe(ConfigLoadFailedEvent.class,
+    this.configSub = eventBus.subscribe(ConfigLoadFailedEvent.class,
         event -> this.toastManager.show(buildConfigMessage(event), ToastManager.ToastType.ERROR));
-    Subscription spawnSub = eventBus.subscribe(EntitySpawnFailedEvent.class,
+    this.spawnSub = eventBus.subscribe(EntitySpawnFailedEvent.class,
         event -> this.toastManager.show(buildSpawnFailureMessage(event), ToastManager.ToastType.WARNING));
-    Subscription gameOverSub = eventBus.subscribe(GameOverEvent.class, event -> handleGameOver());
+    this.gameOverSub = eventBus.subscribe(GameOverEvent.class, event -> handleGameOver());
     this.addComponentListener(new ComponentAdapter() {
       /**
        * ウィンドウサイズ変更時の処理を行う。
@@ -108,6 +112,17 @@ public class GameWindow extends JFrame {
         repaintCurrentSceneUI();
         camera.setScreenSize(GameWindow.this.mainPanel.getWidth(), GameWindow.this.mainPanel.getHeight());
         // MEMO:ウィンドウリサイズ時の処理を追加する場合はここに記載 Cameraの位置修正とか
+      }
+    });
+    this.addWindowListener(new WindowAdapter() {
+      @Override
+      public void windowClosed(WindowEvent e) {
+        cleanupSubscriptions();
+      }
+
+      @Override
+      public void windowClosing(WindowEvent e) {
+        cleanupSubscriptions();
       }
     });
     setVisible(true);
@@ -201,10 +216,9 @@ public class GameWindow extends JFrame {
     }
     if (gameModel.getGameLoop() != null) {
       gameModel.getGameLoop().pause();
-    if (this.mapSub != null) {
-      this.mapSub.unsubscribe();
     }
-    this.mapSub.unsubscribe();
+    unsubscribe(mapSub);
+    mapSub = null;
     int day = gameModel.getDay();
     int soul = gameModel.getSoul();
     int maxPopulation = gameModel.getPopulationMax();
@@ -226,10 +240,30 @@ public class GameWindow extends JFrame {
       if (gameModel.getGameLoop() != null) {
         gameModel.getGameLoop().stop();
       }
-      gameOverTimer.stop();
     });
     gameOverTimer.setRepeats(false);
     gameOverTimer.start();
+  }
+
+  private void cleanupSubscriptions() {
+    unsubscribe(mapSub);
+    unsubscribe(configSub);
+    unsubscribe(spawnSub);
+    unsubscribe(gameOverSub);
+    if (gameOverTimer != null) {
+      gameOverTimer.stop();
+      gameOverTimer = null;
+    }
+    mapSub = null;
+    configSub = null;
+    spawnSub = null;
+    gameOverSub = null;
+  }
+
+  private void unsubscribe(Subscription sub) {
+    if (sub != null) {
+      sub.unsubscribe();
+    }
   }
 
   private static String buildConfigMessage(ConfigLoadFailedEvent event) {

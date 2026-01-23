@@ -1,5 +1,6 @@
 package io.github.sasori_256.town_planning.entity.model.manager;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Supplier;
@@ -30,6 +31,8 @@ public class PopulationManager {
   private int maxPopulation;
   /** 累計死亡住民数。 */
   private int totalDeaths;
+  /** ゲームオーバー処理の多重実行防止。 */
+  private final AtomicBoolean gameOverTriggered = new AtomicBoolean(false);
 
   /**
    * 住民数管理を生成する。
@@ -58,14 +61,12 @@ public class PopulationManager {
       withWriteLock(() -> {
         totalDeaths++;
       });
-      if (event.populationAlive() == 0) {
+      if (event.populationAlive() == 0 && gameOverTriggered.compareAndSet(false, true)) {
         // ゲーム全体でゲームオーバー処理を開始するためにイベントを発行。
         this.eventBus.publish(new GameOverEvent());
         // ResidentDiedEventの購読を解除。
         diedSub.unsubscribe();
-        if (bornSub != null) {
-          bornSub.unsubscribe();
-        }
+        bornSub.unsubscribe();
       }
     });
   }

@@ -126,8 +126,9 @@ public enum TerrainType implements Terrain {
    * @return 一致する TerrainType または null
    */
   public static TerrainType fromDisplayName(String name) {
-    if (name == null)
+    if (name == null) {
       return null;
+    }
     return BY_DISPLAY_NAME.get(name);
   }
 }

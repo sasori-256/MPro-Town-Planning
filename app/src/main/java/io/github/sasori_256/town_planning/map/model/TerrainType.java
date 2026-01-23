@@ -41,7 +41,7 @@ public enum TerrainType implements Terrain {
   COAST_YmW("Coast_YmW", "Water", false, false, 1_000_000),
   COAST_YmS("Coast_YmS", "Water", false, false, 1_000_000),
   COAST_XpNW("Coast_XpNW", "Water", false, false, 1_000_000),
-  COAST_XmSW("Coast_XmES", "Water", false, false, 1_000_000),
+  COAST_XmES("Coast_XmES", "Water", false, false, 1_000_000),
   COAST_YpNE("Coast_YpNE", "Water", false, false, 1_000_000),
   COAST_YmWS("Coast_YmWS", "Water", false, false, 1_000_000),
   COAST_N("Coast_N", "Water", false, false, 1_000_000),

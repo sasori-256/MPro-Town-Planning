@@ -93,7 +93,7 @@ public class GameMap implements MapContext {
       collider = TerrainType.GRASS.getKind(); // 海と草原の境界は海が削れる
     }
     // 一旦海のみ境界処理を行う
-    if(!target.equals(TerrainType.WATER.getKind())){
+    if (!target.equals(TerrainType.WATER.getKind())) {
       return;
     }
     /*

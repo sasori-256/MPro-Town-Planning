@@ -29,8 +29,8 @@ public class GameMap implements MapContext {
     this.height = height;
     this.eventBus = eventBus;
     this.cells = new MapCell[height][width];
-    GenerateMapTerrain(seed); // マップの地形を生成
-    StylizeMapEdges(); // 地形の境界を整える
+    generateMapTerrain(seed); // マップの地形を生成
+    stylizeMapEdges(); // 地形の境界を整える
   }
 
   /**
@@ -38,7 +38,7 @@ public class GameMap implements MapContext {
    *
    * @param seed シード値
    */
-  private void GenerateMapTerrain(long seed) {
+  private void generateMapTerrain(long seed) {
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
         // 0以上1以下に正規化されたノイズ値を取得
@@ -68,10 +68,10 @@ public class GameMap implements MapContext {
   /**
    * マップの地形の境界を整える。
    */
-  private void StylizeMapEdges() {
+  private void stylizeMapEdges() {
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
-        StylizeCellEdge(x, y);
+        stylizeCellEdge(x, y);
       }
     }
   }
@@ -82,7 +82,7 @@ public class GameMap implements MapContext {
    * @param x セルのX座標
    * @param y セルのY座標
    */
-  private void StylizeCellEdge(int x, int y) {
+  private void stylizeCellEdge(int x, int y) {
     String target = cells[y][x].getTerrain().getKind();
     String collider = "";
     if (target.equals(TerrainType.MOUNTAIN.getKind())) {
@@ -132,9 +132,9 @@ public class GameMap implements MapContext {
       return; // 隣接する全ての地形と同じ場合、境界処理は不要
     }
     // 境界地形のタイプコードを定義
-    String typeCode = DefineBoundaryTypeCode(target);
+    String typeCode = defineBoundaryTypeCode(target);
     // 隣接する地形の状態に基づいて向きを決定
-    String orientationCode = DefineOrientationCode(N, E, S, W, Xp, Xm, Yp, Ym);
+    String orientationCode = defineOrientationCode(N, E, S, W, Xp, Xm, Yp, Ym);
     // typeCodeとorientationCodeを組み合わせて新しい地形タイプを決定
     // 例: "Coast_XpYm"など
     String newTerrainTypeName = typeCode + "_" + orientationCode;
@@ -153,7 +153,7 @@ public class GameMap implements MapContext {
    * @param target 基準となる地形
    * @return タイプコード
    */
-  private String DefineBoundaryTypeCode(String target) {
+  private String defineBoundaryTypeCode(String target) {
     if (target.equals(TerrainType.WATER.getKind()))
       return "Coast"; // 海と草原の境界は山が削れる
     if (target.equals(TerrainType.GRASS.getKind()))
@@ -169,7 +169,7 @@ public class GameMap implements MapContext {
    * @params 各方向の隣接地形が異なるかどうかのフラグ
    * @return 向きコード
    */
-  private String DefineOrientationCode(boolean N, boolean E, boolean S, boolean W,
+  private String defineOrientationCode(boolean N, boolean E, boolean S, boolean W,
       boolean Xp, boolean Xm, boolean Yp, boolean Ym) {
     // 8方向の組み合わせに基づいて向きコードを決定
     // 4辺全てが境界の場合

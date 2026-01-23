@@ -85,11 +85,11 @@ public class GameMap implements MapContext {
   private void StylizeCellEdge(int x, int y) {
     String target = cells[y][x].getTerrain().getKind();
     String collider = "";
-    if(target.equals(TerrainType.MOUNTAIN.getKind())){
+    if (target.equals(TerrainType.MOUNTAIN.getKind())) {
       collider = TerrainType.WATER.getKind(); // 山と海の境界は山が削れる
-    } else if(target.equals(TerrainType.GRASS.getKind())){
+    } else if (target.equals(TerrainType.GRASS.getKind())) {
       collider = TerrainType.MOUNTAIN.getKind(); // 草原と山の境界は草原が削れる
-    } else if(target.equals(TerrainType.WATER.getKind())){
+    } else if (target.equals(TerrainType.WATER.getKind())) {
       collider = TerrainType.GRASS.getKind(); // 海と草原の境界は海が削れる
     }
     // 一旦海のみ境界処理を行う

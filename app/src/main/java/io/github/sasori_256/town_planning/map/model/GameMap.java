@@ -1,7 +1,6 @@
 package io.github.sasori_256.town_planning.map.model;
 
 import java.awt.geom.Point2D;
-import java.util.Map;
 
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
@@ -85,39 +84,50 @@ public class GameMap implements MapContext {
    */
   private void StylizeCellEdge(int x, int y) {
     String target = cells[y][x].getTerrain().getKind();
+    String collider = "";
+    if(target.equals(TerrainType.MOUNTAIN.getKind())){
+      collider = TerrainType.WATER.getKind(); // 山と海の境界は山が削れる
+    } else if(target.equals(TerrainType.GRASS.getKind())){
+      collider = TerrainType.MOUNTAIN.getKind(); // 草原と山の境界は草原が削れる
+    } else if(target.equals(TerrainType.WATER.getKind())){
+      collider = TerrainType.GRASS.getKind(); // 海と草原の境界は海が削れる
+    }
+    // 一旦海のみ境界処理を行う
+    if(!target.equals(TerrainType.WATER.getKind())){
+      return;
+    }
     /*
      * 隣接する8方向の地形を取得 直行表示(アイソメトリックでない)なら以下のようになる
      * あ い う
      * き ☆ え
      * く か お
      */
-    String Terrain_N = (x + 1 < width && y + 1 < height) ? cells[y + 1][x + 1].getTerrain().getKind()
-        : TerrainType.WATER.getKind(); // 上方向の地形//：あ
-    boolean N = (Terrain_N != target);
+    String Terrain_S = (x + 1 < width && y + 1 < height) ? cells[y + 1][x + 1].getTerrain().getKind()
+        : TerrainType.WATER.getKind(); // 下方向の地形//：お
+    boolean S = (Terrain_S.equals(collider));
     String Terrain_E = (x + 1 < width && y - 1 >= 0) ? cells[y - 1][x + 1].getTerrain().getKind()
         : TerrainType.WATER.getKind(); // 右方向の地形：う
-    boolean E = (Terrain_E != target);
-    String Terrain_S = (x - 1 >= 0 && y - 1 >= 0) ? cells[y - 1][x - 1].getTerrain().getKind()
-        : TerrainType.WATER.getKind(); // 下方向の地形 ：お
-    boolean S = (Terrain_S != target);
+    boolean E = (Terrain_E.equals(collider));
+    String Terrain_N = (x - 1 >= 0 && y - 1 >= 0) ? cells[y - 1][x - 1].getTerrain().getKind()
+        : TerrainType.WATER.getKind(); // 上方向の地形 ：あ
+    boolean N = (Terrain_N.equals(collider));
     String Terrain_W = (x - 1 >= 0 && y + 1 < height) ? cells[y + 1][x - 1].getTerrain().getKind()
         : TerrainType.WATER.getKind(); // 左方向の地形 ：き
-    boolean W = (Terrain_W != target);
+    boolean W = (Terrain_W.equals(collider));
     String Terrain_Xp = x + 1 < width ? cells[y][x + 1].getTerrain().getKind()
         : TerrainType.WATER.getKind(); // 左上方向の地形：く
-    boolean Xp = (Terrain_Xp != target);
+    boolean Xp = (Terrain_Xp.equals(collider));
     String Terrain_Xm = x - 1 >= 0 ? cells[y][x - 1].getTerrain().getKind()
         : TerrainType.WATER.getKind(); // 右下方向の地形：え
-    boolean Xm = (Terrain_Xm != target);
+    boolean Xm = (Terrain_Xm.equals(collider));
     String Terrain_Yp = y + 1 < height ? cells[y + 1][x].getTerrain().getKind()
         : TerrainType.WATER.getKind(); // 右上方向の地形：い
-    boolean Yp = (Terrain_Yp != target);
+    boolean Yp = (Terrain_Yp.equals(collider));
     String Terrain_Ym = y - 1 >= 0 ? cells[y - 1][x].getTerrain().getKind()
         : TerrainType.WATER.getKind(); // 左下方向の地形：か
-    boolean Ym = (Terrain_Ym != target);
-    // 隣接する地形と異なる場合、境界処理を行う
-    Boolean needToStylize = (Terrain_N != target || Terrain_S != target || Terrain_E != target || Terrain_W != target
-        || Terrain_Xp != target || Terrain_Xm != target || Terrain_Yp != target || Terrain_Ym != target);
+    boolean Ym = (Terrain_Ym.equals(collider));
+    // 隣接するいずれかの地形と異なる場合、境界処理を行う
+    Boolean needToStylize = N || E || S || W || Xp || Xm || Yp || Ym;
     if (!needToStylize) {
       return; // 隣接する全ての地形と同じ場合、境界処理は不要
     }
@@ -125,16 +135,15 @@ public class GameMap implements MapContext {
     String typeCode = DefineBoundaryTypeCode(target);
     // 隣接する地形の状態に基づいて向きを決定
     String orientationCode = DefineOrientationCode(N, E, S, W, Xp, Xm, Yp, Ym);
-    System.out.println("typeCode: " + typeCode + ", orientationCode: " + orientationCode + "  " + x + "," + y);
-
     // typeCodeとorientationCodeを組み合わせて新しい地形タイプを決定
     // 例: "Coast_XpYm"など
     String newTerrainTypeName = typeCode + "_" + orientationCode;
+    // System.out.println("(" + x + ", " + y + ")" + newTerrainTypeName);
     TerrainType newTerrainType = TerrainType.fromDisplayName(newTerrainTypeName);
     if (newTerrainType != null) {
       cells[y][x].setTerrain(newTerrainType);
     } else {
-      // cells[y][x].setTerrain(TerrainType.ERROR);
+      System.out.println("(" + x + ", " + y + ")" + newTerrainTypeName + " Not found ");
     }
   }
 
@@ -145,12 +154,12 @@ public class GameMap implements MapContext {
    * @return タイプコード
    */
   private String DefineBoundaryTypeCode(String target) {
-    if (target == TerrainType.WATER.getKind())
-      return "Coast"; // 海と草原の境界
-    if (target == TerrainType.GRASS.getKind())
-      return "Hill"; // 草原と山の境界
-    if (target == TerrainType.MOUNTAIN.getKind())
-      return "Cliff"; // 山と海の境界
+    if (target.equals(TerrainType.WATER.getKind()))
+      return "Coast"; // 海と草原の境界は山が削れる
+    if (target.equals(TerrainType.GRASS.getKind()))
+      return "Hill"; // 草原と山の境界は草原が削れる
+    if (target.equals(TerrainType.MOUNTAIN.getKind()))
+      return "Cliff"; // 山と海の境界は山が削れる
     return "";
   }
 
@@ -181,27 +190,27 @@ public class GameMap implements MapContext {
     if (Yp && Ym)
       return "YpYm";
     // 隣接する2辺が境界で、その対角が境界でない場合
-    if (Xp && Yp && !W)
+    if (Xp && Yp && !N)
       return "XpYp";
-    if (Xp && Ym && !N)
+    if (Xp && Ym && !W)
       return "XpYm";
-    if (Xm && Yp && !S)
+    if (Xm && Yp && !E)
       return "XmYp";
-    if (Xm && Ym && !E)
+    if (Xm && Ym && !S)
       return "XmYm";
     // 隣接する2辺が境界で、その対角も境界の場合
-    if (Xp && Yp && W)
-      return "XpYpW";
-    if (Xp && Ym && N)
-      return "XpYmN";
-    if (Xm && Yp && S)
-      return "XmYpS";
-    if (Xm && Ym && E)
-      return "XmYmE";
+    if (Xp && Yp && N)
+      return "XpYpN";
+    if (Xp && Ym && W)
+      return "XpYmW";
+    if (Xm && Yp && E)
+      return "XmYpE";
+    if (Xm && Ym && S)
+      return "XmYmS";
     // 1辺のみが境界で、その隣接する対角がどちらも境界でない場合
     if (Xp && !N && !W)
       return "Xp";
-    if (Xm && !E && !S)
+    if (Xm && !S && !E)
       return "Xm";
     if (Yp && !N && !E)
       return "Yp";
@@ -253,8 +262,8 @@ public class GameMap implements MapContext {
     // 辺の境界が存在せず、隣接する2頂点が境界の場合
     if (N && E)
       return "NE";
-    if (E && S)
-      return "ES";
+    if (S && E)
+      return "SE";
     if (S && W)
       return "SW";
     if (N && W)

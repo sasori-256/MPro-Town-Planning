@@ -2,7 +2,9 @@ package io.github.sasori_256.town_planning;
 
 import java.awt.geom.Point2D;
 import java.util.concurrent.locks.ReadWriteLock;
+
 import javax.swing.SwingUtilities;
+
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.ui.GameWindow;
 import io.github.sasori_256.town_planning.entity.Camera;
@@ -27,8 +29,8 @@ public class App {
   public static void main(String[] args) {
     final int WIDTH = 640;
     final int HEIGHT = 640;
-    final int MAP_WIDTH = 10;
-    final int MAP_HEIGHT = 10;
+    final int MAP_WIDTH = 100;
+    final int MAP_HEIGHT = 100;
     final long SEED = 0L;
 
     EventBus eventBus = new EventBus();

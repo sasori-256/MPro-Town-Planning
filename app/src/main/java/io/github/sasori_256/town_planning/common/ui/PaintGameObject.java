@@ -95,11 +95,11 @@ public class PaintGameObject {
       }
     }
 
-    String buildingName = building.getType().getImageName(cell.getLocalX(), cell.getLocalY());
-    if (buildingName == null) {
+    String tileImageName = building.getType().getTileImageName(cell.getLocalX(), cell.getLocalY());
+    if (tileImageName == null) {
       return;
     }
-    paint(g, pos, buildingName, camera, imageManager, panel, true);
+    paint(g, pos, tileImageName, camera, imageManager, panel, true);
   }
 
   /**

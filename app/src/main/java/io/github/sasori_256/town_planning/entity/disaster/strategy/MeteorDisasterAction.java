@@ -63,9 +63,13 @@ public class MeteorDisasterAction implements GameAction {
 
     // 移動 (空から降ってくる)
     double progress = Math.min(1.0, timer / impactTime);
-    double startY = -10.0; // 画面外上空
-    double currentY = startY + (targetPos.getY() - startY) * progress;
-    self.setPosition(new Point2D.Double(targetPos.getX(), currentY));
+    double targetX = targetPos.getX();
+    double targetY = targetPos.getY();
+    double startX = targetX - 1.0;
+    double startY = targetY - 4.0; // 画面外上空
+    double currentX = startX + (targetX - startX) * progress;
+    double currentY = startY + (targetY - startY) * progress;
+    self.setPosition(new Point2D.Double(currentX, currentY));
 
     if (timer >= impactTime) {
       impact(context, disaster);

@@ -37,7 +37,7 @@ public class Disaster extends BaseGameEntity {
     super(position);
     this.type = disasterType;
     this.animationName = disasterType.getImageName();
-    this.animationFrameRate = 6;
+    this.animationFrameRate = 30;
     this.animationLoop = true;
     this.animationElapsedSeconds = 0.0;
 

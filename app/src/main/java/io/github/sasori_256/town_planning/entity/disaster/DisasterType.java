@@ -11,8 +11,7 @@ import io.github.sasori_256.town_planning.entity.model.GameAction;
  * 天災の種類定義。
  */
 public enum DisasterType {
-  // TODO: ローディングのぐるぐるの画像差し替えないとボケすぎる
-  METEOR("隕石", "loading", 200, 3, 100, CategoryType.METEOR, (pos, type) -> new MeteorDisasterAction(pos, type)),
+  METEOR("隕石", "meteor", 200, 3, 100, CategoryType.METEOR, (pos, type) -> new MeteorDisasterAction(pos, type)),
   PLAGUE("疫病", "plague", 150, 5, 20, CategoryType.PLAGUE);
 
   private final String displayName;

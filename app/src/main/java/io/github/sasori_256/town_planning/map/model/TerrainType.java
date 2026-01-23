@@ -41,7 +41,7 @@ public enum TerrainType implements Terrain {
   COAST_YmW("Coast_YmW", "Water", false, false, 1_000_000),
   COAST_YmS("Coast_YmS", "Water", false, false, 1_000_000),
   COAST_XpNW("Coast_XpNW", "Water", false, false, 1_000_000),
-  COAST_XmES("Coast_XmES", "Water", false, false, 1_000_000),
+  COAST_XmSW("Coast_XmES", "Water", false, false, 1_000_000),
   COAST_YpNE("Coast_YpNE", "Water", false, false, 1_000_000),
   COAST_YmWS("Coast_YmWS", "Water", false, false, 1_000_000),
   COAST_N("Coast_N", "Water", false, false, 1_000_000),
@@ -62,12 +62,16 @@ public enum TerrainType implements Terrain {
 
   private final String displayName;
   private final String kind;
+  private final String kind;
   private final boolean walkable;
   private final boolean buildable;
   private final int moveCost;
 
   TerrainType(String displayName, String kind, boolean buildable, boolean walkable, int moveCost) {
+
+  TerrainType(String displayName, String kind, boolean buildable, boolean walkable, int moveCost) {
     this.displayName = displayName;
+    this.kind = kind;
     this.kind = kind;
     this.buildable = buildable;
     this.walkable = walkable;
@@ -78,6 +82,12 @@ public enum TerrainType implements Terrain {
   @Override
   public String getDisplayName() {
     return displayName;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getKind() {
+    return kind;
   }
 
   /** {@inheritDoc} */
@@ -126,9 +136,8 @@ public enum TerrainType implements Terrain {
    * @return 一致する TerrainType または null
    */
   public static TerrainType fromDisplayName(String name) {
-    if (name == null) {
+    if (name == null)
       return null;
-    }
     return BY_DISPLAY_NAME.get(name);
   }
 }

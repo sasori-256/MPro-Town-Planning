@@ -41,7 +41,7 @@ public class GameModel implements GameContext, SimulationStep {
   /** 初期魂所持量。 */
   private static final int INITIAL_SOUL = 100;
   /** アニメーション進行の固定ステップ(秒)。 */
-  private static final double ANIMATION_STEP = 1.0 / 6.0;
+  private static final double ANIMATION_STEP = 1.0 / 30.0;
 
   /** イベント通知に使用するイベントバス。 */
   private final EventBus eventBus;

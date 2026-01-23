@@ -80,7 +80,8 @@ public class GameWindow extends JFrame {
       ImageManager imageManager) {
     this.gameModel = gameModel;
     this.gameMap = gameModel.getMap();
-    this.camera = camera;
+    this.camera = camera
+;
     this.eventBus = eventBus;
     this.gameMapController = gameMapController;
     this.stateLock = stateLock;
@@ -201,6 +202,8 @@ public class GameWindow extends JFrame {
     }
     if (gameModel.getGameLoop() != null) {
       gameModel.getGameLoop().pause();
+    if (this.mapSub != null) {
+      this.mapSub.unsubscribe();
     }
     this.mapSub.unsubscribe();
     int day = gameModel.getDay();

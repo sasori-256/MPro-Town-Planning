@@ -20,7 +20,7 @@ public enum BuildingType {
       CategoryType.RESIDENTIAL),
   BLUE_ROOFED_HOUSE(
       "青屋根の家",
-      "bulue_roofed_house",
+      "blue_roofed_house",
       100,
       8,
       150,

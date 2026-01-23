@@ -6,6 +6,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Supplier;
 
 import io.github.sasori_256.town_planning.common.event.EventBus;
+import io.github.sasori_256.town_planning.common.event.Subscription;
+import io.github.sasori_256.town_planning.common.event.events.GameOverEvent;
 import io.github.sasori_256.town_planning.common.event.events.SoulChangedEvent;
 import io.github.sasori_256.town_planning.common.event.events.SoulHarvestedEvent;
 import io.github.sasori_256.town_planning.entity.model.GameContext;
@@ -22,14 +24,18 @@ public class SoulManager {
   private final EntityManager entityManager;
   /** 現在の魂所持量。 */
   private int soul;
+  /** SoulHarvestedEvent用のunsubscriber。 */
+  private Subscription harvestSub;
+  /** GameOverEvent用のunsubscriber。 */
+  private Subscription gameOverSub;
 
   /**
    * 魂管理を生成する。
    *
-   * @param eventBus    イベントバス
-   * @param stateLock   状態ロック
+   * @param eventBus      イベントバス
+   * @param stateLock     状態ロック
    * @param entityManager エンティティ管理
-   * @param initialSoul 初期魂量
+   * @param initialSoul   初期魂量
    */
   public SoulManager(EventBus eventBus, ReadWriteLock stateLock, EntityManager entityManager,
       int initialSoul) {
@@ -38,7 +44,11 @@ public class SoulManager {
     this.entityManager = entityManager;
     this.soul = initialSoul;
 
-    this.eventBus.subscribe(SoulHarvestedEvent.class, event -> addSoul(event.amount()));
+    this.harvestSub = this.eventBus.subscribe(SoulHarvestedEvent.class, event -> addSoul(event.amount()));
+    this.gameOverSub = this.eventBus.subscribe(GameOverEvent.class, event -> {
+      this.harvestSub.unsubscribe();
+      this.gameOverSub.unsubscribe();
+    });
   }
 
   /**
@@ -47,7 +57,7 @@ public class SoulManager {
    * @return 魂所持量
    */
   public int getSoul() {
-    return withReadLock(() -> soul);
+    return withReadLock(() -> this.soul);
   }
 
   /**
@@ -91,7 +101,7 @@ public class SoulManager {
    * @return 支払い可能ならtrue
    */
   public boolean canAfford(int cost) {
-    return withReadLock(() -> soul >= cost);
+    return withReadLock(() -> canAffordInternal(cost));
   }
 
   /**
@@ -101,7 +111,7 @@ public class SoulManager {
    * @return 支払い可能ならtrue
    */
   boolean canAffordInternal(int cost) {
-    return soul >= cost;
+    return this.soul >= cost;
   }
 
   /**
@@ -112,7 +122,7 @@ public class SoulManager {
    */
   public boolean tryConsumeSoul(int cost) {
     return withWriteLock(() -> {
-      if (soul < cost) {
+      if (this.soul < cost) {
         return false;
       }
       addSoulInternal(-cost);

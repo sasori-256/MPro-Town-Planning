@@ -155,6 +155,13 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
               animationManager, this);
         }
       }
+
+      if (gameModel.getBuildingPreview().getBuildingPreviewType() != null
+          && gameModel.getBuildingPreview().getBuildingPreviewPos() != null) {
+        paintGameObject.paintPreviewBuilding(g, gameModel.getBuildingPreview().getBuildingPreviewPos(),
+            gameModel.getBuildingPreview().getBuildingPreviewType(), camera, imageManager, this,
+            gameModel.getBuildingPreview().getBuildable());
+      }
     } finally {
       readLock.unlock();
     }

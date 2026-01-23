@@ -11,6 +11,6 @@ public class MoveGameMapHandler
 
   @Override
   public void accept(Point2D.Double isoPoint, Function<Point2D.Double, ? extends BaseGameEntity> entityGenerator) {
-    System.out.println("Moved at Iso Coordinates: (" + isoPoint.x + ", " + isoPoint.y + ")");
+    // System.out.println("Moved at Iso Coordinates: (" + isoPoint.x + ", " + isoPoint.y + ")");
   }
 }

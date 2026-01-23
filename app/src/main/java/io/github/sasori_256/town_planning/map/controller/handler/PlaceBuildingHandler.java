@@ -52,5 +52,8 @@ public class PlaceBuildingHandler
     }
     gameMapController.setSelectedEntityGenerator((point) -> null); // TODO:Buildingの連続配置をしたい場合、これじゃだめ
     gameMapController.setActionOnClick(new ClickGameMapHandler());
+    gameMapController.setActionOnMove(new MoveGameMapHandler());
+    gameModel.getBuildingPreview().setBuildingPreviewPos(null);
+    gameModel.getBuildingPreview().setBuildingPreviewType(null);
   }
 }

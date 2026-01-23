@@ -24,8 +24,8 @@ public class App {
   public static void main(String[] args) {
     final int WIDTH = 960;
     final int HEIGHT = 640;
-    final int MAP_WIDTH = 50;
-    final int MAP_HEIGHT = 50;
+    final int MAP_WIDTH = 100;
+    final int MAP_HEIGHT = 100;
     final long SEED = 0L;
 
     ImageManager imageManager = new ImageManager();

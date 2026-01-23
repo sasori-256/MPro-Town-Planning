@@ -98,6 +98,7 @@ public class ImageManager extends Component {
     if (storage != null) {
       return storage;
     } else {
+      // System.out.println("Warning: Image not found: " + name + ".png");
       storage = this.imageStorages.get("error");
       if (storage != null) {
         // System.out.println("Warning: Image not found: " + name + ".png, returning

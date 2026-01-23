@@ -85,7 +85,7 @@ public class GameModel implements GameContext, SimulationStep {
     this.soulManager = new SoulManager(eventBus, stateLock, entityManager, INITIAL_SOUL);
     this.timeManager = new TimeManager(eventBus, stateLock);
     this.relocationManager = new RelocationManager(stateLock, entityManager);
-    this.populationManager = new PopulationManager(stateLock, entityManager);
+    this.populationManager = new PopulationManager(eventBus, stateLock, entityManager);
     this.buildingManager = new BuildingManager(eventBus, gameMap, stateLock, soulManager,
         entityManager);
 
@@ -190,6 +190,24 @@ public class GameModel implements GameContext, SimulationStep {
   @Override
   public int getPopulationDead() {
     return populationManager.getDeadPopulation();
+  }
+
+  /**
+   * 最大生存住民数を返す。
+   *
+   * @return 最大生存住民数
+   */
+  public int getPopulationMax() {
+    return populationManager.getMaxPopulation();
+  }
+
+  /**
+   * 累計死亡住民数を返す。
+   *
+   * @return 累計死亡住民数
+   */
+  public int getPopulationTotalDeaths() {
+    return populationManager.getTotalDeaths();
   }
 
   /** {@inheritDoc} */

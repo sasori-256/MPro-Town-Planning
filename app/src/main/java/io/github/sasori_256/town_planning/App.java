@@ -40,7 +40,7 @@ public class App {
     SwingUtilities.invokeLater(() -> {
       GameWindow gameWindow = new GameWindow(
           // TODO: gameMapを引数に渡すのが冗長なのでgameModelからgetするように変更する
-          gameModel, gameMap, camera, WIDTH, HEIGHT, eventBus, gameMapController, stateLock, imageManager);
+          gameModel, camera, WIDTH, HEIGHT, eventBus, gameMapController, stateLock, imageManager);
       gameModel.startGameLoop(gameWindow::repaint);
     });
   }

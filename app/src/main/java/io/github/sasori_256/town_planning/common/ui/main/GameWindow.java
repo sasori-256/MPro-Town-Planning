@@ -4,10 +4,12 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.event.ComponentAdapter;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 
 import io.github.sasori_256.town_planning.common.core.GameConfig;
 import io.github.sasori_256.town_planning.common.event.EventBus;
@@ -16,6 +18,7 @@ import io.github.sasori_256.town_planning.common.event.events.ConfigLoadFailedEv
 import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailedEvent;
 import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailureReason;
 import io.github.sasori_256.town_planning.common.event.events.EntitySpawnKind;
+import io.github.sasori_256.town_planning.common.event.events.GameOverEvent;
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
 import io.github.sasori_256.town_planning.common.ui.ImageManager;
 import io.github.sasori_256.town_planning.common.ui.ToastManager;
@@ -46,6 +49,12 @@ public class GameWindow extends JFrame {
   private GameMapController gameMapController;
   private ReadWriteLock stateLock;
   private ImageManager imageManager;
+  private SceneNavigator sceneNavigator;
+  private EndPanel endPanel;
+  private Timer gameOverTimer;
+  private final AtomicBoolean gameOverHandled = new AtomicBoolean(false);
+  private ToastManager toastManager;
+  private Subscription mapSub;
 
   /**
    * ゲーム描画ウィンドウを初期化する。
@@ -62,7 +71,6 @@ public class GameWindow extends JFrame {
    */
   public GameWindow(
       GameModel gameModel,
-      GameMap gameMap,
       Camera camera,
       int width,
       int height,
@@ -71,21 +79,24 @@ public class GameWindow extends JFrame {
       ReadWriteLock stateLock,
       ImageManager imageManager) {
     this.gameModel = gameModel;
-    this.gameMap = gameMap;
-    this.camera = camera;
+    this.gameMap = gameModel.getMap();
+    this.camera = camera
     this.eventBus = eventBus;
     this.gameMapController = gameMapController;
     this.stateLock = stateLock;
     this.imageManager = imageManager;
+
     setTitle("Town Planning Game");
     setSize(width, height);
     setupCardPanel();
     setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    ToastManager toastManager = new ToastManager(getLayeredPane(), getLayeredPane());
+
+    this.toastManager = new ToastManager(getLayeredPane(), getLayeredPane());
     Subscription configSub = eventBus.subscribe(ConfigLoadFailedEvent.class,
-        event -> toastManager.show(buildConfigMessage(event), ToastManager.ToastType.ERROR));
+        event -> this.toastManager.show(buildConfigMessage(event), ToastManager.ToastType.ERROR));
     Subscription spawnSub = eventBus.subscribe(EntitySpawnFailedEvent.class,
-        event -> toastManager.show(buildSpawnFailureMessage(event), ToastManager.ToastType.WARNING));
+        event -> this.toastManager.show(buildSpawnFailureMessage(event), ToastManager.ToastType.WARNING));
+    Subscription gameOverSub = eventBus.subscribe(GameOverEvent.class, event -> handleGameOver());
     this.addComponentListener(new ComponentAdapter() {
       /**
        * ウィンドウサイズ変更時の処理を行う。
@@ -112,19 +123,19 @@ public class GameWindow extends JFrame {
     this.cardLayout = new CardLayout();
     this.mainPanel = new JPanel(this.cardLayout);
 
-    SceneNavigator nav = (sceneName) -> {
+    this.sceneNavigator = (sceneName) -> {
       this.cardLayout.show(this.mainPanel, sceneName);
       repaintCurrentSceneUI();
     };
 
-    JPanel titlePanel = createTitlePanel(nav);
+    JPanel titlePanel = createTitlePanel(this.sceneNavigator);
     JPanel gameMapPanel = createGameMapPanel();
-    JPanel endPanel = createEndPanel();
+    this.endPanel = createEndPanel();
     // 新しいシーンを追加する場合はここに記載。そのシーン内でシーンを切り替える場合はnavを渡す。
 
     this.mainPanel.add(titlePanel, "TITLE");
     this.mainPanel.add(gameMapPanel, "GAME_MAP");
-    this.mainPanel.add(endPanel, "END");
+    this.mainPanel.add(this.endPanel, "END");
 
     this.add(this.mainPanel, BorderLayout.CENTER);
   }
@@ -152,7 +163,7 @@ public class GameWindow extends JFrame {
     gameMapPanel.addKeyListener(this.gameMapController);
     gameMapPanel.setFocusable(true);
     // TODO: onCloseなる関数でWindowのフレーム破棄時にunsubscribeするようにする
-    Subscription mapSub = eventBus.subscribe(MapUpdatedEvent.class, event -> {
+    this.mapSub = eventBus.subscribe(MapUpdatedEvent.class, event -> {
       if (SwingUtilities.isEventDispatchThread()) {
         gameMapPanel.repaint();
       } else {
@@ -173,9 +184,50 @@ public class GameWindow extends JFrame {
     return titlePanel;
   }
 
-  private JPanel createEndPanel() {
-    EndPanel endPanel = new EndPanel();
-    return endPanel;
+  private EndPanel createEndPanel() {
+    return new EndPanel();
+  }
+
+  /**
+   * GameOver時に実行する終了処理。
+   * Eventのunsubscribeやトースト通知、ゲームオーバー画面に表示する要素の引き渡しなどを行う。
+   */
+  private void handleGameOver() {
+    if (!gameOverHandled.compareAndSet(false, true)) {
+      return;
+    }
+    if (toastManager != null) {
+      toastManager.show("住民がいなくなりました。", ToastManager.ToastType.INFO);
+    }
+    if (gameModel.getGameLoop() != null) {
+      gameModel.getGameLoop().pause();
+    }
+    this.mapSub.unsubscribe();
+    int day = gameModel.getDay();
+    int soul = gameModel.getSoul();
+    int maxPopulation = gameModel.getPopulationMax();
+    int totalDeaths = gameModel.getPopulationTotalDeaths();
+    SwingUtilities.invokeLater(() -> scheduleGameOverTransition(day, soul, maxPopulation, totalDeaths));
+  }
+
+  private void scheduleGameOverTransition(int day, int soul, int maxPopulation, int totalDeaths) {
+    if (this.endPanel != null) {
+      this.endPanel.setResult(day, soul, maxPopulation, totalDeaths);
+    }
+    if (gameOverTimer != null) {
+      gameOverTimer.stop();
+    }
+    gameOverTimer = new Timer(3000, event -> {
+      if (sceneNavigator != null) {
+        sceneNavigator.changeScene("END");
+      }
+      if (gameModel.getGameLoop() != null) {
+        gameModel.getGameLoop().stop();
+      }
+      gameOverTimer.stop();
+    });
+    gameOverTimer.setRepeats(false);
+    gameOverTimer.start();
   }
 
   private static String buildConfigMessage(ConfigLoadFailedEvent event) {

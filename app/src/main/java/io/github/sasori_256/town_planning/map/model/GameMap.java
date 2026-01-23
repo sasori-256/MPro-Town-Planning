@@ -127,7 +127,7 @@ public class GameMap implements MapContext {
         : TerrainType.WATER.getKind(); // 左下方向の地形：か
     boolean Ym = (Terrain_Ym.equals(collider));
     // 隣接するいずれかの地形と異なる場合、境界処理を行う
-    Boolean needToStylize = N || E || S || W || Xp || Xm || Yp || Ym;
+    boolean needToStylize = N || E || S || W || Xp || Xm || Yp || Ym;
     if (!needToStylize) {
       return; // 隣接する全ての地形と同じ場合、境界処理は不要
     }

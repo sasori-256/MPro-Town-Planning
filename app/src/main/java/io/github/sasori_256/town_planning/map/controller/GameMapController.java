@@ -10,6 +10,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -27,6 +28,7 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
   private Camera camera;
   private final ReadWriteLock stateLock;
   private BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> actionOnClick;
+  private BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> actionOnMove;
   private Function<Point2D.Double, ? extends BaseGameEntity> selectedEntityGenerator;
   private Point previousMiddleMousePos;
 
@@ -40,6 +42,7 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
     this.camera = camera;
     this.stateLock = stateLock;
     this.actionOnClick = new ClickGameMapHandler();
+    this.actionOnMove = new MoveGameMapHandler();
     this.selectedEntityGenerator = (point) -> null;
   }
 
@@ -50,6 +53,15 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
    */
   public void setActionOnClick(BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> action) {
     this.actionOnClick = action;
+  }
+
+  /**
+   * GameMap上での移動時の動作を設定する
+   * 
+   * @param action
+   */
+  public void setActionOnMove(BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> action) {
+    this.actionOnMove = action;
   }
 
   /**
@@ -160,6 +172,8 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
    */
   @Override
   public void mouseMoved(MouseEvent e) {
+    Point2D.Double isoPoint = camera.screenToIso(new Point2D.Double(e.getX(), e.getY()));
+    actionOnMove.accept(isoPoint, selectedEntityGenerator);
   }
 
   /**

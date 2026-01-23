@@ -27,6 +27,7 @@ public class PaintGameObject {
   private static final double DEAD_ROTATION_DEGREES = 90.0;
   private static final float DEAD_HUE_SHIFT = 0.5f;
   private final Map<String, BufferedImage> deadTintCache = new HashMap<>();
+
   /**
    * 垂直方向の高さを持つ画像のシフト量を計算する
    *
@@ -63,7 +64,7 @@ public class PaintGameObject {
       ImageManager imageManager, JPanel panel) {
     MapCell cell = gameMap.getCell(pos);
     String terrainName = cell.getTerrain().getDisplayName();
-    paint(g, pos, terrainName, camera, imageManager, panel, true);
+    paint(g, pos, terrainName, camera, imageManager, panel, true, false);
   }
 
   /**
@@ -99,7 +100,22 @@ public class PaintGameObject {
     if (buildingName == null) {
       return;
     }
-    paint(g, pos, buildingName, camera, imageManager, panel, true);
+    paint(g, pos, buildingName, camera, imageManager, panel, true, false);
+  }
+
+  /**
+   * 指定された座標にプレビュー用の建物を描画する
+   * 
+   * @param g            グラフィックスコンテキスト
+   * @param pos          座標
+   * @param buildingName 建物の名前
+   * @param camera       カメラ
+   * @param imageManager 画像取得用マネージャー
+   * @param panel        描画対象のパネル
+   */
+  public void paintPreviewBuilding(Graphics g, Point2D.Double pos, String buildingName,
+      Camera camera, ImageManager imageManager, JPanel panel) {
+    paint(g, pos, buildingName, camera, imageManager, panel, true, true);
   }
 
   /**
@@ -162,7 +178,7 @@ public class PaintGameObject {
     if (imageName == null) {
       return;
     }
-    paint(g, disaster.getPosition(), imageName, camera, imageManager, panel, false);
+    paint(g, disaster.getPosition(), imageName, camera, imageManager, panel, false, false);
   }
 
   /**
@@ -175,9 +191,10 @@ public class PaintGameObject {
    * @param imageManager 画像取得用マネージャー
    * @param panel        描画対象のパネル
    * @param snapToGrid   座標をグリッド中央に丸めるかの真偽値
+   * @param transparent  半透明に描画するかの真偽値
    */
   private void paint(Graphics g, Point2D.Double pos, String name, Camera camera,
-      ImageManager imageManager, JPanel panel, boolean snapToGrid) {
+      ImageManager imageManager, JPanel panel, boolean snapToGrid, boolean transparent) {
     Graphics2D g2d = (Graphics2D) g;
     // 建物または地形の描画
     ImageStorage imageStorage = imageManager.getImageStorage(name);
@@ -194,8 +211,24 @@ public class PaintGameObject {
       int yPos = (int) Math.round(screenPos.y + posShift.y);
       int width = (int) (imageScale.x * cameraScale);
       int height = (int) (imageScale.y * cameraScale);
-      g2d.drawImage(imageStorage.image, xPos, yPos, width, height, panel);
+      if (transparent) {
+        BufferedImage translucentImage = makeTranslucent(imageStorage.image, 0.5f);
+        g2d.drawImage(translucentImage, xPos, yPos, width, height, panel);
+      } else {
+        g2d.drawImage(imageStorage.image, xPos, yPos, width, height, panel);
+      }
     }
+  }
+
+  private BufferedImage makeTranslucent(BufferedImage image, float alpha) {
+    int width = image.getWidth();
+    int height = image.getHeight();
+    BufferedImage translucentImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+    Graphics2D g2d = translucentImage.createGraphics();
+    g2d.setComposite(AlphaComposite.SrcOver.derive(alpha));
+    g2d.drawImage(image, 0, 0, null);
+    g2d.dispose();
+    return translucentImage;
   }
 
   private void paintImage(Graphics g, Point2D.Double pos, BufferedImage image, Camera camera,

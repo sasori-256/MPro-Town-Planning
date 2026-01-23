@@ -60,7 +60,6 @@ public class GameWindow extends JFrame {
    * ゲーム描画ウィンドウを初期化する。
    *
    * @param gameModel         ゲーム状態を管理するモデル
-   * @param gameMap           ゲームマップ
    * @param camera            カメラ
    * @param width             ウィンドウ幅
    * @param height            ウィンドウ高さ

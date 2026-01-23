@@ -10,7 +10,9 @@ import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.swing.JPanel;
+
 import io.github.sasori_256.town_planning.common.ui.ImageManager.ImageStorage;
 import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.entity.building.Building;
@@ -27,6 +29,7 @@ public class PaintGameObject {
   private static final double DEAD_ROTATION_DEGREES = 90.0;
   private static final float DEAD_HUE_SHIFT = 0.5f;
   private final Map<String, BufferedImage> deadTintCache = new HashMap<>();
+
   /**
    * 垂直方向の高さを持つ画像のシフト量を計算する
    *
@@ -155,6 +158,8 @@ public class PaintGameObject {
           disaster.isAnimationLoop());
       if (frame != null) {
         paintImage(g, disaster.getPosition(), frame, camera, panel, false);
+        System.out.println("Painting disaster animation: " + animationName + " frame "
+            + disaster.getAnimationFrameIndex());
         return;
       }
     }

@@ -1,6 +1,7 @@
 package io.github.sasori_256.town_planning.entity.model;
 
 import java.awt.geom.Point2D;
+import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -15,7 +16,6 @@ import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.entity.building.Building;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
 import io.github.sasori_256.town_planning.entity.disaster.Disaster;
-import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.entity.model.manager.BuildingManager;
 import io.github.sasori_256.town_planning.entity.model.manager.EntityManager;
 import io.github.sasori_256.town_planning.entity.model.manager.PopulationManager;
@@ -23,7 +23,10 @@ import io.github.sasori_256.town_planning.entity.model.manager.RelocationManager
 import io.github.sasori_256.town_planning.entity.model.manager.SoulManager;
 import io.github.sasori_256.town_planning.entity.model.manager.TimeManager;
 import io.github.sasori_256.town_planning.entity.resident.Resident;
+import io.github.sasori_256.town_planning.entity.resident.ResidentState;
+import io.github.sasori_256.town_planning.entity.resident.ResidentType;
 import io.github.sasori_256.town_planning.map.model.GameMap;
+import io.github.sasori_256.town_planning.map.model.TerrainType;
 
 /**
  * ゲームの環境情報を管理するモデルクラス。
@@ -89,6 +92,7 @@ public class GameModel implements GameContext, SimulationStep {
     this.gameLoop = null;
 
     GameConfig.preload();
+    GenerateTownHall(seed); // マップ中央付近に町の中心を生成
   }
 
   /**
@@ -418,5 +422,66 @@ public class GameModel implements GameContext, SimulationStep {
         entityManager.endUpdateCycle();
       }
     });
+  }
+
+  /**
+   * マップ中央付近に町の中心を生成する。
+   * 
+   * @param seed シード値
+   */
+  private void GenerateTownHall(long seed) {
+    int width = gameMap.getWidth();
+    int height = gameMap.getHeight();
+    int centerX = width / 2;
+    int centerY = height / 2;
+    Random rand = new Random(seed);
+    final int MAX_LOOP_COUNT = 10;
+    // マップの中央を基準に正規分布に従ってオフセットを決定
+    // 配置しようとした位置が海だった場合はseedを変えて再試行する
+    int offsetX, offsetY, townHallX = width / 2, townHallY = height / 2, loopCount = 0;
+    boolean foundProperPos = false; // 陸地が見つかったかどうか
+    while (loopCount < MAX_LOOP_COUNT) {
+      offsetX = (int) Math.round(rand.nextGaussian() * width / 10);
+      offsetY = (int) Math.round(rand.nextGaussian() * height / 10);
+      townHallX = centerX + offsetX;
+      townHallY = centerY + offsetY;
+      if (gameMap.getCell(new Point2D.Double(townHallX, townHallY)).getTerrain() != TerrainType.WATER) {
+        foundProperPos = true;
+        break;
+      }
+      loopCount++;
+      rand.setSeed(seed + loopCount); // townHallPosが海だった場合はシードを変えて再試行
+    }
+    // 10回試行しても陸地が見つからない場合はマップを全探索し、最初に見つけた陸地に配置する
+    for (int y = 0; y < height && !foundProperPos; y++) {
+      for (int x = 0; x < width && !foundProperPos; x++) {
+        if (gameMap.getCell(new Point2D.Double(x, y)).getTerrain() != TerrainType.WATER) {
+          townHallX = x;
+          townHallY = y;
+          foundProperPos = true;
+          System.out
+              .println("Warning: マップ中央付近に適切な陸地が見つかりませんでした。最初に見つかった陸地に町の中心を配置します。");
+        }
+      }
+    }
+    if (!foundProperPos) {
+      // 陸地が一つもないマップの場合は強制的に中央に配置
+      System.out.println("Warning: マップに陸地が存在しません。町の中心をマップ中央に強制配置します。");
+      townHallX = centerX;
+      townHallY = centerY;
+    }
+
+    // TODO: 町の中心として一旦青い屋根の家を使用 正しい建物タイプに変更する必要あり
+    // TODO: 町の中心に相当する建物タイプに置き換える。
+    Point2D.Double townHallPos = new Point2D.Double(townHallX, townHallY);
+    Building townHall = new Building(townHallPos, BuildingType.BLUE_ROOFED_HOUSE);
+    if (gameMap.placeBuilding(townHallPos, townHall)) {
+      townHall.setCurrentPopulation(2);
+      spawnEntity(townHall);
+      spawnEntity(new Resident(new Point2D.Double(townHallPos.y, townHallPos.x), ResidentType.CITIZEN,
+          ResidentState.AT_HOME, townHallPos));
+      spawnEntity(new Resident(new Point2D.Double(townHallPos.y, townHallPos.x),
+          ResidentType.CITIZEN, ResidentState.AT_HOME, townHallPos));
+    }
   }
 }

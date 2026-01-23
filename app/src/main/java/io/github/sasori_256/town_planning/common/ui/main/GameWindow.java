@@ -80,7 +80,7 @@ public class GameWindow extends JFrame {
       ImageManager imageManager) {
     this.gameModel = gameModel;
     this.gameMap = gameModel.getMap();
-    this.camera = camera
+    this.camera = camera;
     this.eventBus = eventBus;
     this.gameMapController = gameMapController;
     this.stateLock = stateLock;

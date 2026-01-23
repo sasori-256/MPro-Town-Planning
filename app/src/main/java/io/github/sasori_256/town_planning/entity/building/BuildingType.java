@@ -28,7 +28,6 @@ public enum BuildingType {
       CategoryType.RESIDENTIAL),
   ROAD(
       "道",
-      "stone_brick_floor",
       0,
       0,
       1,
@@ -39,13 +38,12 @@ public enum BuildingType {
       singleMask(true),
       singleMask(true),
       singleCost(1),
-      singleTile("stone_brick_floor"),
+      singleTileImages("stone_brick_floor"),
       singleDrawGroup(DrawGroup.FLOOR),
       0,
       0),
   PLAZA(
       "広場",
-      "plaza_fountain_center",
       0,
       0,
       1,
@@ -53,16 +51,35 @@ public enum BuildingType {
       CategoryType.INFRASTRUCTURE,
       3,
       3,
-      filledMask(3, 3, true),
-      plazaWalkable(),
-      plazaCost(),
-      plazaTiles(),
-      plazaDrawGroup(),
+      new boolean[][] {
+          { true, true, true },
+          { true, true, true },
+          { true, true, true }
+      },
+      new boolean[][] {
+          { true, true, true },
+          { true, false, true },
+          { true, true, true }
+      },
+      new int[][] {
+          { 1, 1, 1 },
+          { 1, 1_000_000, 1 },
+          { 1, 1, 1 }
+      },
+      new String[][] {
+          { "stone_brick_floor", "stone_brick_floor", "stone_brick_floor" },
+          { "stone_brick_floor", "plaza_fountain_center", "stone_brick_floor" },
+          { "stone_brick_floor", "stone_brick_floor", "stone_brick_floor" }
+      },
+      new DrawGroup[][] {
+          { DrawGroup.FLOOR, DrawGroup.FLOOR, DrawGroup.FLOOR },
+          { DrawGroup.FLOOR, DrawGroup.ACTOR, DrawGroup.FLOOR },
+          { DrawGroup.FLOOR, DrawGroup.FLOOR, DrawGroup.FLOOR }
+      },
       1,
       1),
   PARK(
       "公園",
-      "park_floor",
       0,
       0,
       1,
@@ -72,7 +89,7 @@ public enum BuildingType {
       filledMask(5, 5, true),
       filledMask(5, 5, true),
       filledCost(5, 5, 2),
-      filledTiles(5, 5, "park_floor"),
+      filledTileImages(5, 5, "park_floor"),
       filledDrawGroup(5, 5, DrawGroup.FLOOR),
       2,
       2),
@@ -107,7 +124,6 @@ public enum BuildingType {
   }
 
   private final String displayName;
-  private final String imageName;
   private final int cost;
   private final int maxPopulation;
   private final int maxDurability;
@@ -119,7 +135,7 @@ public enum BuildingType {
   private final boolean[][] footprintMask;
   private final boolean[][] walkableMask;
   private final int[][] moveCost;
-  private final String[][] tileImageNames;
+  private final String[][] tileImages;
   private final DrawGroup[][] drawGroup;
   private final int anchorX;
   private final int anchorY;
@@ -129,31 +145,30 @@ public enum BuildingType {
   // Effectありのコンストラクタ
   BuildingType(
       String displayName,
-      String imageName,
+      String tileImageName,
       int cost,
       int maxPopulation,
       int maxDurability,
       Supplier<GameEffect> effectSupplier,
       CategoryType category) {
-    this(displayName, imageName, cost, maxPopulation, maxDurability, effectSupplier, category,
+    this(displayName, cost, maxPopulation, maxDurability, effectSupplier, category,
         1, 1, singleMask(true), singleMask(false), singleCost(DEFAULT_IMPASSABLE_COST),
-        singleTile(imageName), singleDrawGroup(DrawGroup.ACTOR), 0, 0);
+        singleTileImages(tileImageName), singleDrawGroup(DrawGroup.ACTOR), 0, 0);
   }
 
   // Effectなしのコンストラクタ
   BuildingType(
       String displayName,
-      String imageName,
+      String tileImageName,
       int cost,
       int maxPopulation,
       int maxDurability,
       CategoryType category) {
-    this(displayName, imageName, cost, maxPopulation, maxDurability, () -> null, category);
+    this(displayName, tileImageName, cost, maxPopulation, maxDurability, () -> null, category);
   }
 
   BuildingType(
       String displayName,
-      String imageName,
       int cost,
       int maxPopulation,
       int maxDurability,
@@ -164,7 +179,7 @@ public enum BuildingType {
       boolean[][] footprintMask,
       boolean[][] walkableMask,
       int[][] moveCost,
-      String[][] tileImageNames,
+      String[][] tileImages,
       DrawGroup[][] drawGroup,
       int anchorX, int anchorY) {
     if (width <= 0 || height <= 0) {
@@ -173,7 +188,7 @@ public enum BuildingType {
     validateMask("footprintMask", width, height, footprintMask);
     validateMask("walkableMask", width, height, walkableMask);
     validateCost("moveCost", width, height, moveCost);
-    validateTiles("tileImageNames", width, height, tileImageNames);
+    validateTileImages("tileImages", width, height, tileImages);
     validateDrawGroup("drawGroup", width, height, drawGroup);
     if (anchorX < 0 || anchorX >= width || anchorY < 0 || anchorY >= height) {
       throw new IllegalArgumentException(
@@ -182,7 +197,6 @@ public enum BuildingType {
     }
 
     this.displayName = displayName;
-    this.imageName = imageName;
     this.cost = cost;
     this.maxPopulation = maxPopulation;
     this.maxDurability = maxDurability;
@@ -193,7 +207,7 @@ public enum BuildingType {
     this.footprintMask = footprintMask;
     this.walkableMask = walkableMask;
     this.moveCost = moveCost;
-    this.tileImageNames = tileImageNames;
+    this.tileImages = tileImages;
     this.drawGroup = drawGroup;
     this.anchorX = anchorX;
     this.anchorY = anchorY;
@@ -207,24 +221,16 @@ public enum BuildingType {
   }
 
   /**
-   * 基本画像名を返す。
-   */
-  public String getImageName() {
-    return imageName;
-  }
-
-  /**
    * タイル座標に対応する画像名を返す。
    *
    * @param localX 建物内のX座標
    * @param localY 建物内のY座標
    */
-  public String getImageName(int localX, int localY) {
+  public String getTileImageName(int localX, int localY) {
     if (localX < 0 || localY < 0 || localX >= width || localY >= height) {
-      return imageName;
+      return null;
     }
-    String name = tileImageNames[localY][localX];
-    return name != null ? name : imageName;
+    return tileImages[localY][localX];
   }
 
   /**
@@ -391,7 +397,7 @@ public enum BuildingType {
     return new int[][] { { value } };
   }
 
-  private static String[][] singleTile(String value) {
+  private static String[][] singleTileImages(String value) {
     return new String[][] { { value } };
   }
 
@@ -419,7 +425,7 @@ public enum BuildingType {
     return cost;
   }
 
-  private static String[][] filledTiles(int width, int height, String value) {
+  private static String[][] filledTileImages(int width, int height, String value) {
     String[][] tiles = new String[height][width];
     for (int y = 0; y < height; y++) {
       for (int x = 0; x < width; x++) {
@@ -436,30 +442,6 @@ public enum BuildingType {
         groups[y][x] = value;
       }
     }
-    return groups;
-  }
-
-  private static boolean[][] plazaWalkable() {
-    boolean[][] mask = filledMask(3, 3, true);
-    mask[1][1] = false;
-    return mask;
-  }
-
-  private static int[][] plazaCost() {
-    int[][] cost = filledCost(3, 3, 1);
-    cost[1][1] = DEFAULT_IMPASSABLE_COST;
-    return cost;
-  }
-
-  private static String[][] plazaTiles() {
-    String[][] tiles = filledTiles(3, 3, "stone_brick_floor");
-    tiles[1][1] = "plaza_fountain_center";
-    return tiles;
-  }
-
-  private static DrawGroup[][] plazaDrawGroup() {
-    DrawGroup[][] groups = filledDrawGroup(3, 3, DrawGroup.FLOOR);
-    groups[1][1] = DrawGroup.ACTOR;
     return groups;
   }
 
@@ -485,13 +467,19 @@ public enum BuildingType {
     }
   }
 
-  private static void validateTiles(String name, int width, int height, String[][] tiles) {
+  private static void validateTileImages(String name, int width, int height, String[][] tiles) {
     if (tiles == null || tiles.length != height) {
       throw new IllegalArgumentException(name + " height mismatch.");
     }
     for (int y = 0; y < height; y++) {
       if (tiles[y] == null || tiles[y].length != width) {
         throw new IllegalArgumentException(name + " width mismatch at y=" + y);
+      }
+      for (int x = 0; x < width; x++) {
+        if (tiles[y][x] == null) {
+          throw new IllegalArgumentException(
+              name + " contains null at x=" + x + ", y=" + y);
+        }
       }
     }
   }

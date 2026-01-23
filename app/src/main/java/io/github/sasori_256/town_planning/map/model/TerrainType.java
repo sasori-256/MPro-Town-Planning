@@ -62,12 +62,16 @@ public enum TerrainType implements Terrain {
 
   private final String displayName;
   private final String kind;
+  private final String kind;
   private final boolean walkable;
   private final boolean buildable;
   private final int moveCost;
 
   TerrainType(String displayName, String kind, boolean buildable, boolean walkable, int moveCost) {
+
+  TerrainType(String displayName, String kind, boolean buildable, boolean walkable, int moveCost) {
     this.displayName = displayName;
+    this.kind = kind;
     this.kind = kind;
     this.buildable = buildable;
     this.walkable = walkable;
@@ -78,6 +82,12 @@ public enum TerrainType implements Terrain {
   @Override
   public String getDisplayName() {
     return displayName;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getKind() {
+    return kind;
   }
 
   /** {@inheritDoc} */

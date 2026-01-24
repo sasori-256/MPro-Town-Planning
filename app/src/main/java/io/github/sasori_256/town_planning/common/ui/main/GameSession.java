@@ -26,6 +26,17 @@ public class GameSession {
   private final GameMapPanel gameMapPanel;
   private Subscription mapSub;
 
+  /**
+   * ゲームセッションを生成する。
+   *
+   * @param windowWidth  ウィンドウ幅
+   * @param windowHeight ウィンドウ高さ
+   * @param mapWidth     マップ幅
+   * @param mapHeight    マップ高さ
+   * @param seed         マップ生成シード
+   * @param imageManager 画像管理
+   * @param navigator    画面遷移ナビゲータ
+   */
   public GameSession(
       int windowWidth,
       int windowHeight,
@@ -58,30 +69,50 @@ public class GameSession {
     });
   }
 
+  /**
+   * ゲーム画面のコンポーネントを返す。
+   */
   public JComponent getView() {
     return gameMapPanel;
   }
 
+  /**
+   * セッションで使用しているイベントバスを返す。
+   */
   public EventBus getEventBus() {
     return eventBus;
   }
 
+  /**
+   * ゲームループを開始する。
+   *
+   * @param renderCallback 描画更新コールバック
+   */
   public void start(Runnable renderCallback) {
     gameModel.startGameLoop(renderCallback);
   }
 
+  /**
+   * ゲームループを一時停止する。
+   */
   public void pause() {
     if (gameModel.getGameLoop() != null) {
       gameModel.getGameLoop().pause();
     }
   }
 
+  /**
+   * ゲームループを停止する。
+   */
   public void stop() {
     if (gameModel.getGameLoop() != null) {
       gameModel.getGameLoop().stop();
     }
   }
 
+  /**
+   * セッションの後始末を行う。
+   */
   public void dispose() {
     stop();
     if (mapSub != null) {
@@ -90,6 +121,9 @@ public class GameSession {
     }
   }
 
+  /**
+   * 結果画面向けのスナップショットを取得する。
+   */
   public GameResult snapshot() {
     return new GameResult(
         gameModel.getDay(),
@@ -98,6 +132,9 @@ public class GameSession {
         gameModel.getPopulationTotalDeaths());
   }
 
+  /**
+   * 画面サイズに合わせてカメラサイズを更新する。
+   */
   public void updateCameraScreenSize(int width, int height) {
     camera.setScreenSize(width, height);
   }

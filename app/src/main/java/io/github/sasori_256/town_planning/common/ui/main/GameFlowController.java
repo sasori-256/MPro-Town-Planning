@@ -19,6 +19,9 @@ import io.github.sasori_256.town_planning.common.ui.ToastManager;
 import io.github.sasori_256.town_planning.common.ui.main.scene.EndPanel;
 import io.github.sasori_256.town_planning.common.ui.main.scene.TitlePanel;
 
+/**
+ * タイトル・ゲーム・結果画面の遷移とセッション管理を統括する。
+ */
 public class GameFlowController implements GameFlowNavigator {
   private final GameWindow window;
   private final ImageManager imageManager;
@@ -37,6 +40,17 @@ public class GameFlowController implements GameFlowNavigator {
   private Timer gameOverTimer;
   private final AtomicBoolean gameOverHandled = new AtomicBoolean(false);
 
+  /**
+   * ゲーム遷移のコントローラを生成する。
+   *
+   * @param window       表示用ウィンドウ
+   * @param imageManager 画像管理
+   * @param windowWidth  ウィンドウ幅
+   * @param windowHeight ウィンドウ高さ
+   * @param mapWidth     マップ幅
+   * @param mapHeight    マップ高さ
+   * @param seed         マップ生成シード
+   */
   public GameFlowController(
       GameWindow window,
       ImageManager imageManager,
@@ -61,6 +75,9 @@ public class GameFlowController implements GameFlowNavigator {
     });
   }
 
+  /**
+   * タイトル/結果画面を初期化し、初期シーンへ遷移する。
+   */
   public void initialize() {
     this.titlePanel = new TitlePanel(this, imageManager);
     this.endPanel = new EndPanel(this);
@@ -69,6 +86,7 @@ public class GameFlowController implements GameFlowNavigator {
     window.showScene(SceneId.TITLE);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void startNewGame() {
     clearGameOverTimer();
@@ -83,6 +101,7 @@ public class GameFlowController implements GameFlowNavigator {
     currentSession.start(window::repaint);
   }
 
+  /** {@inheritDoc} */
   @Override
   public void goToTitle() {
     clearGameOverTimer();
@@ -90,6 +109,9 @@ public class GameFlowController implements GameFlowNavigator {
     window.showScene(SceneId.TITLE);
   }
 
+  /**
+   * セッション固有のイベント購読を登録する。
+   */
   private void attachSessionSubscriptions(GameSession session) {
     EventBus eventBus = session.getEventBus();
     configSub = eventBus.subscribe(ConfigLoadFailedEvent.class,
@@ -100,6 +122,9 @@ public class GameFlowController implements GameFlowNavigator {
     GameConfig.reportErrors();
   }
 
+  /**
+   * ゲームオーバー処理をまとめて実行する。
+   */
   private void handleGameOver() {
     if (currentSession == null) {
       return;
@@ -115,6 +140,9 @@ public class GameFlowController implements GameFlowNavigator {
     scheduleGameOverTransition();
   }
 
+  /**
+   * 結果画面へ遷移するタイマーを設定する。
+   */
   private void scheduleGameOverTransition() {
     clearGameOverTimer();
     gameOverTimer = new Timer(3000, event -> {
@@ -125,6 +153,9 @@ public class GameFlowController implements GameFlowNavigator {
     gameOverTimer.start();
   }
 
+  /**
+   * ゲームオーバー遷移タイマーを解除する。
+   */
   private void clearGameOverTimer() {
     if (gameOverTimer != null) {
       gameOverTimer.stop();
@@ -132,6 +163,9 @@ public class GameFlowController implements GameFlowNavigator {
     }
   }
 
+  /**
+   * セッションと関連する購読を破棄する。
+   */
   private void disposeSession() {
     if (currentSession != null) {
       currentSession.dispose();
@@ -145,6 +179,9 @@ public class GameFlowController implements GameFlowNavigator {
     gameOverSub = null;
   }
 
+  /**
+   * 現在のウィンドウサイズへカメラを合わせる。
+   */
   private void updateCameraToWindow() {
     if (currentSession == null) {
       return;
@@ -156,6 +193,9 @@ public class GameFlowController implements GameFlowNavigator {
     currentSession.updateCameraScreenSize(size.width, size.height);
   }
 
+  /**
+   * 購読解除を安全に行う。
+   */
   private void unsubscribe(Subscription subscription) {
     if (subscription != null) {
       subscription.unsubscribe();

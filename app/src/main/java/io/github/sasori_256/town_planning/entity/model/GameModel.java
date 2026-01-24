@@ -330,7 +330,12 @@ public class GameModel implements GameContext, SimulationStep {
    * @return 建設できた場合はtrue
    */
   public boolean constructBuilding(Point2D.Double pos, BuildingType type) {
-    return buildingManager.constructBuilding(this, pos, type);
+    boolean constructed = buildingManager.constructBuilding(this, pos, type);
+    if (constructed) {
+      // 建設直後に住民の割り当てを再計算し、空き家への移動を促す。
+      relocationManager.rebalanceResidents();
+    }
+    return constructed;
   }
 
   // getters / setters

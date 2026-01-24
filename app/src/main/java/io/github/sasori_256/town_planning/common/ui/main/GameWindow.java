@@ -25,6 +25,12 @@ public class GameWindow extends JFrame {
   private static final int MIN_WIDTH = 640;
   private static final int MIN_HEIGHT = 480;
 
+  /**
+   * 画面遷移用のウィンドウを生成する。
+   *
+   * @param width  初期ウィンドウ幅
+   * @param height 初期ウィンドウ高さ
+   */
   public GameWindow(int width, int height) {
     setTitle("Town Planning Game");
     setSize(width, height);
@@ -45,6 +51,12 @@ public class GameWindow extends JFrame {
     setVisible(true);
   }
 
+  /**
+   * シーンを登録する。
+   *
+   * @param sceneId   シーンID
+   * @param component シーンの描画コンポーネント
+   */
   public void setScene(SceneId sceneId, JComponent component) {
     JComponent existing = scenes.put(sceneId, component);
     if (existing != null) {
@@ -55,15 +67,29 @@ public class GameWindow extends JFrame {
     this.mainPanel.repaint();
   }
 
+  /**
+   * 登録済みのシーンを表示する。
+   *
+   * @param sceneId 表示するシーンID
+   */
   public void showScene(SceneId sceneId) {
     this.cardLayout.show(this.mainPanel, sceneId.name());
     repaintCurrentSceneUI();
   }
 
+  /**
+   * トースト通知を表示する。
+   *
+   * @param message 表示文
+   * @param type    通知タイプ
+   */
   public void showToast(String message, ToastManager.ToastType type) {
     toastManager.show(message, type);
   }
 
+  /**
+   * 現在のシーン領域サイズを返す。
+   */
   public Dimension getSceneSize() {
     return this.mainPanel.getSize();
   }

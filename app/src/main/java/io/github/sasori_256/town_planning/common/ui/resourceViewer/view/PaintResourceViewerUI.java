@@ -72,7 +72,7 @@ public class PaintResourceViewerUI extends JPanel {
                 // defaultPanelWidth;
                 // totalWidth += panelWidth + panelMargin;
                 String initialValue = resolveInitialValue(type);
-                ResourceViewerPanel panel = new ResourceViewerPanel(initialValue, panelImage);
+                ResourceViewerPanel panel = new ResourceViewerPanel(initialValue, type.getUnit(), panelImage);
                 this.add(panel);
                 this.add(Box.createHorizontalStrut(panelMargin));
                 resourcePanels.put(type, panel);
@@ -100,11 +100,11 @@ public class PaintResourceViewerUI extends JPanel {
             return;
         }
         if (javax.swing.SwingUtilities.isEventDispatchThread()) {
-            panel.setDisplayValue(value);
+            panel.setDisplayValue(value, type.getUnit());
             panel.repaint();
         } else {
             javax.swing.SwingUtilities.invokeLater(() -> {
-                panel.setDisplayValue(value);
+                panel.setDisplayValue(value, type.getUnit());
                 panel.repaint();
             });
         }

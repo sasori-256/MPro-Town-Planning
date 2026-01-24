@@ -1,6 +1,7 @@
 package io.github.sasori_256.town_planning.entity.resident.strategy;
 
 import io.github.sasori_256.town_planning.common.core.GameConfig;
+import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.SoulHarvestedEvent;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.entity.model.GameContext;
@@ -14,8 +15,8 @@ import io.github.sasori_256.town_planning.entity.resident.ResidentState;
 public class ResidentCorpseCleanupEffect implements GameEffect {
   private static final double HARVEST_DELAY_SECONDS = GameConfig.getCorpseHarvestDelaySeconds();
   private static final int BASE_SOUL = GameConfig.getCorpseSoulBase();
-  private static final int FAITH_DIVISOR =
-      Math.max(1, GameConfig.getCorpseSoulFaithDivisor());
+  private static final int FAITH_DIVISOR = Math.max(1, GameConfig.getCorpseSoulFaithDivisor());
+  private final EventBus eventBus = EventBus.getInstance();
 
   private double elapsed;
   private boolean harvested;
@@ -46,7 +47,7 @@ public class ResidentCorpseCleanupEffect implements GameEffect {
     harvested = true;
 
     int soulAmount = BASE_SOUL + (resident.getFaith() / FAITH_DIVISOR);
-    context.getEventBus().publish(new SoulHarvestedEvent(soulAmount));
+    eventBus.publish(new SoulHarvestedEvent(soulAmount));
     context.removeEntity(resident);
   }
 }

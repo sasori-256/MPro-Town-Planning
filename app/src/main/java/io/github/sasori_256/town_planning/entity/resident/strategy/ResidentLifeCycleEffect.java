@@ -1,6 +1,7 @@
 package io.github.sasori_256.town_planning.entity.resident.strategy;
 
 import io.github.sasori_256.town_planning.common.core.strategy.UpdateStrategy;
+import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.ResidentDiedEvent;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.entity.model.GameContext;
@@ -12,6 +13,8 @@ import io.github.sasori_256.town_planning.entity.resident.ResidentState;
  * 住民のライフサイクル（加齢、死亡）を管理するEffect。
  */
 public class ResidentLifeCycleEffect implements UpdateStrategy, GameEffect {
+  private final EventBus eventBus = EventBus.getInstance();
+
   /** {@inheritDoc} */
   @Override
   public void update(GameContext context, BaseGameEntity self) {
@@ -47,7 +50,7 @@ public class ResidentLifeCycleEffect implements UpdateStrategy, GameEffect {
     resident.markDead();
 
     // 死亡イベント発行
-    context.getEventBus().publish(new ResidentDiedEvent(resident, context.getPopulationAlive()));
+    eventBus.publish(new ResidentDiedEvent(resident, context.getPopulationAlive()));
   }
 
   /**

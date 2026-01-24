@@ -41,3 +41,9 @@ tasks.named<Test>("test") {
     // Use JUnit Platform for unit tests.
     useJUnitPlatform()
 }
+
+tasks.named<Jar>("jar") {
+    manifest {
+        attributes["Main-Class"] = "io.github.sasori_256.town_planning.App"
+    }
+}

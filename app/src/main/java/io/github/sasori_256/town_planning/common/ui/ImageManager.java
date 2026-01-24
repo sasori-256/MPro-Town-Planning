@@ -1,10 +1,8 @@
 package io.github.sasori_256.town_planning.common.ui;
 
 import java.awt.Component;
-import java.awt.MediaTracker;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,66 +16,109 @@ public class ImageManager extends Component {
   private final Map<String, ImageStorage> imageStorages = new HashMap<>();
 
   /**
-   * 所定の場所にある全ての画像を読み込む
+   * 所定の場所にある全ての画像を読み込む (ClassLoader#getResourceAsStream を使用)
    */
   public void loadImages() {
-    java.net.URL imagesUrl = this.getClass().getClassLoader().getResource("images");
-    String PATH = imagesUrl != null ? imagesUrl.getPath() : null;
-    File dir = PATH != null ? new File(PATH) : null;
+    ClassLoader cl = this.getClass().getClassLoader();
+    java.util.List<String> resourcePaths = new java.util.ArrayList<>();
 
-    java.util.List<File> fileList = new java.util.ArrayList<>();
-    if (dir != null && dir.exists()) {
-      // スタックを使って再帰的にサブディレクトリを探索する
-      java.util.Deque<File> stack = new java.util.ArrayDeque<>();
-      stack.push(dir);
-      while (!stack.isEmpty()) {
-        File current = stack.pop();
-        File[] children = current.listFiles();
-        if (children == null)
-          continue;
-        for (File child : children) {
-          if (child.isDirectory()) {
-            stack.push(child);
-          } else if (child.getName().toLowerCase().endsWith(".png")) {
-            fileList.add(child);
+    try {
+      java.net.URL dirURL = cl.getResource("images");
+      if (dirURL != null) {
+        String protocol = dirURL.getProtocol();
+        if ("file".equals(protocol)) {
+          // ディレクトリとして読み込める場合 (IDE実行など)
+          java.io.File root = new java.io.File(dirURL.toURI());
+          java.util.Deque<java.io.File> stack = new java.util.ArrayDeque<>();
+          stack.push(root);
+          while (!stack.isEmpty()) {
+            java.io.File cur = stack.pop();
+            java.io.File[] children = cur.listFiles();
+            if (children == null)
+              continue;
+            for (java.io.File child : children) {
+              if (child.isDirectory()) {
+                stack.push(child);
+              } else if (child.getName().toLowerCase().endsWith(".png")) {
+                // resources 内の相対パスを作る
+                String rel = root.toURI().relativize(child.toURI()).getPath();
+                // resource path は "images/..." の形式
+                resourcePaths.add("images/" + rel);
+              }
+            }
           }
+        } else if ("jar".equals(protocol)) {
+          // JAR 内の場合は JarFile を開いて entries を走査
+          String path = dirURL.getPath(); // like file:/path/to/jar.jar!/images
+          int bang = path.indexOf("!");
+          String jarPath = (bang >= 0) ? path.substring(0, bang) : path;
+          if (jarPath.startsWith("file:")) {
+            jarPath = jarPath.substring("file:".length());
+          }
+          jarPath = java.net.URLDecoder.decode(jarPath, "UTF-8");
+          java.util.jar.JarFile jar = null;
+          try {
+            jar = new java.util.jar.JarFile(jarPath);
+            java.util.Enumeration<java.util.jar.JarEntry> entries = jar.entries();
+            while (entries.hasMoreElements()) {
+              java.util.jar.JarEntry entry = entries.nextElement();
+              String name = entry.getName();
+              if (name.startsWith("images/") && !entry.isDirectory() && name.toLowerCase().endsWith(".png")) {
+                resourcePaths.add(name);
+              }
+            }
+          } finally {
+            if (jar != null) {
+              try {
+                jar.close();
+              } catch (Exception ignored) {
+              }
+            }
+          }
+        } else {
+          // その他のプロトコル (例: vfs, etc.) - 試しに URL からストリームを直接探し、失敗したら何もしない
+        }
+      } else {
+        // images ディレクトリが見つからない場合は試しにクラスパス全体を検索 (簡易)
+        java.util.Enumeration<java.net.URL> roots = cl.getResources("");
+        while (roots.hasMoreElements()) {
+          java.net.URL u = roots.nextElement();
+          // ここでは通常のケースは上の file/jar でカバーされるため特別な処理は行わない
         }
       }
+    } catch (Exception e) {
+      System.err.println("Error locating image resources");
+      e.printStackTrace();
     }
-    File[] files = fileList.toArray(new File[0]);
-    MediaTracker tracker = new MediaTracker(this);
-    // 一時的に画像名とImageオブジェクトを保持する
+
+    // 読み込み
     Map<String, BufferedImage> loadedImages = new HashMap<>();
-    if (files != null) {
-      for (int i = 0; i < files.length; i++) {
-        File file = files[i];
-        String imageName = file.getName().replaceFirst("[.][^.]+$", "").toLowerCase();
-        // System.out.println("Loading image: " + imageName);
-        try {
-          BufferedImage img = ImageIO.read(file);
-          tracker.addImage(img, 0);
-          loadedImages.put(imageName, img);
-        } catch (Exception e) {
-          System.err.println("Error loading image: " + file.getName());
-          e.printStackTrace();
+    for (String resPath : resourcePaths) {
+      try (java.io.InputStream is = cl.getResourceAsStream(resPath)) {
+        if (is == null) {
+          System.err.println("Resource not found via stream: " + resPath);
           continue;
         }
-      }
-      try {
-        tracker.waitForAll();
-      } catch (InterruptedException e) {
-        System.err.println("Error loading images");
+        BufferedImage img = ImageIO.read(is);
+        if (img == null) {
+          System.err.println("Failed to read image (not PNG?): " + resPath);
+          continue;
+        }
+        String imageName = new java.io.File(resPath).getName().replaceFirst("[.][^.]+$", "").toLowerCase();
+        loadedImages.put(imageName, img);
+      } catch (Exception e) {
+        System.err.println("Error loading resource image: " + resPath);
         e.printStackTrace();
       }
-
-      for (Map.Entry<String, BufferedImage> entry : loadedImages.entrySet()) {
-        String imageName = entry.getKey();
-        BufferedImage img = entry.getValue();
-        ImageStorage storage = new ImageStorage(imageName, img);
-        this.imageStorages.put(imageName, storage);
-      }
     }
 
+    // ImageStorage に保持
+    for (Map.Entry<String, BufferedImage> entry : loadedImages.entrySet()) {
+      String imageName = entry.getKey();
+      BufferedImage img = entry.getValue();
+      ImageStorage storage = new ImageStorage(imageName, img);
+      this.imageStorages.put(imageName, storage);
+    }
   }
 
   /**
@@ -98,6 +139,7 @@ public class ImageManager extends Component {
     if (storage != null) {
       return storage;
     } else {
+      // System.out.println("Warning: Image not found: " + name + ".png");
       storage = this.imageStorages.get("error");
       if (storage != null) {
         // System.out.println("Warning: Image not found: " + name + ".png, returning

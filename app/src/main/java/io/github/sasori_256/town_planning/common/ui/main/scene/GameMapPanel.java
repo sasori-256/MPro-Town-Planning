@@ -1,15 +1,15 @@
 package io.github.sasori_256.town_planning.common.ui.main.scene;
 
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import java.awt.Color;
 import javax.swing.JPanel;
-import java.awt.Graphics;
-import java.awt.geom.Point2D;
 
 import io.github.sasori_256.town_planning.common.ui.AnimationManager;
 import io.github.sasori_256.town_planning.common.ui.ImageManager;
@@ -66,7 +66,7 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
     this.paintGameObject = new PaintGameObject();
     this.stateLock = stateLock;
     this.setLayout(null);
-    setBackground(Color.BLACK);
+    setBackground(new Color(19, 175, 251)); // 海の色
     this.paintObjectSelectUI = new PaintObjectSelectUI(imageManager, this, root);
     this.add(new PaintResourceViewerUI(gameModel, imageManager, 1.0));
     paintObjectSelectUI.paint();

@@ -14,6 +14,7 @@ import io.github.sasori_256.town_planning.entity.model.GameAction;
 import io.github.sasori_256.town_planning.entity.model.GameContext;
 import io.github.sasori_256.town_planning.entity.resident.Resident;
 import io.github.sasori_256.town_planning.entity.resident.ResidentState;
+import io.github.sasori_256.town_planning.common.event.EventBus;
 
 /**
  * 隕石などの単発災害のロジック。
@@ -23,6 +24,7 @@ public class MeteorDisasterAction implements GameAction {
   private static final String IMPACT_ANIMATION_NAME = "meteor_impact";
   private static final int IMPACT_ANIMATION_FPS = 6;
   private static final double IMPACT_EFFECT_DURATION = 1.0;
+  private final EventBus eventBus = EventBus.getInstance();
   private final Point2D.Double targetPos;
   private final DisasterType type;
   private double timer;
@@ -63,9 +65,13 @@ public class MeteorDisasterAction implements GameAction {
 
     // 移動 (空から降ってくる)
     double progress = Math.min(1.0, timer / impactTime);
-    double startY = -10.0; // 画面外上空
-    double currentY = startY + (targetPos.getY() - startY) * progress;
-    self.setPosition(new Point2D.Double(targetPos.getX(), currentY));
+    double targetX = targetPos.getX();
+    double targetY = targetPos.getY();
+    double startX = targetX - 1.0;
+    double startY = targetY - 4.0; // 画面外上空
+    double currentX = startX + (targetX - startX) * progress;
+    double currentY = startY + (targetY - startY) * progress;
+    self.setPosition(new Point2D.Double(currentX, currentY));
 
     if (timer >= impactTime) {
       impact(context, disaster);
@@ -95,7 +101,7 @@ public class MeteorDisasterAction implements GameAction {
           // 即死させる
           resident.markDead();
           // ResidentDiedEventを発行
-          context.getEventBus().publish(new ResidentDiedEvent(resident, context.getPopulationAlive()));
+          eventBus.publish(new ResidentDiedEvent(resident, context.getPopulationAlive()));
         }
       }
 
@@ -104,6 +110,6 @@ public class MeteorDisasterAction implements GameAction {
       // if (buildingType != null) { ... }
     }
 
-    context.getEventBus().publish(new DisasterOccurredEvent(type));
+    eventBus.publish(new DisasterOccurredEvent(type));
   }
 }

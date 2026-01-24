@@ -14,7 +14,7 @@ import io.github.sasori_256.town_planning.entity.model.GameTime;
  */
 public class TimeManager {
   /** イベント通知に使用するイベントバス。 */
-  private final EventBus eventBus;
+  private final EventBus eventBus = EventBus.getInstance();
   /** 状態同期に使用するロック。 */
   private final ReadWriteLock stateLock;
   /** ゲーム内時間の本体。 */
@@ -23,11 +23,9 @@ public class TimeManager {
   /**
    * 時間管理を生成する。
    *
-   * @param eventBus  イベントバス
    * @param stateLock 状態ロック
    */
-  public TimeManager(EventBus eventBus, ReadWriteLock stateLock) {
-    this.eventBus = eventBus;
+  public TimeManager(ReadWriteLock stateLock) {
     this.stateLock = stateLock;
   }
 

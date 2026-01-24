@@ -3,7 +3,9 @@ package io.github.sasori_256.town_planning.map.controller.handler;
 import java.awt.geom.Point2D;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+
 import io.github.sasori_256.town_planning.entity.building.Building;
+import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailedEvent;
 import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailureReason;
 import io.github.sasori_256.town_planning.common.event.events.EntitySpawnKind;
@@ -17,6 +19,7 @@ import io.github.sasori_256.town_planning.map.controller.GameMapController;
 public class PlaceBuildingHandler
     implements BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> {
   private GameModel gameModel;
+  private final EventBus eventBus = EventBus.getInstance();
   private GameMapController gameMapController;
 
   /**
@@ -44,7 +47,7 @@ public class PlaceBuildingHandler
     if (entity instanceof Building building) {
       gameModel.constructBuilding(roundedPoint, building.getType());
     } else {
-      gameModel.getEventBus().publish(new EntitySpawnFailedEvent(
+      eventBus.publish(new EntitySpawnFailedEvent(
           EntitySpawnKind.BUILDING,
           EntitySpawnFailureReason.INVALID_ENTITY,
           roundedPoint,

@@ -31,3 +31,12 @@
 ```bash
 ./gradlew build
 ```
+
+## 使用素材
+本ソフトウェアには、以下のフォントが含まれています
+
+**フォント**：ベストテンFONT
+
+**フリーダウンロード**：https://flopdesign.booth.pm/items/2747965
+
+**コピーライト**：Copyright(c) 2021 M+ FONTS PROJECT

@@ -4,6 +4,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import javax.swing.SwingUtilities;
 
+import io.github.sasori_256.town_planning.common.core.FontManager;
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.ui.ImageManager;
 import io.github.sasori_256.town_planning.common.ui.main.GameWindow;
@@ -28,6 +29,7 @@ public class App {
     final int MAP_HEIGHT = 100;
     final long SEED = 0L;
 
+    new FontManager();
     ImageManager imageManager = new ImageManager();
 
     EventBus eventBus = new EventBus();

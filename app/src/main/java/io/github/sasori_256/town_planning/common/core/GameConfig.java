@@ -38,10 +38,7 @@ public final class GameConfig {
     getCorpseSoulFaithDivisor();
   }
 
-  public static void reportErrors(EventBus eventBus) {
-    if (eventBus == null) {
-      return;
-    }
+  public static void reportErrors() {
     List<ConfigError> errors;
     synchronized (GameConfig.class) {
       if (errorsReported) {
@@ -52,7 +49,7 @@ public final class GameConfig {
       LOAD_ERRORS.clear();
     }
     for (ConfigError error : errors) {
-      eventBus.publish(new ConfigLoadFailedEvent(error.code, error.message));
+      EventBus.getInstance().publish(new ConfigLoadFailedEvent(error.code, error.message));
     }
   }
 

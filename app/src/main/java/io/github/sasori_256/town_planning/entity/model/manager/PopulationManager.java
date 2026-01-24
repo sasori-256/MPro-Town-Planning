@@ -18,7 +18,7 @@ import io.github.sasori_256.town_planning.entity.resident.ResidentState;
  */
 public class PopulationManager {
   /** イベント通知に使用するイベントバス。 */
-  private final EventBus eventBus;
+  private final EventBus eventBus = EventBus.getInstance();
   /** 状態同期に使用するロック。 */
   private final ReadWriteLock stateLock;
   /** エンティティ管理。 */
@@ -41,8 +41,7 @@ public class PopulationManager {
    * @param stateLock     状態ロック
    * @param entityManager エンティティ管理
    */
-  public PopulationManager(EventBus eventBus, ReadWriteLock stateLock, EntityManager entityManager) {
-    this.eventBus = eventBus;
+  public PopulationManager(ReadWriteLock stateLock, EntityManager entityManager) {
     this.stateLock = stateLock;
     this.entityManager = entityManager;
 

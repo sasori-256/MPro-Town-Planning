@@ -1,6 +1,5 @@
 package io.github.sasori_256.town_planning.entity.model;
 
-import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.entity.building.Building;
 import io.github.sasori_256.town_planning.entity.disaster.Disaster;
 import io.github.sasori_256.town_planning.entity.disaster.DisasterType;
@@ -27,12 +26,6 @@ import java.util.stream.Stream;
  * DI (Dependency Injection) のような役割を果たす。
  */
 public interface GameContext {
-  /**
-   * イベントバスを返す。
-   *
-   * @return イベントバス
-   */
-  EventBus getEventBus();
 
   /**
    * マップを返す。

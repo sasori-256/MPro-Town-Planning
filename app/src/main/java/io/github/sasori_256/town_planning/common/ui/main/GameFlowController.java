@@ -97,7 +97,7 @@ public class GameFlowController implements GameFlowNavigator {
     spawnSub = eventBus.subscribe(EntitySpawnFailedEvent.class,
         event -> window.showToast(buildSpawnFailureMessage(event), ToastManager.ToastType.WARNING));
     gameOverSub = eventBus.subscribe(GameOverEvent.class, event -> handleGameOver());
-    GameConfig.reportErrors(eventBus);
+    GameConfig.reportErrors();
   }
 
   private void handleGameOver() {

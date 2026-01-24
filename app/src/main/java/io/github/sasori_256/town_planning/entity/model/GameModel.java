@@ -48,7 +48,7 @@ public class GameModel implements GameContext, SimulationStep {
   private static final double ANIMATION_STEP = 1.0 / 30.0;
 
   /** イベント通知に使用するイベントバス。 */
-  private final EventBus eventBus;
+  private final EventBus eventBus = EventBus.getInstance();
   /** マップ状態の本体。 */
   private final GameMap gameMap;
   /** 共有状態を保護する読み書きロック。 */
@@ -81,18 +81,16 @@ public class GameModel implements GameContext, SimulationStep {
    *
    * @param mapWidth  マップの横幅
    * @param mapHeight マップの縦幅
-   * @param eventBus  イベントバス
    */
-  public GameModel(int mapWidth, int mapHeight, long seed, EventBus eventBus) {
-    this.eventBus = eventBus;
-    this.gameMap = new GameMap(mapWidth, mapHeight, seed, eventBus);
+  public GameModel(int mapWidth, int mapHeight, long seed) {
+    this.gameMap = new GameMap(mapWidth, mapHeight, seed);
 
-    this.entityManager = new EntityManager(eventBus, stateLock);
-    this.soulManager = new SoulManager(eventBus, stateLock, entityManager, INITIAL_SOUL);
-    this.timeManager = new TimeManager(eventBus, stateLock);
+    this.entityManager = new EntityManager(stateLock);
+    this.soulManager = new SoulManager(stateLock, entityManager, INITIAL_SOUL);
+    this.timeManager = new TimeManager(stateLock);
     this.relocationManager = new RelocationManager(stateLock, entityManager);
-    this.populationManager = new PopulationManager(eventBus, stateLock, entityManager);
-    this.buildingManager = new BuildingManager(eventBus, gameMap, stateLock, soulManager,
+    this.populationManager = new PopulationManager(stateLock, entityManager);
+    this.buildingManager = new BuildingManager(gameMap, stateLock, soulManager,
         entityManager);
     this.residentPanicManager = new ResidentPanicManager(stateLock, entityManager);
 
@@ -114,12 +112,6 @@ public class GameModel implements GameContext, SimulationStep {
   }
 
   // --- GameContext Implementation ---
-
-  /** {@inheritDoc} */
-  @Override
-  public EventBus getEventBus() {
-    return eventBus;
-  }
 
   /** {@inheritDoc} */
   @Override

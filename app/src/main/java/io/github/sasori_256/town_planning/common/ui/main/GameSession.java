@@ -17,7 +17,7 @@ import io.github.sasori_256.town_planning.map.controller.GameMapController;
 import io.github.sasori_256.town_planning.map.model.GameMap;
 
 public class GameSession {
-  private final EventBus eventBus;
+  private final EventBus eventBus = EventBus.getInstance();
   private final GameModel gameModel;
   private final GameMap gameMap;
   private final Camera camera;
@@ -34,11 +34,10 @@ public class GameSession {
       long seed,
       ImageManager imageManager,
       GameFlowNavigator navigator) {
-    this.eventBus = new EventBus();
-    this.gameModel = new GameModel(mapWidth, mapHeight, seed, eventBus);
+    this.gameModel = new GameModel(mapWidth, mapHeight, seed);
     this.gameMap = gameModel.getGameMap();
     this.stateLock = gameModel.getStateLock();
-    this.camera = new Camera(1, windowWidth, windowHeight, mapWidth, mapHeight, eventBus);
+    this.camera = new Camera(1, windowWidth, windowHeight, mapWidth, mapHeight);
     this.gameMapController = new GameMapController(camera, stateLock);
 
     CategoryNode root = NodeMenuInitializer.setup(this.gameMapController, this.gameModel);

@@ -119,8 +119,16 @@ public class PaintGameObject {
    */
   public void paintPreviewBuilding(Graphics g, Point2D.Double pos, BuildingType buildingType,
       Camera camera, ImageManager imageManager, JPanel panel, boolean buildable) {
-    // TODO: 複数マスの描画を書く
-    paint(g, pos, buildingType.getImageName(), camera, imageManager, panel, true, true, buildable);
+    for (int x = 0; x < buildingType.getWidth(); x++) {
+      for (int y = 0; y < buildingType.getHeight(); y++) {
+        Point2D.Double tilePos = new Point2D.Double(pos.x + x - buildingType.getAnchorX(),
+            pos.y + y - buildingType.getAnchorY());
+        String tileImageName = buildingType.getTileImageName(x, y);
+        if (tileImageName != null) {
+          paint(g, tilePos, tileImageName, camera, imageManager, panel, true, true, buildable);
+        }
+      }
+    }
   }
 
   /**

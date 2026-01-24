@@ -13,12 +13,11 @@ public class PreviewBuildingHandler
     implements BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> {
   GameModel gameModel;
   BuildingType buildingType;
-  EventBus eventBus;
+  EventBus eventBus = EventBus.getInstance();
 
   public PreviewBuildingHandler(GameModel gameModel, BuildingType buildingType) {
     this.gameModel = gameModel;
     this.buildingType = buildingType;
-    this.eventBus = gameModel.getEventBus();
     gameModel.getBuildingPreview().setBuildingPreviewType(buildingType);
   }
 

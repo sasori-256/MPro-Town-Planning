@@ -72,4 +72,15 @@ public class BuildingPreview {
       stateLock.readLock().unlock();
     }
   }
+
+  public void resetBuildingPreview() {
+    try {
+      stateLock.writeLock().lock();
+      this.buildingPreviewPos = null;
+      this.buildingPreviewType = null;
+      this.buildable = false;
+    } finally {
+      stateLock.writeLock().unlock();
+    }
+  }
 }

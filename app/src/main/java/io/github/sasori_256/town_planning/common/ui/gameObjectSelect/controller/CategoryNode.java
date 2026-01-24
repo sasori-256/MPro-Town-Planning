@@ -14,31 +14,41 @@ public class CategoryNode implements MenuNode {
      *
      * @param name 表示名
      */
-    public CategoryNode(String name) { this.name = name; }
+    public CategoryNode(String name) {
+        this.name = name;
+    }
 
     /**
      * 子ノードを追加する。
      *
      * @param node 追加するノード
      */
-    public void add(MenuNode node) { children.add(node); }
-    
-    /** {@inheritDoc} */
-    @Override
-    public String getName() { return name; }
+    public void add(MenuNode node) {
+        children.add(node);
+    }
 
     /** {@inheritDoc} */
     @Override
-    public boolean isLeaf() { return false; }
+    public String getName() {
+        return name;
+    }
 
     /** {@inheritDoc} */
     @Override
-    public ArrayList<MenuNode> getChildren() { return children; }
-    
+    public boolean isLeaf() {
+        return false;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public ArrayList<MenuNode> getChildren() {
+        return children;
+    }
+
     /** {@inheritDoc} */
     @Override
     public void actionPerformed(java.awt.event.ActionEvent e) {
-        //TODO: Viewと連携する.
+        // TODO: Viewと連携する.
     }
 
 }

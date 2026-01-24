@@ -6,6 +6,7 @@ import java.util.function.Function;
 
 import io.github.sasori_256.town_planning.entity.building.Building;
 import io.github.sasori_256.town_planning.common.event.EventBus;
+import io.github.sasori_256.town_planning.common.event.events.CancelBuildEvent;
 import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailedEvent;
 import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailureReason;
 import io.github.sasori_256.town_planning.common.event.events.EntitySpawnKind;
@@ -55,7 +56,6 @@ public class PlaceBuildingHandler
     }
     gameMapController.setSelectedEntityGenerator((point) -> null); // TODO:Buildingの連続配置をしたい場合、これじゃだめ
     gameMapController.setActionOnClick(new ClickGameMapHandler());
-    gameMapController.setActionOnMove(new MoveGameMapHandler());
-    gameModel.getBuildingPreview().resetBuildingPreview();
+    eventBus.publish(new CancelBuildEvent());
   }
 }

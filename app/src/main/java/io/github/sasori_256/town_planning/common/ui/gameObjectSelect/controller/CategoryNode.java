@@ -2,10 +2,14 @@ package io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller
 
 import java.util.ArrayList;
 
+import io.github.sasori_256.town_planning.common.event.EventBus;
+import io.github.sasori_256.town_planning.common.event.events.CancelBuildEvent;
+
 /**
  * メニューのカテゴリノード。
  */
 public class CategoryNode implements MenuNode {
+    private final EventBus eventBus = EventBus.getInstance();
     private final String name;
     private ArrayList<MenuNode> children = new ArrayList<>();
 
@@ -49,6 +53,7 @@ public class CategoryNode implements MenuNode {
     @Override
     public void actionPerformed(java.awt.event.ActionEvent e) {
         // TODO: Viewと連携する.
+        eventBus.publish(new CancelBuildEvent());
     }
 
 }

@@ -3,11 +3,13 @@ package io.github.sasori_256.town_planning.map.model;
 import java.awt.geom.Point2D;
 import java.util.concurrent.locks.ReadWriteLock;
 
+import io.github.sasori_256.town_planning.common.event.EventBus;
+import io.github.sasori_256.town_planning.common.event.events.CancelBuildEvent;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
 import io.github.sasori_256.town_planning.map.model.GameMap;
-import io.github.sasori_256.town_planning.map.model.MapCell;
 
 public class BuildingPreview {
+  private final EventBus eventBus = EventBus.getInstance();
   private final ReadWriteLock stateLock;
   private Point2D.Double buildingPreviewPos = null;
   private BuildingType buildingPreviewType = null;
@@ -17,6 +19,9 @@ public class BuildingPreview {
   public BuildingPreview(ReadWriteLock stateLock, GameMap gameMap) {
     this.stateLock = stateLock;
     this.gameMap = gameMap;
+    eventBus.subscribe(CancelBuildEvent.class, event -> {
+      resetBuildingPreviewData();
+    });
   }
 
   public void setBuildingPreviewPos(Point2D.Double pos) {
@@ -73,7 +78,7 @@ public class BuildingPreview {
     }
   }
 
-  public void resetBuildingPreview() {
+  private void resetBuildingPreviewData() {
     try {
       stateLock.writeLock().lock();
       this.buildingPreviewPos = null;
@@ -83,4 +88,5 @@ public class BuildingPreview {
       stateLock.writeLock().unlock();
     }
   }
+
 }

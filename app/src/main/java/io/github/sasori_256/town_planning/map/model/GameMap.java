@@ -19,10 +19,9 @@ public class GameMap implements MapContext {
   /**
    * マップを生成する。
    *
-   * @param width    横幅(セル数)
-   * @param height   縦幅(セル数)
-   * @param seed     シード値
-   * @param eventBus イベントバス
+   * @param width  横幅(セル数)
+   * @param height 縦幅(セル数)
+   * @param seed   シード値
    */
   public GameMap(int width, int height, long seed) {
     this.width = width;

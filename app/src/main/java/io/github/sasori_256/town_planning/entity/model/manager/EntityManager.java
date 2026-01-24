@@ -44,7 +44,6 @@ public class EntityManager {
   /**
    * エンティティ管理を生成する。
    *
-   * @param eventBus  イベントバス
    * @param stateLock 状態ロック
    */
   public EntityManager(ReadWriteLock stateLock) {

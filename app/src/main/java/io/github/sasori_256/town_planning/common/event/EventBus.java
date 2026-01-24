@@ -11,6 +11,9 @@ import java.util.Objects;
 /**
  * 型安全なイベントバスの実装。
  * イベントクラス（Record推奨）をキーとしてPub/Subを行う。
+ * EventBusはシングルトンとして実装している。
+ * 使用する際は各クラスでEventBus.getInstance()によりインスタンスを取得し、フィールドとして持つこと。
+ * ただしstaticなメソッドで使用する場合は都度EventBus.getInstance()で取得して使用すること。
  */
 public class EventBus {
   private static final EventBus instance = new EventBus();

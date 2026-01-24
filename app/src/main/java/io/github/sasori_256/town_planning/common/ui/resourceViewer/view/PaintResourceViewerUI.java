@@ -25,7 +25,7 @@ import io.github.sasori_256.town_planning.entity.model.GameContext;
  */
 public class PaintResourceViewerUI extends JPanel {
     private final GameContext gameContext;
-    private final EventBus eventBus;
+    private final EventBus eventBus = EventBus.getInstance();
     private final ImageManager imageManager;
     private double uiScale;
 
@@ -33,7 +33,6 @@ public class PaintResourceViewerUI extends JPanel {
 
     public PaintResourceViewerUI(GameContext gameContext, ImageManager imageManager, double uiScale) {
         this.gameContext = gameContext;
-        this.eventBus = gameContext.getEventBus();
         this.imageManager = imageManager;
         this.uiScale = uiScale;
         initUI();

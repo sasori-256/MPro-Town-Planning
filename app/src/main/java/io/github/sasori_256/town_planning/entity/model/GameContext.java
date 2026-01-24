@@ -25,12 +25,6 @@ import java.util.stream.Stream;
  * DI (Dependency Injection) のような役割を果たす。
  */
 public interface GameContext {
-  /**
-   * イベントバスを返す。
-   *
-   * @return イベントバス
-   */
-  EventBus getEventBus();
 
   /**
    * マップを返す。

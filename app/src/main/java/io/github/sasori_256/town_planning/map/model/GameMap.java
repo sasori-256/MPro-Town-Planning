@@ -14,20 +14,18 @@ public class GameMap implements MapContext {
   private final int width;
   private final int height;
   private final MapCell[][] cells;
-  private final EventBus eventBus;
+  private final EventBus eventBus = EventBus.getInstance();
 
   /**
    * マップを生成する。
    *
-   * @param width    横幅(セル数)
-   * @param height   縦幅(セル数)
-   * @param seed     シード値
-   * @param eventBus イベントバス
+   * @param width  横幅(セル数)
+   * @param height 縦幅(セル数)
+   * @param seed   シード値
    */
-  public GameMap(int width, int height, long seed, EventBus eventBus) {
+  public GameMap(int width, int height, long seed) {
     this.width = width;
     this.height = height;
-    this.eventBus = eventBus;
     this.cells = new MapCell[height][width];
     GenerateMapTerrain(seed); // マップの地形を生成
     StylizeMapEdges(); // 地形の境界を整える

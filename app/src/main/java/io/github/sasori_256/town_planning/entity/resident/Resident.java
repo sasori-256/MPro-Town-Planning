@@ -214,6 +214,8 @@ public class Resident extends BaseGameEntity {
     if (state != ResidentState.DEAD) {
       return 0.0;
     }
+    // 一発で終わらせる設定の場合の対応
+    // TODO: Dead codeと検出されているから、設定ファイルから定数を読み込めるようにして対応する
     if (DEATH_ANIMATION_DURATION <= 0.0) {
       return 1.0;
     }

@@ -3,7 +3,6 @@ package io.github.sasori_256.town_planning;
 import javax.swing.SwingUtilities;
 
 import io.github.sasori_256.town_planning.common.core.FontManager;
-import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.ui.ImageManager;
 import io.github.sasori_256.town_planning.common.ui.main.GameFlowController;
 import io.github.sasori_256.town_planning.common.ui.main.GameWindow;
@@ -26,16 +25,7 @@ public class App {
 
     new FontManager();
     ImageManager imageManager = new ImageManager();
-
-    EventBus eventBus = new EventBus();
-    GameModel gameModel = new GameModel(MAP_WIDTH, MAP_HEIGHT, SEED, eventBus);
-    GameMap gameMap = gameModel.getGameMap();
-
-    Camera camera = new Camera(1, WIDTH, HEIGHT, MAP_WIDTH, MAP_HEIGHT, eventBus);
-    ReadWriteLock stateLock = gameModel.getStateLock();
-    GameMapController gameMapController = new GameMapController(camera, stateLock);
     SwingUtilities.invokeLater(() -> {
-      ImageManager imageManager = new ImageManager();
       GameWindow gameWindow = new GameWindow(WIDTH, HEIGHT);
       GameFlowController controller = new GameFlowController(
           gameWindow, imageManager, WIDTH, HEIGHT, MAP_WIDTH, MAP_HEIGHT, SEED);

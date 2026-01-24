@@ -64,6 +64,9 @@ public class ResidentBehaviorAction implements GameAction {
     }
 
     ResidentState state = resident.getState();
+    if (state == ResidentState.PANICKING) {
+      return;
+    }
     if (state == ResidentState.AT_HOME) {
       handleAtHome(context, resident, map);
       return;

@@ -3,8 +3,10 @@ package io.github.sasori_256.town_planning.entity.model;
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.entity.building.Building;
 import io.github.sasori_256.town_planning.entity.disaster.Disaster;
+import io.github.sasori_256.town_planning.entity.disaster.DisasterType;
 import io.github.sasori_256.town_planning.entity.resident.Resident;
 import io.github.sasori_256.town_planning.map.model.GameMap;
+import java.awt.geom.Point2D;
 
 // Streamとは
 // Streamは、Java 8で導入されたjava.util.streamパッケージに属するクラスであり、
@@ -132,5 +134,13 @@ public interface GameContext {
    * @param <T>    エンティティ型
    */
   <T extends BaseGameEntity> void removeEntity(T entity);
+
+  /**
+   * 天災の影響をゲーム世界に適用する。
+   *
+   * @param center 着弾位置
+   * @param type   天災種別
+   */
+  void applyDisasterImpact(Point2D.Double center, DisasterType type);
 
 }

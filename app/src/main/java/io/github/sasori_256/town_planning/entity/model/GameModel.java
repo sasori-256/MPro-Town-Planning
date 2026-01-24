@@ -1,6 +1,7 @@
 package io.github.sasori_256.town_planning.entity.model;
 
 import java.awt.geom.Point2D;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -13,12 +14,15 @@ import io.github.sasori_256.town_planning.common.core.GameConfig;
 import io.github.sasori_256.town_planning.common.core.GameLoop;
 import io.github.sasori_256.town_planning.common.core.SimulationStep;
 import io.github.sasori_256.town_planning.common.event.EventBus;
+import io.github.sasori_256.town_planning.common.event.events.ResidentDiedEvent;
 import io.github.sasori_256.town_planning.entity.building.Building;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
 import io.github.sasori_256.town_planning.entity.disaster.Disaster;
+import io.github.sasori_256.town_planning.entity.disaster.DisasterType;
 import io.github.sasori_256.town_planning.entity.model.manager.BuildingManager;
 import io.github.sasori_256.town_planning.entity.model.manager.EntityManager;
 import io.github.sasori_256.town_planning.entity.model.manager.PopulationManager;
+import io.github.sasori_256.town_planning.entity.model.manager.ResidentPanicManager;
 import io.github.sasori_256.town_planning.entity.model.manager.RelocationManager;
 import io.github.sasori_256.town_planning.entity.model.manager.SoulManager;
 import io.github.sasori_256.town_planning.entity.model.manager.TimeManager;
@@ -64,6 +68,8 @@ public class GameModel implements GameContext, SimulationStep {
   private final PopulationManager populationManager;
   /** 建物管理。 */
   private final BuildingManager buildingManager;
+  /** 住民のパニック管理。 */
+  private final ResidentPanicManager residentPanicManager;
 
   /** アニメーション進行用の経過時間バッファ。 */
   private double animationAccumulator = 0.0;
@@ -88,6 +94,7 @@ public class GameModel implements GameContext, SimulationStep {
     this.populationManager = new PopulationManager(eventBus, stateLock, entityManager);
     this.buildingManager = new BuildingManager(eventBus, gameMap, stateLock, soulManager,
         entityManager);
+    this.residentPanicManager = new ResidentPanicManager(stateLock, entityManager);
 
     this.gameLoop = null;
 
@@ -220,6 +227,41 @@ public class GameModel implements GameContext, SimulationStep {
   @Override
   public <T extends BaseGameEntity> void removeEntity(T entity) {
     entityManager.removeEntity(entity, this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void applyDisasterImpact(Point2D.Double center, DisasterType type) {
+    if (center == null || type == null) {
+      return;
+    }
+    double damageRadius = type.getRadius();
+    int damage = type.getDamage();
+    double panicRadius = damageRadius + 3.0;
+    withWriteLock(() -> {
+      killResidentsWithin(center, damageRadius);
+      List<Building> destroyed = buildingManager.damageBuildings(this, center, damageRadius, damage);
+      residentPanicManager.panicResidentsByDestroyedBuildings(this, destroyed);
+      residentPanicManager.panicResidentsInRing(this, center, damageRadius, panicRadius);
+    });
+  }
+
+  private void killResidentsWithin(Point2D.Double center, double radius) {
+    if (center == null || radius <= 0.0) {
+      return;
+    }
+    for (Resident resident : entityManager.snapshotResidents()) {
+      if (resident == null) {
+        continue;
+      }
+      if (resident.getState() == ResidentState.DEAD || resident.getState() == ResidentState.AT_HOME) {
+        continue;
+      }
+      if (resident.getPosition().distance(center) <= radius) {
+        resident.markDead();
+        eventBus.publish(new ResidentDiedEvent(resident, getPopulationAlive()));
+      }
+    }
   }
 
   // --- Game Logic API ---

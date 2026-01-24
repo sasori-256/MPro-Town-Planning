@@ -10,12 +10,20 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import javax.swing.JPanel;
+import javax.swing.AbstractAction;
+import javax.swing.JComponent;
+import javax.swing.KeyStroke;
+import java.awt.Graphics;
+import java.awt.geom.Point2D;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 
 import io.github.sasori_256.town_planning.common.ui.AnimationManager;
 import io.github.sasori_256.town_planning.common.ui.ImageManager;
 import io.github.sasori_256.town_planning.common.ui.PaintGameObject;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.view.PaintObjectSelectUI;
+import io.github.sasori_256.town_planning.common.ui.main.GameFlowNavigator;
 import io.github.sasori_256.town_planning.common.ui.main.UiRefreshable;
 import io.github.sasori_256.town_planning.common.ui.resourceViewer.view.PaintResourceViewerUI;
 import io.github.sasori_256.town_planning.entity.Camera;
@@ -40,6 +48,7 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
   private final PaintGameObject paintGameObject;
   private final PaintObjectSelectUI paintObjectSelectUI;
   private final ReadWriteLock stateLock;
+  private final GameFlowNavigator navigator;
 
   /**
    * マップ描画パネルを生成する。
@@ -56,7 +65,8 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
       Camera camera,
       CategoryNode root,
       ReadWriteLock stateLock,
-      ImageManager imageManager) {
+      ImageManager imageManager,
+      GameFlowNavigator navigator) {
     this.gameMap = gameMap;
     this.gameModel = gameModel;
     this.camera = camera;
@@ -65,13 +75,29 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
     this.animationManager = new AnimationManager();
     this.paintGameObject = new PaintGameObject();
     this.stateLock = stateLock;
+    this.navigator = navigator;
     this.setLayout(null);
     setBackground(new Color(19, 175, 251)); // 海の色
     this.paintObjectSelectUI = new PaintObjectSelectUI(imageManager, this, root);
     this.add(new PaintResourceViewerUI(gameModel, imageManager, 1.0));
     paintObjectSelectUI.paint();
+    setupNavigationBindings();
     revalidate();
     repaint();
+  }
+
+  private void setupNavigationBindings() {
+    if (navigator == null) {
+      return;
+    }
+    getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+        .put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "goTitle");
+    getActionMap().put("goTitle", new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        navigator.goToTitle();
+      }
+    });
   }
 
   /**
@@ -149,7 +175,7 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
           paintGameObject.paintBuilding(g, entry.pos, gameMap, camera, imageManager,
               animationManager, this);
         } else if (entry.kind == DrawKind.RESIDENT) {
-          paintGameObject.paintResident(g, entry.resident, camera, imageManager, this);
+          paintGameObject.paintResident(g, entry.resident, camera, imageManager, animationManager, this);
         } else if (entry.kind == DrawKind.DISASTER) {
           paintGameObject.paintDisaster(g, entry.disaster, camera, imageManager,
               animationManager, this);

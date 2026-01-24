@@ -181,6 +181,24 @@ public class GameModel implements GameContext, SimulationStep {
     return populationManager.getDeadPopulation();
   }
 
+  /**
+   * 最大生存住民数を返す。
+   *
+   * @return 最大生存住民数
+   */
+  public int getPopulationMax() {
+    return populationManager.getMaxPopulation();
+  }
+
+  /**
+   * 累計死亡住民数を返す。
+   *
+   * @return 累計死亡住民数
+   */
+  public int getPopulationTotalDeaths() {
+    return populationManager.getTotalDeaths();
+  }
+
   /** {@inheritDoc} */
   @Override
   public <T extends BaseGameEntity> void spawnEntity(T entity) {

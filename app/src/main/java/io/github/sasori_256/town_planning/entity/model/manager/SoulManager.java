@@ -15,7 +15,7 @@ import io.github.sasori_256.town_planning.entity.model.GameContext;
  */
 public class SoulManager {
   /** イベント通知に使用するイベントバス。 */
-  private final EventBus eventBus;
+  private final EventBus eventBus = EventBus.getInstance();
   /** 状態同期に使用するロック。 */
   private final ReadWriteLock stateLock;
   /** 住民の検索と削除に使用するエンティティ管理。 */
@@ -26,14 +26,12 @@ public class SoulManager {
   /**
    * 魂管理を生成する。
    *
-   * @param eventBus    イベントバス
-   * @param stateLock   状態ロック
+   * @param stateLock     状態ロック
    * @param entityManager エンティティ管理
-   * @param initialSoul 初期魂量
+   * @param initialSoul   初期魂量
    */
-  public SoulManager(EventBus eventBus, ReadWriteLock stateLock, EntityManager entityManager,
+  public SoulManager(ReadWriteLock stateLock, EntityManager entityManager,
       int initialSoul) {
-    this.eventBus = eventBus;
     this.stateLock = stateLock;
     this.entityManager = entityManager;
     this.soul = initialSoul;

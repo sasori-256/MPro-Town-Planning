@@ -25,7 +25,7 @@ import io.github.sasori_256.town_planning.entity.resident.ResidentState;
  */
 public class EntityManager {
   /** イベント通知に使用するイベントバス。 */
-  private final EventBus eventBus;
+  private final EventBus eventBus = EventBus.getInstance();
   /** 状態同期に使用するロック。 */
   private final ReadWriteLock stateLock;
   /** 建物エンティティ一覧。 */
@@ -47,8 +47,7 @@ public class EntityManager {
    * @param eventBus  イベントバス
    * @param stateLock 状態ロック
    */
-  public EntityManager(EventBus eventBus, ReadWriteLock stateLock) {
-    this.eventBus = eventBus;
+  public EntityManager(ReadWriteLock stateLock) {
     this.stateLock = stateLock;
   }
 
@@ -123,7 +122,9 @@ public class EntityManager {
   /**
    * エンティティをゲーム世界に追加する。
    *
-   * <p>更新サイクル中は待機列に積み、後でまとめて追加する。</p>
+   * <p>
+   * 更新サイクル中は待機列に積み、後でまとめて追加する。
+   * </p>
    *
    * @param entity  追加するエンティティ
    * @param context ゲームコンテキスト
@@ -186,7 +187,9 @@ public class EntityManager {
   /**
    * エンティティをゲーム世界から削除する。
    *
-   * <p>更新サイクル中は待機列に積み、後でまとめて削除する。</p>
+   * <p>
+   * 更新サイクル中は待機列に積み、後でまとめて削除する。
+   * </p>
    *
    * @param entity  削除するエンティティ
    * @param context ゲームコンテキスト

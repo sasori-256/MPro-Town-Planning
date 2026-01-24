@@ -42,7 +42,7 @@ public class GameWindow extends JFrame {
   private GameModel gameModel;
   private GameMap gameMap;
   private Camera camera;
-  private EventBus eventBus;
+  private EventBus eventBus = EventBus.getInstance();
   private GameMapController gameMapController;
   private ReadWriteLock stateLock;
   private ImageManager imageManager;
@@ -55,7 +55,6 @@ public class GameWindow extends JFrame {
    * @param camera            カメラ
    * @param width             ウィンドウ幅
    * @param height            ウィンドウ高さ
-   * @param eventBus          イベントバス
    * @param gameMapController マップ操作コントローラ
    * @param stateLock         状態ロック
    * @param imageManager      画像管理マネージャ
@@ -66,14 +65,12 @@ public class GameWindow extends JFrame {
       Camera camera,
       int width,
       int height,
-      EventBus eventBus,
       GameMapController gameMapController,
       ReadWriteLock stateLock,
       ImageManager imageManager) {
     this.gameModel = gameModel;
     this.gameMap = gameMap;
     this.camera = camera;
-    this.eventBus = eventBus;
     this.gameMapController = gameMapController;
     this.stateLock = stateLock;
     this.imageManager = imageManager;
@@ -100,7 +97,7 @@ public class GameWindow extends JFrame {
       }
     });
     setVisible(true);
-    GameConfig.reportErrors(eventBus);
+    GameConfig.reportErrors();
   }
 
   /**

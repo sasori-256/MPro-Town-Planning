@@ -30,17 +30,16 @@ public class App {
 
     ImageManager imageManager = new ImageManager();
 
-    EventBus eventBus = new EventBus();
-    GameModel gameModel = new GameModel(MAP_WIDTH, MAP_HEIGHT, SEED, eventBus);
+    GameModel gameModel = new GameModel(MAP_WIDTH, MAP_HEIGHT, SEED);
     GameMap gameMap = gameModel.getGameMap();
 
-    Camera camera = new Camera(1, WIDTH, HEIGHT, MAP_WIDTH, MAP_HEIGHT, eventBus);
+    Camera camera = new Camera(1, WIDTH, HEIGHT, MAP_WIDTH, MAP_HEIGHT);
     ReadWriteLock stateLock = gameModel.getStateLock();
     GameMapController gameMapController = new GameMapController(camera, stateLock);
     SwingUtilities.invokeLater(() -> {
       GameWindow gameWindow = new GameWindow(
           // TODO: gameMapを引数に渡すのが冗長なのでgameModelからgetするように変更する
-          gameModel, gameMap, camera, WIDTH, HEIGHT, eventBus, gameMapController, stateLock, imageManager);
+          gameModel, gameMap, camera, WIDTH, HEIGHT, gameMapController, stateLock, imageManager);
       gameModel.startGameLoop(gameWindow::repaint);
     });
   }

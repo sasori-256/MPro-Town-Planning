@@ -3,6 +3,8 @@ package io.github.sasori_256.town_planning.map.controller.handler;
 import java.awt.geom.Point2D;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+
+import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailedEvent;
 import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailureReason;
 import io.github.sasori_256.town_planning.common.event.events.EntitySpawnKind;
@@ -18,6 +20,7 @@ import io.github.sasori_256.town_planning.map.model.MapContext;
 public class ActionDisasterHandler
     implements BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> {
   private final GameModel gameModel;
+  private final EventBus eventBus = EventBus.getInstance();
   private final GameMapController gameMapController;
   private final MapContext mapContext;
 
@@ -48,7 +51,7 @@ public class ActionDisasterHandler
     }
     Point2D.Double roundedPoint = new Point2D.Double(Math.round(isoPoint.x), Math.round(isoPoint.y));
     if (mapContext != null && !mapContext.isValidPosition(roundedPoint)) {
-      gameModel.getEventBus().publish(new EntitySpawnFailedEvent(
+      eventBus.publish(new EntitySpawnFailedEvent(
           EntitySpawnKind.DISASTER,
           EntitySpawnFailureReason.INVALID_POSITION,
           roundedPoint,
@@ -59,7 +62,7 @@ public class ActionDisasterHandler
     if (entity instanceof Disaster disaster) {
       gameModel.spawnEntity(disaster);
     } else {
-      gameModel.getEventBus().publish(new EntitySpawnFailedEvent(
+      eventBus.publish(new EntitySpawnFailedEvent(
           EntitySpawnKind.DISASTER,
           EntitySpawnFailureReason.INVALID_ENTITY,
           roundedPoint,

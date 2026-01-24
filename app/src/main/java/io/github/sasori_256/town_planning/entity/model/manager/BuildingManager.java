@@ -20,7 +20,7 @@ import io.github.sasori_256.town_planning.map.model.GameMap;
  */
 public class BuildingManager {
   /** イベント通知に使用するイベントバス。 */
-  private final EventBus eventBus;
+  private final EventBus eventBus = EventBus.getInstance();
   /** マップ本体。 */
   private final GameMap gameMap;
   /** 状態同期に使用するロック。 */
@@ -33,15 +33,13 @@ public class BuildingManager {
   /**
    * 建物管理を生成する。
    *
-   * @param eventBus      イベントバス
    * @param gameMap       マップ
    * @param stateLock     状態ロック
    * @param soulManager   魂管理
    * @param entityManager エンティティ管理
    */
-  public BuildingManager(EventBus eventBus, GameMap gameMap, ReadWriteLock stateLock,
+  public BuildingManager(GameMap gameMap, ReadWriteLock stateLock,
       SoulManager soulManager, EntityManager entityManager) {
-    this.eventBus = eventBus;
     this.gameMap = gameMap;
     this.stateLock = stateLock;
     this.soulManager = soulManager;

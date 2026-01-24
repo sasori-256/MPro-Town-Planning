@@ -13,7 +13,20 @@ import java.util.Objects;
  * イベントクラス（Record推奨）をキーとしてPub/Subを行う。
  */
 public class EventBus {
+  private static final EventBus instance = new EventBus();
   private final Map<Class<?>, List<Consumer<?>>> listeners = new ConcurrentHashMap<>();
+
+  private EventBus() {
+  }
+
+  /**
+   * イベントバスのシングルトンインスタンスを取得する。
+   *
+   * @return イベントバスのインスタンス
+   */
+  public static EventBus getInstance() {
+    return instance;
+  }
 
   /**
    * イベントを購読する。

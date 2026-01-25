@@ -48,13 +48,15 @@ public class BuildingPreview {
   public void setBuildingPreviewPos(Point2D.Double pos) {
     try {
       stateLock.writeLock().lock();
-      pos.x = Math.round(pos.x);
-      pos.y = Math.round(pos.y);
-      this.buildingPreviewPos = pos;
-      if (pos != null) {
-        this.buildable = gameMap.canPlaceBuilding(pos, buildingPreviewType);
+      if (pos == null) {
+        this.buildingPreviewPos = null;
+        this.buildable = false;
+        return;
       }
-
+      Point2D.Double roundedPos =
+          new Point2D.Double(Math.round(pos.x), Math.round(pos.y));
+      this.buildingPreviewPos = roundedPos;
+      this.buildable = gameMap.canPlaceBuilding(roundedPos, buildingPreviewType);
     } finally {
       stateLock.writeLock().unlock();
     }

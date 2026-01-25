@@ -112,10 +112,11 @@ public class PaintGameObject {
    * 
    * @param g            グラフィックスコンテキスト
    * @param pos          座標
-   * @param buildingName 建物の名前
+   * @param buildingType 建物の種類
    * @param camera       カメラ
    * @param imageManager 画像取得用マネージャー
    * @param panel        描画対象のパネル
+   * @param buildable    建設可能かどうか
    */
   public void paintPreviewBuilding(Graphics g, Point2D.Double pos, BuildingType buildingType,
       Camera camera, ImageManager imageManager, JPanel panel, boolean buildable) {

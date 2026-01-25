@@ -4,10 +4,8 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
-import java.awt.Image;
 import java.awt.Point;
 import java.awt.geom.Point2D;
-import java.awt.event.ActionListener;
 
 import io.github.sasori_256.town_planning.common.ui.CustomButton;
 import io.github.sasori_256.town_planning.common.ui.ImageManager;
@@ -72,9 +70,8 @@ public class BuildPreviewUI extends JPanel {
     if (pos == null) {
       return;
     }
-    pos.x = Math.round(pos.x);
-    pos.y = Math.round(pos.y);
-    Point2D.Double screenPos = camera.isoToScreen(pos);
+    Point2D.Double roundedPos = new Point2D.Double(Math.round(pos.x), Math.round(pos.y));
+    Point2D.Double screenPos = camera.isoToScreen(roundedPos);
     Point location = new Point((int) screenPos.x - this.getWidth() / 2, (int) screenPos.y - this.getHeight() * 2);
     this.setLocation(location);
   }

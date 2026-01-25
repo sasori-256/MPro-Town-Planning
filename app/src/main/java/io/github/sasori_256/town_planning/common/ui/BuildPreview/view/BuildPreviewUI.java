@@ -4,10 +4,8 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JPanel;
 
-import java.awt.Image;
 import java.awt.Point;
 import java.awt.geom.Point2D;
-import java.awt.event.ActionListener;
 
 import io.github.sasori_256.town_planning.common.ui.CustomButton;
 import io.github.sasori_256.town_planning.common.ui.ImageManager;

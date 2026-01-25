@@ -344,6 +344,9 @@ public class GameMap implements MapContext {
   }
 
   public boolean canPlaceBuilding(Point2D.Double pos, BuildingType type) {
+    if (pos == null || type == null) {
+      return false;
+    }
     int anchorX = (int) Math.round(pos.getX());
     int anchorY = (int) Math.round(pos.getY());
     int originX = anchorX - type.getAnchorX();

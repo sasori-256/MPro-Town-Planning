@@ -3,7 +3,6 @@ package io.github.sasori_256.town_planning.entity;
 import java.awt.geom.Point2D;
 
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
-import io.github.sasori_256.town_planning.common.event.events.TemporaryBuildEvent;
 import io.github.sasori_256.town_planning.common.event.EventBus;
 
 /**

@@ -1,4 +1,4 @@
-package io.github.sasori_256.town_planning.common.ui.BuildPreview.controller;
+package io.github.sasori_256.town_planning.common.ui.buildPreview.controller;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;

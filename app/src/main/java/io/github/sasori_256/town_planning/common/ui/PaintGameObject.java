@@ -270,17 +270,6 @@ public class PaintGameObject {
     }
   }
 
-  private BufferedImage makeTranslucent(BufferedImage image, float alpha) {
-    int width = image.getWidth();
-    int height = image.getHeight();
-    BufferedImage translucentImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-    Graphics2D g2d = translucentImage.createGraphics();
-    g2d.setComposite(AlphaComposite.SrcOver.derive(alpha));
-    g2d.drawImage(image, 0, 0, null);
-    g2d.dispose();
-    return translucentImage;
-  }
-
   private void paintImage(Graphics g, Point2D.Double pos, BufferedImage image, Camera camera,
       JPanel panel, boolean snapToGrid) {
     if (image == null) {

@@ -1,4 +1,4 @@
-package io.github.sasori_256.town_planning.common.ui.BuildPreview.view;
+package io.github.sasori_256.town_planning.common.ui.buildPreview.view;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -12,10 +12,10 @@ import java.awt.event.ActionListener;
 import io.github.sasori_256.town_planning.common.ui.CustomButton;
 import io.github.sasori_256.town_planning.common.ui.ImageManager;
 import io.github.sasori_256.town_planning.common.ui.ImageManager.ImageStorage;
-import io.github.sasori_256.town_planning.common.ui.BuildPreview.PreviewButtonType;
-import io.github.sasori_256.town_planning.common.ui.BuildPreview.controller.BuildAccept;
-import io.github.sasori_256.town_planning.common.ui.BuildPreview.controller.BuildCancel;
-import io.github.sasori_256.town_planning.common.ui.BuildPreview.controller.BuildRotate;
+import io.github.sasori_256.town_planning.common.ui.buildPreview.PreviewButtonType;
+import io.github.sasori_256.town_planning.common.ui.buildPreview.controller.BuildAccept;
+import io.github.sasori_256.town_planning.common.ui.buildPreview.controller.BuildCancel;
+import io.github.sasori_256.town_planning.common.ui.buildPreview.controller.BuildRotate;
 import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.entity.model.GameModel;
 

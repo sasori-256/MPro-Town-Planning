@@ -6,7 +6,6 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
@@ -19,7 +18,7 @@ import io.github.sasori_256.town_planning.common.event.events.TemporaryBuildEven
 import io.github.sasori_256.town_planning.common.ui.AnimationManager;
 import io.github.sasori_256.town_planning.common.ui.ImageManager;
 import io.github.sasori_256.town_planning.common.ui.PaintGameObject;
-import io.github.sasori_256.town_planning.common.ui.BuildPreview.view.BuildPreviewUI;
+import io.github.sasori_256.town_planning.common.ui.buildPreview.view.BuildPreviewUI;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.view.PaintObjectSelectUI;
 import io.github.sasori_256.town_planning.common.ui.main.UiRefreshable;
@@ -87,16 +86,22 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
     repaint();
 
     eventBus.subscribe(TemporaryBuildEvent.class, event -> {
-      buildPreviewUI.setVisible(true);
-      buildPreviewUI.updateUpPos(gameModel.getBuildingPreview().getBuildingPreviewPos());
+      javax.swing.SwingUtilities.invokeLater(() -> {
+        buildPreviewUI.setVisible(true);
+        buildPreviewUI.updateUpPos(gameModel.getBuildingPreview().getBuildingPreviewPos());
+      });
     });
     eventBus.subscribe(MapUpdatedEvent.class, event -> {
       if (buildPreviewUI.isVisible()) {
-        buildPreviewUI.updateUpPos(gameModel.getBuildingPreview().getBuildingPreviewPos());
+        javax.swing.SwingUtilities.invokeLater(() -> {
+          buildPreviewUI.updateUpPos(gameModel.getBuildingPreview().getBuildingPreviewPos());
+        });
       }
     });
     eventBus.subscribe(CancelBuildEvent.class, event -> {
-      buildPreviewUI.setVisible(false);
+      javax.swing.SwingUtilities.invokeLater(() -> {
+        buildPreviewUI.setVisible(false);
+      });
     });
   }
 

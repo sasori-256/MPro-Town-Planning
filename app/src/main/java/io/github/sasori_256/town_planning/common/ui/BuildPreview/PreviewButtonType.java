@@ -1,6 +1,4 @@
-package io.github.sasori_256.town_planning.common.ui.BuildPreview;
-
-;
+package io.github.sasori_256.town_planning.common.ui.buildPreview;
 
 public enum PreviewButtonType {
   ACCEPT("accept"),

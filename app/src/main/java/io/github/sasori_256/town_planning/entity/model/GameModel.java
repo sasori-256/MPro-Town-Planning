@@ -27,7 +27,6 @@ import io.github.sasori_256.town_planning.entity.resident.ResidentType;
 import io.github.sasori_256.town_planning.map.model.BuildingPreview;
 import io.github.sasori_256.town_planning.map.model.GameMap;
 import io.github.sasori_256.town_planning.map.model.TerrainType;
-import io.github.sasori_256.town_planning.map.model.BuildingPreview;
 
 /**
  * ゲームの環境情報を管理するモデルクラス。

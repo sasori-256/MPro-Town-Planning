@@ -43,9 +43,9 @@ import io.github.sasori_256.town_planning.map.model.TerrainType;
  */
 public class GameModel implements GameContext, SimulationStep {
   /** 初期魂所持量。 */
-  private static final int INITIAL_SOUL = 100;
+  private static final int INITIAL_SOUL = GameConfig.getSoulInitialAmount();
   /** アニメーション進行の固定ステップ(秒)。 */
-  private static final double ANIMATION_STEP = 1.0 / 30.0;
+  private static final double ANIMATION_STEP = GameConfig.getAnimationStepSeconds();
 
   /** イベント通知に使用するイベントバス。 */
   private final EventBus eventBus = EventBus.getInstance();

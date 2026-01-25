@@ -8,6 +8,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Supplier;
 
+import io.github.sasori_256.town_planning.common.core.GameConfig;
 import io.github.sasori_256.town_planning.entity.building.Building;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
 import io.github.sasori_256.town_planning.entity.model.CategoryType;
@@ -19,7 +20,8 @@ import io.github.sasori_256.town_planning.entity.resident.ResidentState;
  */
 public class RelocationManager {
   /** 住民再配置で最低限成立させる世帯人数。 */
-  private static final int MIN_RESIDENTS_PER_HOUSE = 2;
+  private static final int MIN_RESIDENTS_PER_HOUSE =
+      GameConfig.getResidentRelocationMinResidentsPerHouse();
   /** 状態同期に使用するロック。 */
   private final ReadWriteLock stateLock;
   /** エンティティ管理。 */

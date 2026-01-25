@@ -2,6 +2,7 @@ package io.github.sasori_256.town_planning.entity.disaster.strategy;
 
 import java.awt.geom.Point2D;
 
+import io.github.sasori_256.town_planning.common.core.GameConfig;
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.DisasterOccurredEvent;
 import io.github.sasori_256.town_planning.entity.disaster.Disaster;
@@ -16,8 +17,9 @@ import io.github.sasori_256.town_planning.entity.model.GameContext;
  */
 public class MeteorDisasterAction implements GameAction {
   private static final String IMPACT_ANIMATION_NAME = "meteor_impact";
-  private static final int IMPACT_ANIMATION_FPS = 6;
-  private static final double IMPACT_EFFECT_DURATION = 1.0;
+  private static final int IMPACT_ANIMATION_FPS = GameConfig.getDisasterMeteorAnimationFps();
+  private static final double IMPACT_EFFECT_DURATION =
+      GameConfig.getDisasterMeteorEffectDurationSeconds();
   private final EventBus eventBus = EventBus.getInstance();
   private final Point2D.Double targetPos;
   private final DisasterType type;
@@ -35,7 +37,7 @@ public class MeteorDisasterAction implements GameAction {
     this.targetPos = new Point2D.Double(targetPos.x, targetPos.y);
     this.type = type;
     this.timer = 0.0;
-    this.impactTime = 2.0;
+    this.impactTime = GameConfig.getDisasterMeteorImpactSeconds();
     this.impacted = false;
   }
 

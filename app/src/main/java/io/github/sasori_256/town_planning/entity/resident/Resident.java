@@ -2,6 +2,7 @@ package io.github.sasori_256.town_planning.entity.resident;
 
 import java.awt.geom.Point2D;
 
+import io.github.sasori_256.town_planning.common.core.GameConfig;
 import io.github.sasori_256.town_planning.common.core.strategy.CompositeUpdateStrategy;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.entity.resident.strategy.ResidentBehaviorAction;
@@ -12,7 +13,7 @@ import io.github.sasori_256.town_planning.entity.resident.strategy.ResidentLifeC
  * 住民エンティティを表すクラス。
  */
 public class Resident extends BaseGameEntity {
-  private static final double DEATH_ANIMATION_DURATION = 0.4;
+  private static final double DEATH_ANIMATION_DURATION = GameConfig.getResidentDeathAnimationDurationSeconds();
   private final ResidentType type;
   private Point2D.Double homePosition;
   private Point2D.Double relocationTarget;
@@ -214,8 +215,6 @@ public class Resident extends BaseGameEntity {
     if (state != ResidentState.DEAD) {
       return 0.0;
     }
-    // 一発で終わらせる設定の場合の対応
-    // TODO: Dead codeと検出されているから、設定ファイルから定数を読み込めるようにして対応する
     if (DEATH_ANIMATION_DURATION <= 0.0) {
       return 1.0;
     }

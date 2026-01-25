@@ -36,10 +36,10 @@ public class DestinationMoveAction implements GameAction {
     FAILED
   }
 
-  private static final double ARRIVAL_EPSILON = 1e-3;
-  private static final double SEARCH_COOLDOWN = 0.5;
-  private static final int MAX_RANDOM_TRIES = 20;
-  private static final long COST_INF = 1_000_000L;
+  private static final double ARRIVAL_EPSILON = GameConfig.getPathfindingArrivalEpsilonTiles();
+  private static final double SEARCH_COOLDOWN = GameConfig.getPathfindingSearchCooldownSeconds();
+  private static final int MAX_RANDOM_TRIES = GameConfig.getPathfindingMaxRandomTries();
+  private static final long COST_INF = GameConfig.getPathfindingCostInf();
 
   private final double speed;
   private final boolean autoDestination;

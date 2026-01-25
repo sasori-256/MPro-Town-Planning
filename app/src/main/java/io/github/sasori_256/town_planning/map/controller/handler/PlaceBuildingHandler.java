@@ -10,6 +10,7 @@ import io.github.sasori_256.town_planning.common.event.events.CancelBuildEvent;
 import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailedEvent;
 import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailureReason;
 import io.github.sasori_256.town_planning.common.event.events.EntitySpawnKind;
+import io.github.sasori_256.town_planning.common.event.events.TemporaryBuildEvent;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.entity.model.GameModel;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
@@ -42,20 +43,10 @@ public class PlaceBuildingHandler
    */
   @Override
   public void accept(Point2D.Double isoPoint, Function<Point2D.Double, ? extends BaseGameEntity> entityGenerator) {
-    System.out.println("Placing building at: " + isoPoint);
-    Point2D.Double roundedPoint = new Point2D.Double(Math.round(isoPoint.x), Math.round(isoPoint.y));
-    BaseGameEntity entity = entityGenerator.apply(roundedPoint);
-    if (entity instanceof Building building) {
-      gameModel.constructBuilding(roundedPoint, building.getType());
-    } else {
-      eventBus.publish(new EntitySpawnFailedEvent(
-          EntitySpawnKind.BUILDING,
-          EntitySpawnFailureReason.INVALID_ENTITY,
-          roundedPoint,
-          "generated=" + (entity == null ? "null" : entity.getClass().getSimpleName())));
+    gameModel.getBuildingPreview().setEntityGenerator(entityGenerator);
+    gameModel.getBuildingPreview().setBuildingPreviewPos(isoPoint);
+    if (gameModel.getBuildingPreview().getBuildable()) {
+      eventBus.publish(new TemporaryBuildEvent());
     }
-    gameMapController.setSelectedEntityGenerator((point) -> null); // TODO:Buildingの連続配置をしたい場合、これじゃだめ
-    gameMapController.setActionOnClick(new ClickGameMapHandler());
-    eventBus.publish(new CancelBuildEvent());
   }
 }

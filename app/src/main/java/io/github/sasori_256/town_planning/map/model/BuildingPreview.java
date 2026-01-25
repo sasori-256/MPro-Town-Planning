@@ -2,15 +2,17 @@ package io.github.sasori_256.town_planning.map.model;
 
 import java.awt.geom.Point2D;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.function.Function;
 
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.CancelBuildEvent;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
-import io.github.sasori_256.town_planning.map.model.GameMap;
+import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 
 public class BuildingPreview {
   private final EventBus eventBus = EventBus.getInstance();
   private final ReadWriteLock stateLock;
+  private Function<Point2D.Double, ? extends BaseGameEntity> entityGenerator = (point) -> null;
   private Point2D.Double buildingPreviewPos = null;
   private BuildingType buildingPreviewType = null;
   private boolean buildable = false;
@@ -24,9 +26,30 @@ public class BuildingPreview {
     });
   }
 
+  public void setEntityGenerator(
+      Function<Point2D.Double, ? extends BaseGameEntity> entityGenerator) {
+    try {
+      stateLock.writeLock().lock();
+      this.entityGenerator = entityGenerator;
+    } finally {
+      stateLock.writeLock().unlock();
+    }
+  }
+
+  public Function<Point2D.Double, ? extends BaseGameEntity> getEntityGenerator() {
+    try {
+      stateLock.readLock().lock();
+      return entityGenerator;
+    } finally {
+      stateLock.readLock().unlock();
+    }
+  }
+
   public void setBuildingPreviewPos(Point2D.Double pos) {
     try {
       stateLock.writeLock().lock();
+      pos.x = Math.round(pos.x);
+      pos.y = Math.round(pos.y);
       this.buildingPreviewPos = pos;
       if (pos != null) {
         this.buildable = gameMap.canPlaceBuilding(pos, buildingPreviewType);

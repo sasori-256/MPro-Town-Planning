@@ -6,14 +6,20 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import javax.swing.JPanel;
 
+import io.github.sasori_256.town_planning.common.event.EventBus;
+import io.github.sasori_256.town_planning.common.event.events.CancelBuildEvent;
+import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
+import io.github.sasori_256.town_planning.common.event.events.TemporaryBuildEvent;
 import io.github.sasori_256.town_planning.common.ui.AnimationManager;
 import io.github.sasori_256.town_planning.common.ui.ImageManager;
 import io.github.sasori_256.town_planning.common.ui.PaintGameObject;
+import io.github.sasori_256.town_planning.common.ui.BuildPreview.view.BuildPreviewUI;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.view.PaintObjectSelectUI;
 import io.github.sasori_256.town_planning.common.ui.main.UiRefreshable;
@@ -39,7 +45,9 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
   private final AnimationManager animationManager;
   private final PaintGameObject paintGameObject;
   private final PaintObjectSelectUI paintObjectSelectUI;
+  private final BuildPreviewUI buildPreviewUI;
   private final ReadWriteLock stateLock;
+  private final EventBus eventBus = EventBus.getInstance();
 
   /**
    * マップ描画パネルを生成する。
@@ -67,11 +75,29 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
     this.stateLock = stateLock;
     this.setLayout(null);
     setBackground(new Color(19, 175, 251)); // 海の色
+    this.buildPreviewUI = new BuildPreviewUI(imageManager, camera, gameModel);
     this.paintObjectSelectUI = new PaintObjectSelectUI(imageManager, this, root);
     this.add(new PaintResourceViewerUI(gameModel, imageManager, 1.0));
+    buildPreviewUI.setVisible(false);
+    this.add(buildPreviewUI);
+
     paintObjectSelectUI.paint();
+
     revalidate();
     repaint();
+
+    eventBus.subscribe(TemporaryBuildEvent.class, event -> {
+      buildPreviewUI.setVisible(true);
+      buildPreviewUI.updateUpPos(gameModel.getBuildingPreview().getBuildingPreviewPos());
+    });
+    eventBus.subscribe(MapUpdatedEvent.class, event -> {
+      if (buildPreviewUI.isVisible()) {
+        buildPreviewUI.updateUpPos(gameModel.getBuildingPreview().getBuildingPreviewPos());
+      }
+    });
+    eventBus.subscribe(CancelBuildEvent.class, event -> {
+      buildPreviewUI.setVisible(false);
+    });
   }
 
   /**
@@ -156,6 +182,7 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
         }
       }
 
+      // 建物プレビューを描画
       if (gameModel.getBuildingPreview().getBuildingPreviewType() != null
           && gameModel.getBuildingPreview().getBuildingPreviewPos() != null) {
         paintGameObject.paintPreviewBuilding(g, gameModel.getBuildingPreview().getBuildingPreviewPos(),

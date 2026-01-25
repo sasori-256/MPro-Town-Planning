@@ -19,6 +19,7 @@ import javax.swing.SwingUtilities;
 
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.CancelBuildEvent;
+import io.github.sasori_256.town_planning.common.event.events.TemporaryBuildEvent;
 import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.map.controller.handler.*;
@@ -49,6 +50,10 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
     this.selectedEntityGenerator = (point) -> null;
     eventBus.subscribe(CancelBuildEvent.class, event -> {
       this.selectedEntityGenerator = (point) -> null;
+      this.actionOnClick = new ClickGameMapHandler();
+      this.actionOnMove = new MoveGameMapHandler();
+    });
+    eventBus.subscribe(TemporaryBuildEvent.class, event -> {
       this.actionOnClick = new ClickGameMapHandler();
       this.actionOnMove = new MoveGameMapHandler();
     });

@@ -1,5 +1,6 @@
 package io.github.sasori_256.town_planning.entity.resident.strategy;
 
+import io.github.sasori_256.town_planning.common.core.GameConfig;
 import io.github.sasori_256.town_planning.entity.building.Building;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
@@ -24,9 +25,9 @@ import java.util.stream.Collectors;
  */
 public class ResidentBehaviorAction implements GameAction {
   // Timings are in game seconds unless noted.
-  private static final double WORK_DURATION = 5.0;
-  private static final double HOME_WAIT_MIN = 8.0;
-  private static final double HOME_WAIT_MAX = 20.0;
+  private static final double WORK_DURATION = GameConfig.getResidentWorkDurationSeconds();
+  private static final double HOME_WAIT_MIN = GameConfig.getResidentHomeWaitMinSeconds();
+  private static final double HOME_WAIT_MAX = GameConfig.getResidentHomeWaitMaxSeconds();
   // Distance threshold to treat an entry point as reached.
   private static final double HOME_ENTRY_EPSILON = 0.1;
   private static final int[][] ADJACENT_OFFSETS = {

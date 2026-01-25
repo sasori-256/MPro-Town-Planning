@@ -32,10 +32,65 @@ public final class GameConfig {
     return getPositiveInt("corpse.soulFaithDivisor", 5);
   }
 
+  public static double getResidentWorkDurationSeconds() {
+    return getPositiveDouble("resident.workDurationSeconds", 5.0);
+  }
+
+  public static double getResidentHomeWaitMinSeconds() {
+    return getNonNegativeDouble("resident.homeWaitMinSeconds", 8.0);
+  }
+
+  public static double getResidentHomeWaitMaxSeconds() {
+    return getNonNegativeDouble("resident.homeWaitMaxSeconds", 20.0);
+  }
+
+  public static double getResidentMoveSpeedTilesPerSecond() {
+    return getPositiveDouble("resident.moveSpeedTilesPerSecond", 2.0);
+  }
+
+  public static double getResidentPanicSpeedTilesPerSecond() {
+    return getPositiveDouble("resident.panic.speedTilesPerSecond", 3.0);
+  }
+
+  public static double getResidentPanicRetargetMinSeconds() {
+    return getNonNegativeDouble("resident.panic.retargetMinSeconds", 0.2);
+  }
+
+  public static double getResidentPanicRetargetMaxSeconds() {
+    return getNonNegativeDouble("resident.panic.retargetMaxSeconds", 0.6);
+  }
+
+  public static double getResidentPanicDurationMinSeconds() {
+    return getNonNegativeDouble("resident.panic.durationMinSeconds", 4.0);
+  }
+
+  public static double getResidentPanicDurationMaxSeconds() {
+    return getNonNegativeDouble("resident.panic.durationMaxSeconds", 8.0);
+  }
+
+  public static double getResidentPanicRadiusTiles() {
+    return getNonNegativeDouble("resident.panic.radiusTiles", 3.0);
+  }
+
+  public static double getDisasterPanicRadiusOffsetTiles() {
+    return getNonNegativeDouble("disaster.panicRadiusOffsetTiles", 3.0);
+  }
+
   public static void preload() {
     getCorpseHarvestDelaySeconds();
     getCorpseSoulBase();
     getCorpseSoulFaithDivisor();
+    getResidentWorkDurationSeconds();
+    getResidentHomeWaitMinSeconds();
+    getResidentHomeWaitMaxSeconds();
+    getResidentMoveSpeedTilesPerSecond();
+    getResidentPanicSpeedTilesPerSecond();
+    getResidentPanicRetargetMinSeconds();
+    getResidentPanicRetargetMaxSeconds();
+    getResidentPanicDurationMinSeconds();
+    getResidentPanicDurationMaxSeconds();
+    getResidentPanicRadiusTiles();
+    getDisasterPanicRadiusOffsetTiles();
   }
 
   public static void reportErrors() {
@@ -89,6 +144,16 @@ public final class GameConfig {
   private static int getPositiveInt(String key, int defaultValue) {
     int value = getInt(key, defaultValue);
     return value <= 0 ? defaultValue : value;
+  }
+
+  private static double getNonNegativeDouble(String key, double defaultValue) {
+    double value = getDouble(key, defaultValue);
+    return value < 0.0 ? defaultValue : value;
+  }
+
+  private static double getPositiveDouble(String key, double defaultValue) {
+    double value = getDouble(key, defaultValue);
+    return value <= 0.0 ? defaultValue : value;
   }
 
   private static int getInt(String key, int defaultValue) {

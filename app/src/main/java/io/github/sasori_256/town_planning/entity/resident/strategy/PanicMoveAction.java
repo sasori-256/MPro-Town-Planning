@@ -4,6 +4,7 @@ import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.entity.model.GameAction;
 import io.github.sasori_256.town_planning.entity.model.GameContext;
 import io.github.sasori_256.town_planning.map.model.GameMap;
+import io.github.sasori_256.town_planning.common.core.GameConfig;
 import java.awt.geom.Point2D;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -11,13 +12,13 @@ import java.util.concurrent.ThreadLocalRandom;
  * パニック時に周囲をあたふた移動するアクション。
  */
 public class PanicMoveAction implements GameAction {
-  private static final double SPEED = 3.0; // タイル/秒
+  private static final double SPEED = GameConfig.getResidentPanicSpeedTilesPerSecond(); // タイル/秒
   private static final double ARRIVAL_EPSILON = 1e-3;
-  private static final double RETARGET_MIN = 0.2;
-  private static final double RETARGET_MAX = 0.6;
-  private static final double PANIC_DURATION_MIN = 4.0;
-  private static final double PANIC_DURATION_MAX = 8.0;
-  private static final double PANIC_RADIUS = 3.0;
+  private static final double RETARGET_MIN = GameConfig.getResidentPanicRetargetMinSeconds();
+  private static final double RETARGET_MAX = GameConfig.getResidentPanicRetargetMaxSeconds();
+  private static final double PANIC_DURATION_MIN = GameConfig.getResidentPanicDurationMinSeconds();
+  private static final double PANIC_DURATION_MAX = GameConfig.getResidentPanicDurationMaxSeconds();
+  private static final double PANIC_RADIUS = GameConfig.getResidentPanicRadiusTiles();
   private static final int[][] OFFSETS = {
       { 1, 0 },
       { -1, 0 },

@@ -229,7 +229,7 @@ public class GameModel implements GameContext, SimulationStep {
     }
     double damageRadius = type.getRadius();
     int damage = type.getDamage();
-    double panicRadius = damageRadius + 3.0;
+    double panicRadius = damageRadius + GameConfig.getDisasterPanicRadiusOffsetTiles();
     withWriteLock(() -> {
       killResidentsWithin(center, damageRadius);
       List<Building> destroyed = buildingManager.damageBuildings(this, center, damageRadius, damage);

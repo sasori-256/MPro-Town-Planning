@@ -70,9 +70,8 @@ public class BuildPreviewUI extends JPanel {
     if (pos == null) {
       return;
     }
-    pos.x = Math.round(pos.x);
-    pos.y = Math.round(pos.y);
-    Point2D.Double screenPos = camera.isoToScreen(pos);
+    Point2D.Double roundedPos = new Point2D.Double(Math.round(pos.x), Math.round(pos.y));
+    Point2D.Double screenPos = camera.isoToScreen(roundedPos);
     Point location = new Point((int) screenPos.x - this.getWidth() / 2, (int) screenPos.y - this.getHeight() * 2);
     this.setLocation(location);
   }

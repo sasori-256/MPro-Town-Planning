@@ -53,53 +53,53 @@ public class PaintObjectSelectUI {
 
   private void createButtonIfNotExists(String buttonText, int xPos, int yPos, int width, int height,
       ActionListener actionListener, MenuNode objectNode, int level) {
-    boolean exists = false;
+    CustomButton existingButton = null;
     for (CustomButton button : createdButtons.get(level)) {
       if (button.getTextContent().equals(buttonText)) {
-        exists = true;
+        existingButton = button;
         break;
       }
     }
-    if (!exists) { // 同じ名前のボタンが存在しない場合は追加する
-      String prefix = "";
-      switch (level) {
-        case 0:
-          prefix = "modeIcon_";
-          break;
-        case 1:
-          prefix = "categoryIcon_";
-          break;
-        case 2:
-          prefix = "objectIcon_";
-          break;
-      }
-      String imageName = prefix + buttonText.toLowerCase();
-      ImageStorage imageStorage = imageManager.getImageStorage(imageName);
-      CustomButton button;
-      if (imageStorage == null || imageStorage.getName() == null || imageStorage.getName().equals("error")) {
-        // System.err.println("Warning: Image not found: " + imageName);
-        button = new CustomButton(buttonText, xPos, yPos, width, height); // 画像が見つからない場合はテキストだけのボタンを使用
-      } else {
-        button = new CustomButton(buttonText, imageStorage, xPos, yPos, width, height); // 画像が見つかった場合は画像だけのボタンを使用
-        // button.setImage(imageStorage.getImage(), width, height);
-      }
-      // ボタンの画像を指定
-      button.addActionListener(actionListener);
-      if (objectNode != null) {
-        button.addActionListener(objectNode);
-      }
-      createdButtons.get(level).add(button);
-      panel.add(button);
+    if (existingButton != null) {
+      existingButton.updateLayout(xPos, yPos, width, height);
+      return;
     }
+    // 同じ名前のボタンが存在しない場合は追加する
+    String prefix = "";
+    switch (level) {
+      case 0:
+        prefix = "modeIcon_";
+        break;
+      case 1:
+        prefix = "categoryIcon_";
+        break;
+      case 2:
+        prefix = "objectIcon_";
+        break;
+    }
+    String imageName = prefix + buttonText.toLowerCase();
+    ImageStorage imageStorage = imageManager.getImageStorage(imageName);
+    CustomButton button;
+    if (imageStorage == null || imageStorage.getName() == null || imageStorage.getName().equals("error")) {
+      // System.err.println("Warning: Image not found: " + imageName);
+      button = new CustomButton(buttonText, xPos, yPos, width, height); // 画像が見つからない場合はテキストだけのボタンを使用
+    } else {
+      button = new CustomButton(buttonText, imageStorage, xPos, yPos, width, height); // 画像が見つかった場合は画像だけのボタンを使用
+      // button.setImage(imageStorage.getImage(), width, height);
+    }
+    // ボタンの画像を指定
+    button.addActionListener(actionListener);
+    if (objectNode != null) {
+      button.addActionListener(objectNode);
+    }
+    createdButtons.get(level).add(button);
+    panel.add(button);
   }
 
   /**
    * 全てのlevelのボタンを再配置・再描画する
    */
   public void repaintUI() {
-    clearButtonLevel(0);
-    clearButtonLevel(1);
-    clearButtonLevel(2);
     paint();
   }
 
@@ -252,9 +252,9 @@ public class PaintObjectSelectUI {
         createButtonIfNotExists(buttonText, xPos, yPos, width, height, listener, categoryNode, 1);
       }
     } else {
-      if (categoryRoot == null) {
+      if (categoryRoot == null && !selectedModeName.isEmpty()) {
         System.err.println("Selected mode root is null for mode: " + selectedModeName);
-      } else {
+      } else if (categoryRoot != null && !selectedModeName.isEmpty()) {
         System.out.println("No children in category root for mode: " + selectedModeName);
       }
     }

@@ -1,5 +1,6 @@
 package io.github.sasori_256.town_planning.entity.building.strategy;
 
+import io.github.sasori_256.town_planning.common.core.GameConfig;
 import io.github.sasori_256.town_planning.entity.building.Building;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.entity.model.GameContext;
@@ -17,7 +18,10 @@ import java.util.concurrent.ThreadLocalRandom;
  */
 public class PopulationGrowthEffect implements GameEffect {
   // 住民生成の判定間隔(秒)。
-  private static final double DEFAULT_SPAWN_INTERVAL = 15.0;
+  private static final double SPAWN_INTERVAL = GameConfig.getResidentGrowthSpawnIntervalSeconds();
+  private static final int MIN_HOME_POPULATION = GameConfig.getResidentGrowthMinHomePopulation();
+  private static final double SPAWN_CHANCE =
+      Math.clamp(GameConfig.getResidentGrowthSpawnChance(), 0.0, 1.0);
   private final int maxPopulation;
   private final double spawnInterval;
   private double timer;
@@ -29,7 +33,7 @@ public class PopulationGrowthEffect implements GameEffect {
    */
   public PopulationGrowthEffect(int maxPopulation) {
     this.maxPopulation = maxPopulation;
-    this.spawnInterval = DEFAULT_SPAWN_INTERVAL;
+    this.spawnInterval = SPAWN_INTERVAL;
     this.timer = 0.0;
   }
 
@@ -41,7 +45,7 @@ public class PopulationGrowthEffect implements GameEffect {
     }
     Building building = (Building) self;
     int currentPopulation = building.getCurrentPopulation();
-    if (currentPopulation < 2) {
+    if (currentPopulation < MIN_HOME_POPULATION) {
       return;
     }
     if (currentPopulation >= maxPopulation) {
@@ -54,7 +58,7 @@ public class PopulationGrowthEffect implements GameEffect {
     }
     timer = 0.0;
 
-    if (!ThreadLocalRandom.current().nextBoolean()) {
+    if (ThreadLocalRandom.current().nextDouble() >= SPAWN_CHANCE) {
       return;
     }
 

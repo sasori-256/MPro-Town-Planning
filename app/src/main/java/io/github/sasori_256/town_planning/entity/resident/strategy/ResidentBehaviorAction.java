@@ -1,5 +1,6 @@
 package io.github.sasori_256.town_planning.entity.resident.strategy;
 
+import io.github.sasori_256.town_planning.common.core.GameConfig;
 import io.github.sasori_256.town_planning.entity.building.Building;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
@@ -24,9 +25,9 @@ import java.util.stream.Collectors;
  */
 public class ResidentBehaviorAction implements GameAction {
   // Timings are in game seconds unless noted.
-  private static final double WORK_DURATION = 5.0;
-  private static final double HOME_WAIT_MIN = 8.0;
-  private static final double HOME_WAIT_MAX = 20.0;
+  private static final double WORK_DURATION = GameConfig.getResidentWorkDurationSeconds();
+  private static final double HOME_WAIT_MIN = GameConfig.getResidentHomeWaitMinSeconds();
+  private static final double HOME_WAIT_MAX = GameConfig.getResidentHomeWaitMaxSeconds();
   // Distance threshold to treat an entry point as reached.
   private static final double HOME_ENTRY_EPSILON = 0.1;
   private static final int[][] ADJACENT_OFFSETS = {
@@ -38,6 +39,7 @@ public class ResidentBehaviorAction implements GameAction {
   private static final int[][] HOME_ENTRY_OFFSETS = ADJACENT_OFFSETS;
 
   private final DestinationMoveAction mover = new DestinationMoveAction(false);
+  private final PanicMoveAction panicAction = new PanicMoveAction();
   private double workTimer;
   private double homeWaitTimer;
   private double homeWaitDuration;
@@ -64,6 +66,11 @@ public class ResidentBehaviorAction implements GameAction {
     }
 
     ResidentState state = resident.getState();
+    if (state == ResidentState.PANICKING) {
+      handlePanicking(context, resident, map);
+      return;
+    }
+    panicAction.reset();
     if (state == ResidentState.AT_HOME) {
       handleAtHome(context, resident, map);
       return;
@@ -86,7 +93,24 @@ public class ResidentBehaviorAction implements GameAction {
     }
   }
 
+  private void handlePanicking(GameContext context, Resident resident, GameMap map) {
+    panicAction.execute(context, resident);
+    if (panicAction.isFinished()) {
+      panicAction.reset();
+      // パニック中に割り当てられた引っ越し先があれば、移動を再開する。
+      if (resident.hasRelocationTarget()) {
+        resident.setState(ResidentState.RELOCATING);
+        return;
+      }
+      startReturnHome(resident, map);
+    }
+  }
+
   private void handleAtHome(GameContext context, Resident resident, GameMap map) {
+    if (!isHomeAvailable(map, resident.getHomePosition())) {
+      enterIdle(resident, map);
+      return;
+    }
     if (homeWaitDuration <= 0.0) {
       scheduleHomeWait();
     }
@@ -167,6 +191,10 @@ public class ResidentBehaviorAction implements GameAction {
   }
 
   private void handleReturning(GameContext context, Resident resident, GameMap map) {
+    if (!isHomeAvailable(map, resident.getHomePosition())) {
+      enterIdle(resident, map);
+      return;
+    }
     if (!mover.hasDestination()) {
       forceReturnHome(resident, true);
       return;
@@ -186,6 +214,10 @@ public class ResidentBehaviorAction implements GameAction {
   }
 
   private void startReturnHome(Resident resident, GameMap map) {
+    if (!isHomeAvailable(map, resident.getHomePosition())) {
+      enterIdle(resident, map);
+      return;
+    }
     Point2D.Double entry = findHomeEntry(map, resident.getHomePosition());
     if (entry == null) {
       forceReturnHome(resident, true);
@@ -306,6 +338,32 @@ public class ResidentBehaviorAction implements GameAction {
       return null;
     }
     return alternatives.get(ThreadLocalRandom.current().nextInt(alternatives.size()));
+  }
+
+  private boolean isHomeAvailable(GameMap map, Point2D.Double home) {
+    if (map == null || home == null || !map.isValidPosition(home)) {
+      return false;
+    }
+    Building building = map.getCell(home).getBuilding();
+    if (building == null) {
+      return false;
+    }
+    return building.getType().getCategory() == CategoryType.RESIDENTIAL;
+  }
+
+  private void enterIdle(Resident resident, GameMap map) {
+    Point2D.Double home = resident.getHomePosition();
+    if (home != null && resident.getPosition().distance(home) <= HOME_ENTRY_EPSILON) {
+      Point2D.Double exit = findHomeEntry(map, home);
+      if (exit != null) {
+        resident.setPosition(exit);
+      }
+    }
+    resident.setState(ResidentState.IDLE);
+    mover.clearDestination();
+    workTimer = 0.0;
+    homeWaitTimer = 0.0;
+    homeWaitDuration = 0.0;
   }
 
   private Point2D.Double findBuildingEntry(GameMap map, Building building) {

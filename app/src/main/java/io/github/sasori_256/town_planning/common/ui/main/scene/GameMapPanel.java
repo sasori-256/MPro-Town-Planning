@@ -83,7 +83,8 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
    * gameMapの内容を描画する
    *
    * @param g 描画に使用するGraphicsオブジェクト
-   * @implNote 画像ファイルが見つからない場合、"Warning Image not found: imageName.png at (x,y)"
+   * @implNote 画像ファイルが見つからない場合、"Warning Image not found: imageName.pn
+   *           at (x,y)"
    *           という警告が出力されます。
    * @see GameMap
    */

@@ -67,7 +67,7 @@ public class BuildingNode implements MenuNode {
     public void actionPerformed(java.awt.event.ActionEvent e) {
         // TODO: Viewと連携する.
         gameMapController.setSelectedEntityGenerator(generator);
-        gameMapController.setActionOnClick(new PlaceBuildingHandler(gameModel, gameMapController));
+        gameMapController.setActionOnClick(new PlaceBuildingHandler(gameModel));
         gameMapController.setActionOnMove(new PreviewBuildingHandler(gameModel, type));
     }
 }

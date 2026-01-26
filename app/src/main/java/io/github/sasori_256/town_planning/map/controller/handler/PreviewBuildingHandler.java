@@ -6,7 +6,6 @@ import java.util.function.Function;
 
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.entity.model.GameModel;
-import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
 
 public class PreviewBuildingHandler

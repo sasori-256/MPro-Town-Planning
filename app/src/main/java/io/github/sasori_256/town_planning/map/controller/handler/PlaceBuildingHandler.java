@@ -22,7 +22,6 @@ public class PlaceBuildingHandler
     implements BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> {
   private GameModel gameModel;
   private final EventBus eventBus = EventBus.getInstance();
-  private GameMapController gameMapController;
 
   /**
    * 配置ハンドラを生成する。
@@ -30,9 +29,8 @@ public class PlaceBuildingHandler
    * @param gameModel         ゲームモデル
    * @param gameMapController マップコントローラ
    */
-  public PlaceBuildingHandler(GameModel gameModel, GameMapController gameMapController) {
+  public PlaceBuildingHandler(GameModel gameModel) {
     this.gameModel = gameModel;
-    this.gameMapController = gameMapController;
   }
 
   /**

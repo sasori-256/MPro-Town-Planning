@@ -1,15 +1,11 @@
 package io.github.sasori_256.town_planning;
 
-import java.util.concurrent.locks.ReadWriteLock;
-
 import javax.swing.SwingUtilities;
 
 import io.github.sasori_256.town_planning.common.core.FontManager;
 import io.github.sasori_256.town_planning.common.ui.ImageManager;
+import io.github.sasori_256.town_planning.common.ui.main.GameFlowController;
 import io.github.sasori_256.town_planning.common.ui.main.GameWindow;
-import io.github.sasori_256.town_planning.entity.Camera;
-import io.github.sasori_256.town_planning.entity.model.GameModel;
-import io.github.sasori_256.town_planning.map.controller.GameMapController;
 
 /**
  * アプリケーションのエントリーポイント。
@@ -29,17 +25,11 @@ public class App {
 
     new FontManager();
     ImageManager imageManager = new ImageManager();
-
-    GameModel gameModel = new GameModel(MAP_WIDTH, MAP_HEIGHT, SEED);
-
-    Camera camera = new Camera(1, WIDTH, HEIGHT, MAP_WIDTH, MAP_HEIGHT);
-    ReadWriteLock stateLock = gameModel.getStateLock();
-    GameMapController gameMapController = new GameMapController(camera, stateLock);
     SwingUtilities.invokeLater(() -> {
-      GameWindow gameWindow = new GameWindow(
-          // TODO: gameMapを引数に渡すのが冗長なのでgameModelからgetするように変更する
-          gameModel, camera, WIDTH, HEIGHT, gameMapController, stateLock, imageManager);
-      gameModel.startGameLoop(gameWindow::repaint);
+      GameWindow gameWindow = new GameWindow(WIDTH, HEIGHT);
+      GameFlowController controller = new GameFlowController(
+          gameWindow, imageManager, WIDTH, HEIGHT, MAP_WIDTH, MAP_HEIGHT, SEED);
+      controller.initialize();
     });
   }
 }

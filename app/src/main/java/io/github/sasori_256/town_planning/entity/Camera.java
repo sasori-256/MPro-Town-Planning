@@ -2,7 +2,6 @@ package io.github.sasori_256.town_planning.entity;
 
 import java.awt.geom.Point2D;
 
-import io.github.sasori_256.town_planning.common.core.GameConfig;
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
 import io.github.sasori_256.town_planning.common.event.EventBus;
 
@@ -21,9 +20,9 @@ public class Camera {
   private int screenWidth;
   private int screenHeight;
   private int zoomLevel;
-  private static final double ZOOM_STEP = GameConfig.getCameraZoomStep();
-  private static final int MIN_ZOOM_LEVEL = GameConfig.getCameraZoomMinLevel(); // 0.25倍
-  private static final int MAX_ZOOM_LEVEL = GameConfig.getCameraZoomMaxLevel(); // 3.0倍
+  private static final double ZOOM_STEP = 0.25;
+  private static final int MIN_ZOOM_LEVEL = 1; // 0.25倍
+  private static final int MAX_ZOOM_LEVEL = 12; // 3.0倍
   private final EventBus eventBus = EventBus.getInstance();
 
   /**

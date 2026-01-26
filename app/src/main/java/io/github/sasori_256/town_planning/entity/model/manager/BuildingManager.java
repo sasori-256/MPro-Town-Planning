@@ -1,8 +1,6 @@
 package io.github.sasori_256.town_planning.entity.model.manager;
 
 import java.awt.geom.Point2D;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Supplier;
@@ -98,59 +96,6 @@ public class BuildingManager {
       eventBus.publish(new MapUpdatedEvent(entity.getPosition()));
       return null;
     });
-  }
-
-  /**
-   * 指定範囲の建物にダメージを与える。
-   *
-   * @param context ゲームコンテキスト
-   * @param center  中心座標
-   * @param radius  影響半径
-   * @param damage  ダメージ量
-   * @return 破壊された建物の一覧
-   */
-  public List<Building> damageBuildings(GameContext context, Point2D.Double center, double radius,
-      int damage) {
-    return withWriteLock(() -> {
-      List<Building> destroyed = new ArrayList<>();
-      if (center == null || radius <= 0.0 || damage <= 0) {
-        return destroyed;
-      }
-      List<Building> candidates = entityManager.snapshotBuildings();
-      for (Building building : candidates) {
-        if (building == null) {
-          continue;
-        }
-        if (!isWithinRadius(building, center, radius)) {
-          continue;
-        }
-        if (building.applyDamage(damage)) {
-          gameMap.removeBuilding(building.getPosition());
-          context.removeEntity(building);
-          destroyed.add(building);
-        }
-      }
-      return destroyed;
-    });
-  }
-
-  private boolean isWithinRadius(Building building, Point2D.Double center, double radius) {
-    BuildingType type = building.getType();
-    boolean[][] footprint = type.getFootprintMask();
-    int originX = building.getOriginX();
-    int originY = building.getOriginY();
-    for (int y = 0; y < type.getHeight(); y++) {
-      for (int x = 0; x < type.getWidth(); x++) {
-        if (!footprint[y][x]) {
-          continue;
-        }
-        Point2D.Double pos = new Point2D.Double(originX + x, originY + y);
-        if (pos.distance(center) <= radius) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   /**

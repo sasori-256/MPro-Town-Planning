@@ -123,27 +123,12 @@ public class CustomButton extends JButton {
    * @param height 高さ
    */
   public final void setCustomBounds(int x, int y, int width, int height) {
-    setBounds(x, y, width, height);
+    super.setBounds(x, y, width, height);
     this.setPreferredSize(new Dimension(width, height));
     this.originalWidth = width;
     this.originalHeight = height;
     this.centerX = x + width / 2;
     this.centerY = y + height / 2;
-  }
-
-  /**
-   * レイアウト更新時に位置とサイズを更新する。
-   *
-   * @param x      左上X
-   * @param y      左上Y
-   * @param width  幅
-   * @param height 高さ
-   */
-  public void updateLayout(int x, int y, int width, int height) {
-    setCustomBounds(x, y, width, height);
-    if (originalImage != null) {
-      setImage(originalImage, width, height);
-    }
   }
 
   private void setBoundsCentered(int width, int height) {
@@ -152,16 +137,9 @@ public class CustomButton extends JButton {
     } else {
       int x = centerX - width / 2;
       int y = centerY - height / 2;
-      setBounds(x, y, width, height);
+      super.setBounds(x, y, width, height);
       setPreferredSize(new Dimension(width, height));
     }
-  }
-
-  @Override
-  public void setBounds(int x, int y, int width, int height) {
-    super.setBounds(x, y, width, height);
-    this.centerX = x + width / 2;
-    this.centerY = y + height / 2;
   }
 
   /**

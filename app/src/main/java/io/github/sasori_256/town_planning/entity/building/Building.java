@@ -77,20 +77,6 @@ public class Building extends BaseGameEntity {
   }
 
   /**
-   * 耐久度にダメージを与える。
-   *
-   * @param damage ダメージ量
-   * @return 破壊された場合はtrue
-   */
-  public boolean applyDamage(int damage) {
-    if (damage <= 0) {
-      return false;
-    }
-    setCurrentDurability(this.currentDurability - damage);
-    return this.currentDurability <= 0;
-  }
-
-  /**
    * 現在の住民数を返す。
    *
    * @return 住民数

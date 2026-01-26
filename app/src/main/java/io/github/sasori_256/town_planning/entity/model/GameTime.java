@@ -1,15 +1,13 @@
 package io.github.sasori_256.town_planning.entity.model;
 
-import io.github.sasori_256.town_planning.common.core.GameConfig;
-
 /**
  * ゲーム内時間と日付の進行を管理するクラス。
  */
 public class GameTime {
   private int dayCount = 1;
   private double timeOfDaySeconds = 0.0;
-  private double dayLengthSeconds = GameConfig.getTimeDayLengthSeconds();
-  private double timeScale = GameConfig.getTimeScale();
+  private double dayLengthSeconds = 10.0;
+  private double timeScale = 1.0;
 
   /**
    * 経過時間を進め、進んだ日数を返す。

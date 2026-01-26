@@ -3,14 +3,14 @@ package io.github.sasori_256.town_planning.entity.model.manager;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Supplier;
 
-import io.github.sasori_256.town_planning.common.core.GameConfig;
 import io.github.sasori_256.town_planning.entity.building.Building;
-import io.github.sasori_256.town_planning.entity.building.BuildingType;
 import io.github.sasori_256.town_planning.entity.model.CategoryType;
 import io.github.sasori_256.town_planning.entity.resident.Resident;
 import io.github.sasori_256.town_planning.entity.resident.ResidentState;
@@ -20,8 +20,7 @@ import io.github.sasori_256.town_planning.entity.resident.ResidentState;
  */
 public class RelocationManager {
   /** 住民再配置で最低限成立させる世帯人数。 */
-  private static final int MIN_RESIDENTS_PER_HOUSE =
-      GameConfig.getResidentRelocationMinResidentsPerHouse();
+  private static final int MIN_RESIDENTS_PER_HOUSE = 2;
   /** 状態同期に使用するロック。 */
   private final ReadWriteLock stateLock;
   /** エンティティ管理。 */
@@ -54,12 +53,8 @@ public class RelocationManager {
       }
 
       // 各家の統計情報を設定
-      List<HouseInfo> houseInfos = new ArrayList<>();
-      for (Building building : houses) {
-        houseInfos.add(new HouseInfo(building, 0, new ArrayList<>()));
-      }
+      Map<HomeKey, HouseStats> statsByHome = new HashMap<>();
       int totalResidents = 0;
-      List<Resident> homelessResidents = new ArrayList<>();
       for (Resident resident : entityManager.snapshotResidents()) {
         if (resident.getState() == ResidentState.DEAD) {
           continue;
@@ -70,19 +65,11 @@ public class RelocationManager {
         if (assignedHome == null) {
           continue;
         }
-        HouseInfo info = findHouseInfo(houseInfos, assignedHome);
-        if (info == null) {
-          // 破壊済みの家に紐づいている場合は、再割り当て対象として扱う。
-          if (resident.hasRelocationTarget()) {
-            resident.clearRelocationTarget();
-          }
-          homelessResidents.add(resident);
-          totalResidents++;
-          continue;
-        }
-        info.assignedCount++;
+        HomeKey key = HomeKey.from(assignedHome);
+        HouseStats stats = statsByHome.computeIfAbsent(key, k -> new HouseStats());
+        stats.assignedCount++;
         if (!resident.hasRelocationTarget()) {
-          info.movableResidents.add(resident);
+          stats.movableResidents.add(resident);
         }
         totalResidents++;
       }
@@ -93,6 +80,17 @@ public class RelocationManager {
         return null;
       }
 
+      // 家ごとの統計情報を集計
+      List<HouseInfo> houseInfos = new ArrayList<>();
+      for (Building building : houses) {
+        HomeKey key = HomeKey.from(building.getPosition());
+        HouseStats stats = statsByHome.get(key);
+        int assignedCount = stats != null ? stats.assignedCount : 0;
+        List<Resident> movable = stats != null
+            ? new ArrayList<>(stats.movableResidents)
+            : new ArrayList<>();
+        houseInfos.add(new HouseInfo(building, assignedCount, movable));
+      }
       // 住民数の降順にソートし、人口の多い家を優先的に処理できるようにする。
       houseInfos.sort(Comparator.comparingInt((HouseInfo info) -> info.assignedCount).reversed());
 
@@ -124,7 +122,7 @@ public class RelocationManager {
       }
 
       // 具体的な引っ越し先の決定
-      List<Resident> movers = new ArrayList<>(homelessResidents);
+      List<Resident> movers = new ArrayList<>();
       List<HouseNeed> needs = new ArrayList<>();
       for (int i = 0; i < houseCount; i++) {
         HouseInfo info = houseInfos.get(i);
@@ -165,6 +163,40 @@ public class RelocationManager {
   }
 
   /**
+   * 住民の所属先を世帯単位で集計するためのキー。
+   */
+  private static final class HomeKey {
+    private final int x;
+    private final int y;
+
+    private HomeKey(int x, int y) {
+      this.x = x;
+      this.y = y;
+    }
+
+    private static HomeKey from(Point2D.Double pos) {
+      return new HomeKey((int) Math.round(pos.getX()), (int) Math.round(pos.getY()));
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (this == obj) {
+        return true;
+      }
+      if (!(obj instanceof HomeKey)) {
+        return false;
+      }
+      HomeKey other = (HomeKey) obj;
+      return x == other.x && y == other.y;
+    }
+
+    @Override
+    public int hashCode() {
+      return 31 * x + y;
+    }
+  }
+
+  /**
    * 世帯ごとの割り当て調整に使う作業用情報。
    */
   private static final class HouseInfo {
@@ -193,6 +225,14 @@ public class RelocationManager {
   }
 
   /**
+   * 家ごとの統計情報を保持する作業用モデル。
+   */
+  private static final class HouseStats {
+    private int assignedCount;
+    private final List<Resident> movableResidents = new ArrayList<>();
+  }
+
+  /**
    * 書き込みロック内で処理を実行する。
    *
    * @param supplier 実行処理
@@ -207,27 +247,5 @@ public class RelocationManager {
     } finally {
       writeLock.unlock();
     }
-  }
-
-  private HouseInfo findHouseInfo(List<HouseInfo> houseInfos, Point2D.Double assignedHome) {
-    if (assignedHome == null) {
-      return null;
-    }
-    int homeX = (int) Math.round(assignedHome.getX());
-    int homeY = (int) Math.round(assignedHome.getY());
-    for (HouseInfo info : houseInfos) {
-      Building building = info.building;
-      int localX = homeX - building.getOriginX();
-      int localY = homeY - building.getOriginY();
-      BuildingType type = building.getType();
-      if (localX < 0 || localY < 0 || localX >= type.getWidth() || localY >= type.getHeight()) {
-        continue;
-      }
-      boolean[][] footprint = type.getFootprintMask();
-      if (footprint[localY][localX]) {
-        return info;
-      }
-    }
-    return null;
   }
 }

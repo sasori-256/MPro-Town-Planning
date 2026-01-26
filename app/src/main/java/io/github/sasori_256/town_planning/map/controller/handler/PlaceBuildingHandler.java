@@ -8,7 +8,6 @@ import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.TemporaryBuildEvent;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.entity.model.GameModel;
-import io.github.sasori_256.town_planning.map.controller.GameMapController;
 
 /**
  * クリック位置に建物を配置するハンドラ。
@@ -17,7 +16,6 @@ public class PlaceBuildingHandler
     implements BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> {
   private GameModel gameModel;
   private final EventBus eventBus = EventBus.getInstance();
-  private GameMapController gameMapController;
 
   /**
    * 配置ハンドラを生成する。
@@ -25,9 +23,8 @@ public class PlaceBuildingHandler
    * @param gameModel         ゲームモデル
    * @param gameMapController マップコントローラ
    */
-  public PlaceBuildingHandler(GameModel gameModel, GameMapController gameMapController) {
+  public PlaceBuildingHandler(GameModel gameModel) {
     this.gameModel = gameModel;
-    this.gameMapController = gameMapController;
   }
 
   /**

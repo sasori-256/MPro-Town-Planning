@@ -12,7 +12,7 @@ import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.Subscription;
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
 import io.github.sasori_256.town_planning.common.ui.ImageManager;
-import io.github.sasori_256.town_planning.common.ui.buildPreview.controller.BuildPreviewController;
+import io.github.sasori_256.town_planning.common.ui.buildPreview.controller.BuildPreviewEventHandler;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.NodeMenuInitializer;
 import io.github.sasori_256.town_planning.common.ui.main.scene.GameMapPanel;
@@ -30,7 +30,7 @@ public class GameSession {
   private final GameMapController gameMapController;
   private final GameMapPanel gameMapPanel;
   private final GameFlowNavigator navigator;
-  private final BuildPreviewController buildPreviewController;
+  private final BuildPreviewEventHandler buildPreviewEventHandler;
   private Subscription mapSub;
 
   /**
@@ -68,7 +68,7 @@ public class GameSession {
     this.gameMapPanel.addKeyListener(this.gameMapController);
     this.gameMapPanel.setFocusable(true);
     setupNavigationBindings();
-    this.buildPreviewController = new BuildPreviewController(this.gameMapPanel);
+    this.buildPreviewEventHandler = new BuildPreviewEventHandler(this.gameMapPanel);
 
     this.mapSub = eventBus.subscribe(MapUpdatedEvent.class, event -> {
       if (SwingUtilities.isEventDispatchThread()) {
@@ -125,7 +125,7 @@ public class GameSession {
    */
   public void dispose() {
     stop();
-    buildPreviewController.dispose();
+    buildPreviewEventHandler.dispose();
     if (mapSub != null) {
       mapSub.unsubscribe();
       mapSub = null;

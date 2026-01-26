@@ -58,8 +58,7 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
       Camera camera,
       CategoryNode root,
       ReadWriteLock stateLock,
-      ImageManager imageManager,
-      GameFlowNavigator navigator) {
+      ImageManager imageManager) {
     this.gameMap = gameMap;
     this.gameModel = gameModel;
     this.camera = camera;
@@ -68,7 +67,6 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
     this.animationManager = new AnimationManager();
     this.paintGameObject = new PaintGameObject();
     this.stateLock = stateLock;
-    this.navigator = navigator;
     this.setLayout(null);
     setBackground(new Color(19, 175, 251)); // 海の色
     this.buildPreviewUI = new BuildPreviewUI(imageManager, camera, gameModel);
@@ -80,20 +78,6 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
     paintObjectSelectUI.paint();
     revalidate();
     repaint();
-  }
-
-  private void setupNavigationBindings() {
-    if (navigator == null) {
-      return;
-    }
-    getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
-        .put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "goTitle");
-    getActionMap().put("goTitle", new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        navigator.goToTitle();
-      }
-    });
   }
 
   /**

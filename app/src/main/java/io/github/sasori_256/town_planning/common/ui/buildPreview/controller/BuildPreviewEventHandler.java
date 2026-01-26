@@ -10,9 +10,9 @@ import io.github.sasori_256.town_planning.common.event.events.TemporaryBuildEven
 import io.github.sasori_256.town_planning.common.ui.main.scene.GameMapPanel;
 
 /**
- * 建物プレビュー表示のイベント購読とUI更新を担当するコントローラ。
+ * 建物プレビュー表示のイベント購読とUI更新を担当するハンドラ。
  */
-public class BuildPreviewController {
+public class BuildPreviewEventHandler {
   private final EventBus eventBus = EventBus.getInstance();
   private final GameMapPanel mapPanel;
   private Subscription temporarySub;
@@ -24,7 +24,7 @@ public class BuildPreviewController {
    *
    * @param mapPanel 表示対象のマップパネル
    */
-  public BuildPreviewController(GameMapPanel mapPanel) {
+  public BuildPreviewEventHandler(GameMapPanel mapPanel) {
     this.mapPanel = mapPanel;
     subscribe();
   }

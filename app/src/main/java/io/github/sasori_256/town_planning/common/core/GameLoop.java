@@ -23,7 +23,8 @@ public class GameLoop implements Runnable {
   private Thread thread = null;
 
   // 30 FPS target
-  private static final double TIME_STEP = GameConfig.getGameLoopTimeStepSeconds();
+  // TODO: マジックナンバーを定数化して外部から変更できるようにする
+  private static final double TIME_STEP = 1.0 / 30.0;
   private static final long TIME_STEP_NANO = (long) (TIME_STEP * 1_000_000_000);
 
   /**

@@ -1,6 +1,5 @@
 package io.github.sasori_256.town_planning.common.ui;
 
-import io.github.sasori_256.town_planning.common.core.GameConfig;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.event.ComponentAdapter;
@@ -13,10 +12,10 @@ import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 public class ToastManager {
-  private static final int DISPLAY_MILLIS = GameConfig.getToastDisplayMillis();
-  private static final int MAX_VISIBLE = GameConfig.getToastMaxVisible();
-  private static final int MARGIN = GameConfig.getToastMarginPixels();
-  private static final int SPACING = GameConfig.getToastSpacingPixels();
+  private static final int DISPLAY_MILLIS = 3000;
+  private static final int MAX_VISIBLE = 3;
+  private static final int MARGIN = 12;
+  private static final int SPACING = 8;
 
   private final JLayeredPane layeredPane;
   private final JComponent anchor;

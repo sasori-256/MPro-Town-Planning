@@ -115,7 +115,7 @@ public class PaintGameObject {
    * @param panel        描画対象のパネル
    */
   public void paintResident(Graphics g, Resident resident, Camera camera, ImageManager imageManager,
-      AnimationManager animationManager, JPanel panel) {
+      JPanel panel) {
     if (resident == null || resident.getType() == null) {
       return;
     }

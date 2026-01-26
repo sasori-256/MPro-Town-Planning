@@ -58,7 +58,7 @@ public class BuildingManager {
    */
   public boolean constructBuilding(GameContext context, Point2D.Double pos, BuildingType type) {
     return withWriteLock(() -> {
-      String detail = buildDetail(type);
+      String detail = BuildingType.getDetailString(type);
       EntitySpawnFailureReason reason = validateConstructionInternal(pos, type);
       if (reason != null) {
         publishSpawnFailure(pos, reason, detail);
@@ -202,12 +202,5 @@ public class BuildingManager {
       return EntitySpawnFailureReason.INSUFFICIENT_SOUL;
     }
     return null;
-  }
-
-  private String buildDetail(BuildingType type) {
-    if (type == null) {
-      return "type=null";
-    }
-    return "type=" + type + ", cost=" + type.getCost();
   }
 }

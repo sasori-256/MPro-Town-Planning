@@ -51,14 +51,7 @@ public class PlaceBuildingHandler
       eventBus.publish(new TemporaryBuildEvent());
       return;
     }
-    String detail = buildDetail(type);
+    String detail = BuildingType.getDetailString(type);
     eventBus.publish(new EntitySpawnFailedEvent(EntitySpawnKind.BUILDING, reason, pos, detail));
-  }
-
-  private String buildDetail(BuildingType type) {
-    if (type == null) {
-      return "type=null";
-    }
-    return "type=" + type + ", cost=" + type.getCost();
   }
 }

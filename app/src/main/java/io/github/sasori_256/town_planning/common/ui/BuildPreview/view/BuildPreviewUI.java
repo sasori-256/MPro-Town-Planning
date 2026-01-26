@@ -55,7 +55,8 @@ public class BuildPreviewUI extends JPanel {
     }
 
     this.setBounds((int) pos.x - this.getWidth() / 2, (int) pos.y - this.getHeight() * 2,
-        (48 + buttonMargin) * PreviewButtonType.values().length, 48);
+        (this.getComponent(0).getWidth() + buttonMargin) * PreviewButtonType.values().length,
+        this.getComponent(0).getHeight());
   }
 
   // private void updateUiScale() {

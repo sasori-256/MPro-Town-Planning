@@ -389,6 +389,28 @@ public enum BuildingType {
     return anchorY;
   }
 
+  /**
+   * 建物の詳細情報を文字列として返す。
+   * 
+   * @return 建物の種類とコストを含む詳細文字列
+   */
+  public String getDetail() {
+    return "type=" + this + ", cost=" + cost;
+  }
+
+  /**
+   * BuildingTypeがnullの場合の詳細情報を返す静的メソッド。
+   * 
+   * @param type 建物種別(nullの場合あり)
+   * @return 建物の詳細文字列
+   */
+  public static String getDetailString(BuildingType type) {
+    if (type == null) {
+      return "type=null";
+    }
+    return type.getDetail();
+  }
+
   private static boolean[][] singleMask(boolean value) {
     return new boolean[][] { { value } };
   }

@@ -399,7 +399,8 @@ public enum BuildingType {
   }
 
   /**
-   * BuildingTypeがnullの場合の詳細情報を返す静的メソッド。
+   * 建物種別の詳細情報を安全に取得する静的メソッド。
+   * nullを含む任意のBuildingTypeを処理できる。
    * 
    * @param type 建物種別(nullの場合あり)
    * @return 建物の詳細文字列

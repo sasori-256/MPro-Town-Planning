@@ -1,5 +1,6 @@
 package io.github.sasori_256.town_planning.entity.resident.strategy;
 
+import io.github.sasori_256.town_planning.common.core.GameConfig;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.entity.model.GameAction;
 import io.github.sasori_256.town_planning.entity.model.GameContext;
@@ -35,10 +36,10 @@ public class DestinationMoveAction implements GameAction {
     FAILED
   }
 
-  private static final double ARRIVAL_EPSILON = 1e-3;
-  private static final double SEARCH_COOLDOWN = 0.5;
-  private static final int MAX_RANDOM_TRIES = 20;
-  private static final long COST_INF = 1_000_000L;
+  private static final double ARRIVAL_EPSILON = GameConfig.getPathfindingArrivalEpsilonTiles();
+  private static final double SEARCH_COOLDOWN = GameConfig.getPathfindingSearchCooldownSeconds();
+  private static final int MAX_RANDOM_TRIES = GameConfig.getPathfindingMaxRandomTries();
+  private static final long COST_INF = GameConfig.getPathfindingCostInf();
 
   private final double speed;
   private final boolean autoDestination;
@@ -62,7 +63,7 @@ public class DestinationMoveAction implements GameAction {
    */
   public DestinationMoveAction(boolean autoDestination) {
     // タイル単位で速度を管理し、タイルサイズ変更の影響を避ける。
-    this.speed = 2.0; // タイル/秒
+    this.speed = GameConfig.getResidentMoveSpeedTilesPerSecond(); // タイル/秒
     this.autoDestination = autoDestination;
     this.searchCooldown = 0.0;
     this.lastStatus = MoveStatus.IDLE;

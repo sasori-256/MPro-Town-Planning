@@ -126,7 +126,8 @@ public class PaintGameObject {
             pos.y + y - buildingType.getAnchorY());
         String tileImageName = buildingType.getTileImageName(x, y);
         if (tileImageName != null) {
-          paint(g, tilePos, tileImageName, camera, imageManager, panel, true, true, buildable);
+          String previewImageName = tileImageName + (buildable ? "_preview_buildable" : "_preview_unbuildable");
+          paint(g, tilePos, previewImageName, camera, imageManager, panel, true);
         }
       }
     }
@@ -197,25 +198,25 @@ public class PaintGameObject {
     paint(g, disaster.getPosition(), imageName, camera, imageManager, panel, false);
   }
 
-  /**
-   * 指定された座標に指定された画像を描画する
-   * 
-   * @param g            グラフィックスコンテキスト
-   * @param pos          座標
-   * @param name         画像の名前
-   * @param camera       カメラ
-   * @param imageManager 画像取得用マネージャー
-   * @param panel        描画対象のパネル
-   * @param snapToGrid   座標をグリッド中央に丸めるかの真偽値
-   */
-  private void paint(Graphics g, Point2D.Double pos, String name, Camera camera,
-      ImageManager imageManager, JPanel panel, boolean snapToGrid) {
-    paint(g, pos, name, camera, imageManager, panel, snapToGrid, false, false);
-  }
+  // /**
+  // * 指定された座標に指定された画像を描画する
+  // *
+  // * @param g グラフィックスコンテキスト
+  // * @param pos 座標
+  // * @param name 画像の名前
+  // * @param camera カメラ
+  // * @param imageManager 画像取得用マネージャー
+  // * @param panel 描画対象のパネル
+  // * @param snapToGrid 座標をグリッド中央に丸めるかの真偽値
+  // */
+  // private void paint(Graphics g, Point2D.Double pos, String name, Camera
+  // camera,
+  // ImageManager imageManager, JPanel panel, boolean snapToGrid) {
+  // paint(g, pos, name, camera, imageManager, panel, snapToGrid, false, false);
+  // }
 
   /**
    * 指定された座標に指定された画像を描画する
-   * Preview用に透明化するオプション付き
    *
    * @param g            グラフィックスコンテキスト
    * @param pos          座標
@@ -224,11 +225,9 @@ public class PaintGameObject {
    * @param imageManager 画像取得用マネージャー
    * @param panel        描画対象のパネル
    * @param snapToGrid   座標をグリッド中央に丸めるかの真偽値
-   * @param transparent  半透明に描画するかの真偽値
-   * @param buildable    建物が配置可能かの真偽値
    */
   private void paint(Graphics g, Point2D.Double pos, String name, Camera camera,
-      ImageManager imageManager, JPanel panel, boolean snapToGrid, boolean transparent, boolean buildable) {
+      ImageManager imageManager, JPanel panel, boolean snapToGrid) {
     Graphics2D g2d = (Graphics2D) g;
     // 建物または地形の描画
     ImageStorage imageStorage = imageManager.getImageStorage(name);
@@ -245,29 +244,30 @@ public class PaintGameObject {
       int yPos = (int) Math.round(screenPos.y + posShift.y);
       int width = (int) (imageScale.x * cameraScale);
       int height = (int) (imageScale.y * cameraScale);
-      if (transparent) {
-        float[] offsets = new float[] { 0f, 0f, 0f, 0f };
-        float[] scales;
-        if (buildable) {
-          scales = new float[] { 1f, 1f, 1f, 0.5f }; // 緑がかった透明
-        } else {
-          scales = new float[] { 1f, 0.3f, 0.3f, 0.7f }; // 赤がかった透明
-        }
-        RescaleOp rescaleOp = new RescaleOp(scales, offsets, null);
-        BufferedImage source = imageStorage.image;
-        if (source.getType() != BufferedImage.TYPE_INT_ARGB) {
-          BufferedImage argbImage = new BufferedImage(source.getWidth(), source.getHeight(),
-              BufferedImage.TYPE_INT_ARGB);
-          Graphics2D g2 = argbImage.createGraphics();
-          g2.drawImage(source, 0, 0, null);
-          g2.dispose();
-          source = argbImage; // 変換したものを使う
-        }
-        BufferedImage filteredImage = rescaleOp.filter(source, null);
-        g2d.drawImage(filteredImage, xPos, yPos, width, height, panel);
-      } else {
-        g2d.drawImage(imageStorage.image, xPos, yPos, width, height, panel);
-      }
+      // if (transparent) {
+      // float[] offsets = new float[] { 0f, 0f, 0f, 0f };
+      // float[] scales;
+      // if (buildable) {
+      // scales = new float[] { 1f, 1f, 1f, 0.5f }; // 緑がかった透明
+      // } else {
+      // scales = new float[] { 1f, 0.3f, 0.3f, 0.7f }; // 赤がかった透明
+      // }
+      // RescaleOp rescaleOp = new RescaleOp(scales, offsets, null);
+      // BufferedImage source = imageStorage.image;
+      // if (source.getType() != BufferedImage.TYPE_INT_ARGB) {
+      // BufferedImage argbImage = new BufferedImage(source.getWidth(),
+      // source.getHeight(),
+      // BufferedImage.TYPE_INT_ARGB);
+      // Graphics2D g2 = argbImage.createGraphics();
+      // g2.drawImage(source, 0, 0, null);
+      // g2.dispose();
+      // source = argbImage; // 変換したものを使う
+      // }
+      // BufferedImage filteredImage = rescaleOp.filter(source, null);
+      // g2d.drawImage(filteredImage, xPos, yPos, width, height, panel);
+      // } else {
+      g2d.drawImage(imageStorage.image, xPos, yPos, width, height, panel);
+      // }
     }
   }
 

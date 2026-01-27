@@ -5,6 +5,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import io.github.sasori_256.town_planning.common.event.EventBus;
+import io.github.sasori_256.town_planning.common.event.events.CancelBuildEvent;
 import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailedEvent;
 import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailureReason;
 import io.github.sasori_256.town_planning.common.event.events.EntitySpawnKind;
@@ -53,5 +54,10 @@ public class PlaceBuildingHandler
     }
     String detail = BuildingType.getDetailString(type);
     eventBus.publish(new EntitySpawnFailedEvent(EntitySpawnKind.BUILDING, reason, pos, detail));
+    // 魂がないときはどこにも立てることができないので、キャンセルしないとキャンセルボタンすら出てこない。
+    // ので先にキャンセルしてしまう。
+    if (reason == EntitySpawnFailureReason.INSUFFICIENT_SOUL) {
+      eventBus.publish(new CancelBuildEvent());
+    }
   }
 }

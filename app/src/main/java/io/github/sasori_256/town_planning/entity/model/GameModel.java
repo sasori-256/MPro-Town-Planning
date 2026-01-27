@@ -14,6 +14,7 @@ import io.github.sasori_256.town_planning.common.core.GameConfig;
 import io.github.sasori_256.town_planning.common.core.GameLoop;
 import io.github.sasori_256.town_planning.common.core.SimulationStep;
 import io.github.sasori_256.town_planning.common.event.EventBus;
+import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailureReason;
 import io.github.sasori_256.town_planning.common.event.events.ResidentDiedEvent;
 import io.github.sasori_256.town_planning.entity.building.Building;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
@@ -339,6 +340,17 @@ public class GameModel implements GameContext, SimulationStep {
       relocationManager.rebalanceResidents();
     }
     return constructed;
+  }
+
+  /**
+   * 建物の建設可否を判定する。
+   *
+   * @param pos  設置位置
+   * @param type 建物種別
+   * @return 問題があれば失敗理由、問題なければnull
+   */
+  public EntitySpawnFailureReason validateConstruction(Point2D.Double pos, BuildingType type) {
+    return buildingManager.validateConstruction(pos, type);
   }
 
   // getters / setters

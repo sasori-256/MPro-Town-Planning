@@ -54,11 +54,11 @@ public class BuildPreviewUI extends JPanel {
       }
     }
 
-    if(this.getComponentCount() == 0){
+    if (this.getComponentCount() == 0) {
       System.err.println("\u001B[31mError: No buttons added to BuildPreviewUI\u001B[0m");
       return;
     }
-    
+
     this.setBounds((int) pos.x - this.getWidth() / 2, (int) pos.y - this.getHeight() * 2,
         (this.getComponent(0).getWidth() + buttonMargin) * PreviewButtonType.values().length,
         this.getComponent(0).getHeight());

@@ -53,8 +53,7 @@ public class BuildingPreview {
         this.buildable = false;
         return;
       }
-      Point2D.Double roundedPos =
-          new Point2D.Double(Math.round(pos.x), Math.round(pos.y));
+      Point2D.Double roundedPos = new Point2D.Double(Math.round(pos.x), Math.round(pos.y));
       this.buildingPreviewPos = roundedPos;
       this.buildable = gameMap.canPlaceBuilding(roundedPos, buildingPreviewType);
     } finally {

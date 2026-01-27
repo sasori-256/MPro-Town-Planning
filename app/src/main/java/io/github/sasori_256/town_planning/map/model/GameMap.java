@@ -1,6 +1,7 @@
 package io.github.sasori_256.town_planning.map.model;
 
 import java.awt.geom.Point2D;
+import java.util.Random;
 
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
@@ -15,6 +16,7 @@ public class GameMap implements MapContext {
   private final int height;
   private final MapCell[][] cells;
   private final EventBus eventBus = EventBus.getInstance();
+  private final Random random;
 
   /**
    * マップを生成する。
@@ -27,6 +29,7 @@ public class GameMap implements MapContext {
     this.width = width;
     this.height = height;
     this.cells = new MapCell[height][width];
+    this.random = new Random(seed);
     GenerateMapTerrain(seed); // マップの地形を生成
     StylizeMapEdges(); // 地形の境界を整える
     StylizeMapEdges(); // 地形の境界を整える
@@ -55,7 +58,7 @@ public class GameMap implements MapContext {
         if (altitude < 0.4) {
           terrainType = TerrainType.WATER;
         } else if (altitude < 0.7) {
-          terrainType = TerrainType.GRASS;
+          terrainType = TerrainType.getRandomGrassType(random);
         } else {
           terrainType = TerrainType.MOUNTAIN;
         }
@@ -410,5 +413,8 @@ public class GameMap implements MapContext {
   @Override
   public int getHeight() {
     return height;
+  }
+
+  private record WeightedTerrain(TerrainType type, int weight) {
   }
 }

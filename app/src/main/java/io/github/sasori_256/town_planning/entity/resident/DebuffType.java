@@ -35,11 +35,17 @@ public enum DebuffType {
         for (Resident target : targets) {
            // 感染（レベルを下げて伝染）。持続時間は10秒でリセット。
            // 既に感染していても、より高いレベル（若い世代）の菌なら更新されるロジックはaddDebuff側で制御
-           target.addDebuff(PLAGUE, 10.0, level - 1);
+           target.addDebuff(PLAGUE, INFECTION_DURATION_SECONDS, level - 1);
         }
       }
     }
   };
+
+  /**
+   * 疫病デバフの持続時間（秒）。
+   * 他所と値を揃える場合はここを変更する。
+   */
+  public static final double INFECTION_DURATION_SECONDS = 10.0;
 
   /**
    * デバフの効果を適用する。

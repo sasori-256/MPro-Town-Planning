@@ -89,12 +89,18 @@ public class PlagueDisasterAction implements GameAction {
     // 範囲内の生存住民を取得
     List<Resident> targets = context.getResidentEntities()
         .filter(r -> r.getState() != ResidentState.DEAD)
+        .filter(r -> r.getState() != ResidentState.AT_HOME) // 家にいる住民は対象外
         .filter(r -> r.getPosition().distanceSq(center) <= radiusSq)
         .collect(Collectors.toList());
 
     for (Resident resident : targets) {
       // デバフ付与（上書き）
       resident.addDebuff(DebuffType.PLAGUE, INFECTION_DURATION, INITIAL_INFECTION_LEVEL);
+
+      // パニック状態へ遷移 (接触感染では発生しない、このActionからの直接感染のみ)
+      if (resident.getState() != ResidentState.PANICKING) {
+        resident.setState(ResidentState.PANICKING);
+      }
     }
   }
 }

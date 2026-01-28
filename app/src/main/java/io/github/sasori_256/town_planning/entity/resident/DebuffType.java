@@ -27,6 +27,7 @@ public enum DebuffType {
         // 必要ならSpatialPartitioningなどを導入するが、まずはシンプルに実装。
         List<Resident> targets = context.getResidentEntities()
             .filter(r -> r.getState() != ResidentState.DEAD)
+            .filter(r -> r.getState() != ResidentState.AT_HOME) // 家にいる住民は対象外
             .filter(r -> r != self) // 自分以外
             .filter(r -> r.getPosition().distanceSq(self.getPosition()) <= radiusSq)
             .collect(Collectors.toList());

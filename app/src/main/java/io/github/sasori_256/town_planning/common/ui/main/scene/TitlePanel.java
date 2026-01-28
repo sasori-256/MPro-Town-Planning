@@ -9,14 +9,14 @@ import io.github.sasori_256.town_planning.common.ui.CustomButton;
 import io.github.sasori_256.town_planning.common.ui.CustomPanel;
 import io.github.sasori_256.town_planning.common.ui.ImageManager;
 import io.github.sasori_256.town_planning.common.ui.ImageManager.ImageStorage;
-import io.github.sasori_256.town_planning.common.ui.main.SceneNavigator;
+import io.github.sasori_256.town_planning.common.ui.main.GameFlowNavigator;
 
 public class TitlePanel extends JPanel {
-  private SceneNavigator sceneNavigator;
-  private ImageManager imageManager;
+  private final GameFlowNavigator navigator;
+  private final ImageManager imageManager;
 
-  public TitlePanel(SceneNavigator sceneNavigator, ImageManager imageManager) {
-    this.sceneNavigator = sceneNavigator;
+  public TitlePanel(GameFlowNavigator navigator, ImageManager imageManager) {
+    this.navigator = navigator;
     this.imageManager = imageManager;
     initCenterComponent();
   }
@@ -47,7 +47,7 @@ public class TitlePanel extends JPanel {
     } else {
       CustomButton startButton = new CustomButton("Start Game", startImageStorage, 0, 0);
       startButton.addActionListener(e -> {
-        sceneNavigator.changeScene("GAME_MAP");
+        navigator.startNewGame();
       });
       startButton.setAlignmentX(JPanel.CENTER_ALIGNMENT);
       centerPanel.add(startButton);

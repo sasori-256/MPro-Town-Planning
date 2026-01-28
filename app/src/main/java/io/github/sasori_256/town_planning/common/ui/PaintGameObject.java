@@ -16,6 +16,7 @@ import javax.swing.JPanel;
 import io.github.sasori_256.town_planning.common.ui.ImageManager.ImageStorage;
 import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.entity.building.Building;
+import io.github.sasori_256.town_planning.entity.building.BuildingType;
 import io.github.sasori_256.town_planning.entity.disaster.Disaster;
 import io.github.sasori_256.town_planning.entity.resident.Resident;
 import io.github.sasori_256.town_planning.entity.resident.ResidentState;
@@ -106,6 +107,32 @@ public class PaintGameObject {
   }
 
   /**
+   * 指定された座標にプレビュー用の建物を描画する
+   * 
+   * @param g            グラフィックスコンテキスト
+   * @param pos          座標
+   * @param buildingType 建物の種類
+   * @param camera       カメラ
+   * @param imageManager 画像取得用マネージャー
+   * @param panel        描画対象のパネル
+   * @param buildable    建設可能かどうか
+   */
+  public void paintPreviewBuilding(Graphics g, Point2D.Double pos, BuildingType buildingType,
+      Camera camera, ImageManager imageManager, JPanel panel, boolean buildable) {
+    for (int x = 0; x < buildingType.getWidth(); x++) {
+      for (int y = 0; y < buildingType.getHeight(); y++) {
+        Point2D.Double tilePos = new Point2D.Double(pos.x + x - buildingType.getAnchorX(),
+            pos.y + y - buildingType.getAnchorY());
+        String tileImageName = buildingType.getTileImageName(x, y);
+        if (tileImageName != null) {
+          String previewImageName = tileImageName + (buildable ? "_preview_buildable" : "_preview_unbuildable");
+          paint(g, tilePos, previewImageName, camera, imageManager, panel, true);
+        }
+      }
+    }
+  }
+
+  /**
    * 指定された住民を描画する
    *
    * @param g            グラフィックスコンテキスト
@@ -115,7 +142,7 @@ public class PaintGameObject {
    * @param panel        描画対象のパネル
    */
   public void paintResident(Graphics g, Resident resident, Camera camera, ImageManager imageManager,
-      JPanel panel) {
+      AnimationManager animationManager, JPanel panel) {
     if (resident == null || resident.getType() == null) {
       return;
     }

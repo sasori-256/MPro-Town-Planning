@@ -1,8 +1,10 @@
 package io.github.sasori_256.town_planning.common.ui;
 
 import java.awt.Component;
+import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.RescaleOp;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -119,6 +121,46 @@ public class ImageManager extends Component {
       ImageStorage storage = new ImageStorage(imageName, img);
       this.imageStorages.put(imageName, storage);
     }
+
+    // プレビュー用画像の生成と保存
+    // TODO: PATHから画像を取得できるようになったらbuildingだけを対象にする。
+    Map<String, ImageStorage> previewStorages = new HashMap<>();
+    for (ImageStorage baseStorage : new HashMap<>(this.imageStorages).values()) {
+      createAndCachePreview(baseStorage, true, previewStorages);
+      createAndCachePreview(baseStorage, false, previewStorages);
+    }
+    this.imageStorages.putAll(previewStorages);
+  }
+
+  private void createAndCachePreview(ImageStorage baseStorage, boolean buildable,
+      Map<String, ImageStorage> targetCache) {
+    String previewImageName = (baseStorage.getName() + (buildable ? "_preview_buildable" : "_preview_unbuildable"))
+        .toLowerCase();
+
+    BufferedImage source = baseStorage.getImage();
+    if (source == null) {
+      return;
+    }
+    float[] offsets = new float[] { 0f, 0f, 0f, 0f };
+    float[] scales;
+    if (buildable) {
+      scales = new float[] { 1f, 1f, 1f, 0.5f }; // 半透明
+    } else {
+      scales = new float[] { 1f, 0.3f, 0.3f, 0.7f }; // 赤がかった半透明
+    }
+    RescaleOp rescaleOp = new RescaleOp(scales, offsets, null);
+    if (source.getType() != BufferedImage.TYPE_INT_ARGB) { // ARGB でない場合は変換
+      BufferedImage argbImage = new BufferedImage(source.getWidth(), source.getHeight(),
+          BufferedImage.TYPE_INT_ARGB);
+      Graphics2D g2 = argbImage.createGraphics();
+      g2.drawImage(source, 0, 0, null);
+      g2.dispose();
+      source = argbImage;
+    }
+
+    BufferedImage filteredImage = rescaleOp.filter(source, null);
+    ImageStorage previewStorage = new ImageStorage(previewImageName, filteredImage);
+    targetCache.put(previewImageName, previewStorage);
   }
 
   /**

@@ -10,12 +10,13 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import javax.swing.JPanel;
-
 import io.github.sasori_256.town_planning.common.ui.AnimationManager;
 import io.github.sasori_256.town_planning.common.ui.ImageManager;
 import io.github.sasori_256.town_planning.common.ui.PaintGameObject;
+import io.github.sasori_256.town_planning.common.ui.buildPreview.view.BuildPreviewUI;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.view.PaintObjectSelectUI;
+import io.github.sasori_256.town_planning.common.ui.main.GameFlowNavigator;
 import io.github.sasori_256.town_planning.common.ui.main.UiRefreshable;
 import io.github.sasori_256.town_planning.common.ui.resourceViewer.view.PaintResourceViewerUI;
 import io.github.sasori_256.town_planning.entity.Camera;
@@ -39,6 +40,7 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
   private final AnimationManager animationManager;
   private final PaintGameObject paintGameObject;
   private final PaintObjectSelectUI paintObjectSelectUI;
+  private final BuildPreviewUI buildPreviewUI;
   private final ReadWriteLock stateLock;
 
   /**
@@ -67,8 +69,12 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
     this.stateLock = stateLock;
     this.setLayout(null);
     setBackground(new Color(19, 175, 251)); // 海の色
+    this.buildPreviewUI = new BuildPreviewUI(imageManager, camera, gameModel);
     this.paintObjectSelectUI = new PaintObjectSelectUI(imageManager, this, root);
     this.add(new PaintResourceViewerUI(gameModel, imageManager, 1.0));
+    buildPreviewUI.setVisible(false);
+    this.add(buildPreviewUI);
+
     paintObjectSelectUI.paint();
     revalidate();
     repaint();
@@ -78,7 +84,8 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
    * gameMapの内容を描画する
    *
    * @param g 描画に使用するGraphicsオブジェクト
-   * @implNote 画像ファイルが見つからない場合、"Warning Image not found: imageName.png at (x,y)"
+   * @implNote 画像ファイルが見つからない場合、"Warning Image not found: imageName.pn
+   *           at (x,y)"
    *           という警告が出力されます。
    * @see GameMap
    */
@@ -149,11 +156,19 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
           paintGameObject.paintBuilding(g, entry.pos, gameMap, camera, imageManager,
               animationManager, this);
         } else if (entry.kind == DrawKind.RESIDENT) {
-          paintGameObject.paintResident(g, entry.resident, camera, imageManager, this);
+          paintGameObject.paintResident(g, entry.resident, camera, imageManager, animationManager, this);
         } else if (entry.kind == DrawKind.DISASTER) {
           paintGameObject.paintDisaster(g, entry.disaster, camera, imageManager,
               animationManager, this);
         }
+      }
+
+      // 建物プレビューを描画
+      if (gameModel.getBuildingPreview().getBuildingPreviewType() != null
+          && gameModel.getBuildingPreview().getBuildingPreviewPos() != null) {
+        paintGameObject.paintPreviewBuilding(g, gameModel.getBuildingPreview().getBuildingPreviewPos(),
+            gameModel.getBuildingPreview().getBuildingPreviewType(), camera, imageManager, this,
+            gameModel.getBuildingPreview().getBuildable());
       }
     } finally {
       readLock.unlock();
@@ -180,6 +195,31 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
   @Override
   public void repaintUI() {
     this.paintObjectSelectUI.repaintUI();
+  }
+
+  /**
+   * 建物プレビューを表示し、位置を更新する。
+   */
+  public void showBuildPreview() {
+    buildPreviewUI.setVisible(true);
+    updateBuildPreviewPosition();
+  }
+
+  /**
+   * 建物プレビューを非表示にする。
+   */
+  public void hideBuildPreview() {
+    buildPreviewUI.setVisible(false);
+  }
+
+  /**
+   * 建物プレビューの位置を更新する。
+   */
+  public void updateBuildPreviewPosition() {
+    if (!buildPreviewUI.isVisible()) {
+      return;
+    }
+    buildPreviewUI.updateUpPos(gameModel.getBuildingPreview().getBuildingPreviewPos());
   }
 
   private enum DrawKind {

@@ -1,6 +1,7 @@
 package io.github.sasori_256.town_planning.entity.model;
 
 import java.awt.geom.Point2D;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -13,18 +14,23 @@ import io.github.sasori_256.town_planning.common.core.GameConfig;
 import io.github.sasori_256.town_planning.common.core.GameLoop;
 import io.github.sasori_256.town_planning.common.core.SimulationStep;
 import io.github.sasori_256.town_planning.common.event.EventBus;
+import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailureReason;
+import io.github.sasori_256.town_planning.common.event.events.ResidentDiedEvent;
 import io.github.sasori_256.town_planning.entity.building.Building;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
 import io.github.sasori_256.town_planning.entity.disaster.Disaster;
+import io.github.sasori_256.town_planning.entity.disaster.DisasterType;
 import io.github.sasori_256.town_planning.entity.model.manager.BuildingManager;
 import io.github.sasori_256.town_planning.entity.model.manager.EntityManager;
 import io.github.sasori_256.town_planning.entity.model.manager.PopulationManager;
+import io.github.sasori_256.town_planning.entity.model.manager.ResidentPanicManager;
 import io.github.sasori_256.town_planning.entity.model.manager.RelocationManager;
 import io.github.sasori_256.town_planning.entity.model.manager.SoulManager;
 import io.github.sasori_256.town_planning.entity.model.manager.TimeManager;
 import io.github.sasori_256.town_planning.entity.resident.Resident;
 import io.github.sasori_256.town_planning.entity.resident.ResidentState;
 import io.github.sasori_256.town_planning.entity.resident.ResidentType;
+import io.github.sasori_256.town_planning.map.model.BuildingPreview;
 import io.github.sasori_256.town_planning.map.model.GameMap;
 import io.github.sasori_256.town_planning.map.model.TerrainType;
 
@@ -39,16 +45,18 @@ import io.github.sasori_256.town_planning.map.model.TerrainType;
  */
 public class GameModel implements GameContext, SimulationStep {
   /** 初期魂所持量。 */
-  private static final int INITIAL_SOUL = 100;
+  private static final int INITIAL_SOUL = GameConfig.getSoulInitialAmount();
   /** アニメーション進行の固定ステップ(秒)。 */
-  private static final double ANIMATION_STEP = 1.0 / 30.0;
+  private static final double ANIMATION_STEP = GameConfig.getAnimationStepSeconds();
 
   /** イベント通知に使用するイベントバス。 */
-  private final EventBus eventBus;
+  private final EventBus eventBus = EventBus.getInstance();
   /** マップ状態の本体。 */
   private final GameMap gameMap;
   /** 共有状態を保護する読み書きロック。 */
   private final ReadWriteLock stateLock = new ReentrantReadWriteLock();
+  /** 建設プレビュー情報。 */
+  private final BuildingPreview buildingPreview;
   /** ゲームループの参照。startGameLoop() で初期化される。 */
   private GameLoop gameLoop;
 
@@ -64,6 +72,8 @@ public class GameModel implements GameContext, SimulationStep {
   private final PopulationManager populationManager;
   /** 建物管理。 */
   private final BuildingManager buildingManager;
+  /** 住民のパニック管理。 */
+  private final ResidentPanicManager residentPanicManager;
 
   /** アニメーション進行用の経過時間バッファ。 */
   private double animationAccumulator = 0.0;
@@ -75,19 +85,18 @@ public class GameModel implements GameContext, SimulationStep {
    *
    * @param mapWidth  マップの横幅
    * @param mapHeight マップの縦幅
-   * @param eventBus  イベントバス
    */
-  public GameModel(int mapWidth, int mapHeight, long seed, EventBus eventBus) {
-    this.eventBus = eventBus;
-    this.gameMap = new GameMap(mapWidth, mapHeight, seed, eventBus);
-
-    this.entityManager = new EntityManager(eventBus, stateLock);
-    this.soulManager = new SoulManager(eventBus, stateLock, entityManager, INITIAL_SOUL);
-    this.timeManager = new TimeManager(eventBus, stateLock);
+  public GameModel(int mapWidth, int mapHeight, long seed) {
+    this.gameMap = new GameMap(mapWidth, mapHeight, seed);
+    this.buildingPreview = new BuildingPreview(stateLock, gameMap);
+    this.entityManager = new EntityManager(stateLock);
+    this.soulManager = new SoulManager(stateLock, entityManager, INITIAL_SOUL);
+    this.timeManager = new TimeManager(stateLock);
     this.relocationManager = new RelocationManager(stateLock, entityManager);
     this.populationManager = new PopulationManager(stateLock, entityManager);
-    this.buildingManager = new BuildingManager(eventBus, gameMap, stateLock, soulManager,
+    this.buildingManager = new BuildingManager(gameMap, stateLock, soulManager,
         entityManager);
+    this.residentPanicManager = new ResidentPanicManager(stateLock, entityManager);
 
     this.gameLoop = null;
 
@@ -107,12 +116,6 @@ public class GameModel implements GameContext, SimulationStep {
   }
 
   // --- GameContext Implementation ---
-
-  /** {@inheritDoc} */
-  @Override
-  public EventBus getEventBus() {
-    return eventBus;
-  }
 
   /** {@inheritDoc} */
   @Override
@@ -192,6 +195,24 @@ public class GameModel implements GameContext, SimulationStep {
     return populationManager.getDeadPopulation();
   }
 
+  /**
+   * 最大生存住民数を返す。
+   *
+   * @return 最大生存住民数
+   */
+  public int getPopulationMax() {
+    return populationManager.getMaxPopulation();
+  }
+
+  /**
+   * 累計死亡住民数を返す。
+   *
+   * @return 累計死亡住民数
+   */
+  public int getPopulationTotalDeaths() {
+    return populationManager.getTotalDeaths();
+  }
+
   /** {@inheritDoc} */
   @Override
   public <T extends BaseGameEntity> void spawnEntity(T entity) {
@@ -202,6 +223,41 @@ public class GameModel implements GameContext, SimulationStep {
   @Override
   public <T extends BaseGameEntity> void removeEntity(T entity) {
     entityManager.removeEntity(entity, this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void applyDisasterImpact(Point2D.Double center, DisasterType type) {
+    if (center == null || type == null) {
+      return;
+    }
+    double damageRadius = type.getRadius();
+    int damage = type.getDamage();
+    double panicRadius = damageRadius + GameConfig.getDisasterPanicRadiusOffsetTiles();
+    withWriteLock(() -> {
+      killResidentsWithin(center, damageRadius);
+      List<Building> destroyed = buildingManager.damageBuildings(this, center, damageRadius, damage);
+      residentPanicManager.panicResidentsByDestroyedBuildings(this, destroyed);
+      residentPanicManager.panicResidentsInRing(this, center, damageRadius, panicRadius);
+    });
+  }
+
+  private void killResidentsWithin(Point2D.Double center, double radius) {
+    if (center == null || radius <= 0.0) {
+      return;
+    }
+    for (Resident resident : entityManager.snapshotResidents()) {
+      if (resident == null) {
+        continue;
+      }
+      if (resident.getState() == ResidentState.DEAD || resident.getState() == ResidentState.AT_HOME) {
+        continue;
+      }
+      if (resident.getPosition().distance(center) <= radius) {
+        resident.markDead();
+        eventBus.publish(new ResidentDiedEvent(resident, getPopulationAlive()));
+      }
+    }
   }
 
   // --- Game Logic API ---
@@ -278,7 +334,23 @@ public class GameModel implements GameContext, SimulationStep {
    * @return 建設できた場合はtrue
    */
   public boolean constructBuilding(Point2D.Double pos, BuildingType type) {
-    return buildingManager.constructBuilding(this, pos, type);
+    boolean constructed = buildingManager.constructBuilding(this, pos, type);
+    if (constructed) {
+      // 建設直後に住民の割り当てを再計算し、空き家への移動を促す。
+      relocationManager.rebalanceResidents();
+    }
+    return constructed;
+  }
+
+  /**
+   * 建物の建設可否を判定する。
+   *
+   * @param pos  設置位置
+   * @param type 建物種別
+   * @return 問題があれば失敗理由、問題なければnull
+   */
+  public EntitySpawnFailureReason validateConstruction(Point2D.Double pos, BuildingType type) {
+    return buildingManager.validateConstruction(pos, type);
   }
 
   // getters / setters
@@ -308,6 +380,15 @@ public class GameModel implements GameContext, SimulationStep {
   public GameLoop getGameLoop() {
     return gameLoop;
   } // 現状、startGameLoopで新しいループが作られるので、このgetterの用途は不明
+
+  /**
+   * 建設プレビュー情報を返す。
+   *
+   * @return 建設プレビュー情報
+   */
+  public BuildingPreview getBuildingPreview() {
+    return buildingPreview;
+  }
 
   /**
    * 日数を設定する。

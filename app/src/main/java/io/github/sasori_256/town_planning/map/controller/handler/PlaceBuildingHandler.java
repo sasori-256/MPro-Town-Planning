@@ -3,13 +3,18 @@ package io.github.sasori_256.town_planning.map.controller.handler;
 import java.awt.geom.Point2D;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import io.github.sasori_256.town_planning.entity.building.Building;
+
+import io.github.sasori_256.town_planning.common.event.EventBus;
+import io.github.sasori_256.town_planning.common.event.events.CancelBuildEvent;
 import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailedEvent;
 import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailureReason;
 import io.github.sasori_256.town_planning.common.event.events.EntitySpawnKind;
+import io.github.sasori_256.town_planning.common.event.events.TemporaryBuildEvent;
+import io.github.sasori_256.town_planning.entity.building.BuildingType;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.entity.model.GameModel;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
+import io.github.sasori_256.town_planning.map.model.BuildingPreview;
 
 /**
  * クリック位置に建物を配置するハンドラ。
@@ -17,7 +22,7 @@ import io.github.sasori_256.town_planning.map.controller.GameMapController;
 public class PlaceBuildingHandler
     implements BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> {
   private GameModel gameModel;
-  private GameMapController gameMapController;
+  private final EventBus eventBus = EventBus.getInstance();
 
   /**
    * 配置ハンドラを生成する。
@@ -25,9 +30,8 @@ public class PlaceBuildingHandler
    * @param gameModel         ゲームモデル
    * @param gameMapController マップコントローラ
    */
-  public PlaceBuildingHandler(GameModel gameModel, GameMapController gameMapController) {
+  public PlaceBuildingHandler(GameModel gameModel) {
     this.gameModel = gameModel;
-    this.gameMapController = gameMapController;
   }
 
   /**
@@ -38,19 +42,22 @@ public class PlaceBuildingHandler
    */
   @Override
   public void accept(Point2D.Double isoPoint, Function<Point2D.Double, ? extends BaseGameEntity> entityGenerator) {
-    System.out.println("Placing building at: " + isoPoint);
-    Point2D.Double roundedPoint = new Point2D.Double(Math.round(isoPoint.x), Math.round(isoPoint.y));
-    BaseGameEntity entity = entityGenerator.apply(roundedPoint);
-    if (entity instanceof Building building) {
-      gameModel.constructBuilding(roundedPoint, building.getType());
-    } else {
-      gameModel.getEventBus().publish(new EntitySpawnFailedEvent(
-          EntitySpawnKind.BUILDING,
-          EntitySpawnFailureReason.INVALID_ENTITY,
-          roundedPoint,
-          "generated=" + (entity == null ? "null" : entity.getClass().getSimpleName())));
+    BuildingPreview preview = gameModel.getBuildingPreview();
+    preview.setEntityGenerator(entityGenerator);
+    preview.setBuildingPreviewPos(isoPoint);
+    Point2D.Double pos = preview.getBuildingPreviewPos();
+    BuildingType type = preview.getBuildingPreviewType();
+    EntitySpawnFailureReason reason = gameModel.validateConstruction(pos, type);
+    if (reason == null) {
+      eventBus.publish(new TemporaryBuildEvent());
+      return;
     }
-    gameMapController.setSelectedEntityGenerator((point) -> null); // TODO:Buildingの連続配置をしたい場合、これじゃだめ
-    gameMapController.setActionOnClick(new ClickGameMapHandler());
+    String detail = BuildingType.getDetailString(type);
+    eventBus.publish(new EntitySpawnFailedEvent(EntitySpawnKind.BUILDING, reason, pos, detail));
+    // 魂がないときはどこにも立てることができないので、キャンセルしないとキャンセルボタンすら出てこない。
+    // ので先にキャンセルしてしまう。
+    if (reason == EntitySpawnFailureReason.INSUFFICIENT_SOUL) {
+      eventBus.publish(new CancelBuildEvent());
+    }
   }
 }

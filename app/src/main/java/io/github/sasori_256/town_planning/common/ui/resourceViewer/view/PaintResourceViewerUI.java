@@ -25,7 +25,7 @@ import io.github.sasori_256.town_planning.entity.model.GameContext;
  */
 public class PaintResourceViewerUI extends JPanel {
     private final GameContext gameContext;
-    private final EventBus eventBus;
+    private final EventBus eventBus = EventBus.getInstance();
     private final ImageManager imageManager;
     private double uiScale;
 
@@ -33,7 +33,6 @@ public class PaintResourceViewerUI extends JPanel {
 
     public PaintResourceViewerUI(GameContext gameContext, ImageManager imageManager, double uiScale) {
         this.gameContext = gameContext;
-        this.eventBus = gameContext.getEventBus();
         this.imageManager = imageManager;
         this.uiScale = uiScale;
         initUI();
@@ -72,7 +71,7 @@ public class PaintResourceViewerUI extends JPanel {
                 // defaultPanelWidth;
                 // totalWidth += panelWidth + panelMargin;
                 String initialValue = resolveInitialValue(type);
-                ResourceViewerPanel panel = new ResourceViewerPanel(initialValue, panelImage);
+                ResourceViewerPanel panel = new ResourceViewerPanel(initialValue, type.getUnit(), panelImage);
                 this.add(panel);
                 this.add(Box.createHorizontalStrut(panelMargin));
                 resourcePanels.put(type, panel);
@@ -100,11 +99,11 @@ public class PaintResourceViewerUI extends JPanel {
             return;
         }
         if (javax.swing.SwingUtilities.isEventDispatchThread()) {
-            panel.setDisplayValue(value);
+            panel.setDisplayValue(value, type.getUnit());
             panel.repaint();
         } else {
             javax.swing.SwingUtilities.invokeLater(() -> {
-                panel.setDisplayValue(value);
+                panel.setDisplayValue(value, type.getUnit());
                 panel.repaint();
             });
         }

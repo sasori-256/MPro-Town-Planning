@@ -1,0 +1,219 @@
+classDiagram
+    %% --- Core Interfaces ---
+    class GameContext {
+        <<interface>>
+        +getMap() GameMap
+        +spawnEntity(BaseGameEntity)
+        +removeEntity(BaseGameEntity)
+    }
+
+    class LifecycleAware {
+        <<interface>>
+        +update(GameContext)
+    }
+
+    class Animatable {
+        <<interface>>
+        +advanceAnimation(double)
+    }
+
+    class SimulationStep {
+        <<interface>>
+        +step(double dt)
+    }
+
+    %% --- Game Model & Managers ---
+    class GameModel {
+        -GameMap gameMap
+        -EntityManager entityManager
+        -SoulManager soulManager
+        -TimeManager timeManager
+        -PopulationManager populationManager
+        -BuildingManager buildingManager
+        -RelocationManager relocationManager
+        -ResidentPanicManager residentPanicManager
+        +startGameLoop()
+        +constructBuilding()
+        +harvestSoulAt()
+    }
+
+    class EntityManager {
+        -List~BaseGameEntity~ entities
+        -Queue~Runnable~ pendingOperations
+        +updateEntities(GameContext)
+        +spawnEntity()
+        +removeEntity()
+    }
+
+    class SoulManager {
+        -int currentSoul
+        +addSoul(int)
+        +harvestSoulAt(GameContext, Point2D)
+    }
+
+    class TimeManager {
+        -int day
+        -double timeOfDay
+        +advance(double)
+    }
+
+    class PopulationManager {
+        +getTotalPopulation()
+        +getAlivePopulation()
+    }
+
+    class BuildingManager {
+        +constructBuilding()
+        +damageBuildings()
+    }
+
+    class RelocationManager {
+        +rebalanceResidents()
+    }
+
+    class ResidentPanicManager {
+        +panicResidentsInRing()
+    }
+
+    %% --- Map System ---
+    class GameMap {
+        -MapCell[][] cells
+        -int width
+        -int height
+        +getCell(Point2D) MapCell
+        +placeBuilding()
+        +removeBuilding()
+    }
+
+    class MapCell {
+        -Point2D position
+        -Terrain terrain
+        -Building building
+        +isOccupied() boolean
+        +canBuild() boolean
+    }
+
+    class Terrain {
+        -TerrainType type
+        +isWalkable()
+        +isBuildable()
+    }
+
+    class BuildingPreview {
+        -GameMap map
+        +setPreview()
+        +clearPreview()
+    }
+
+    %% --- Entities ---
+    class GameEntity {
+        <<interface>>
+        +getPosition()
+    }
+
+    class BaseGameEntity {
+        <<abstract>>
+        #Point2D position
+        #UpdateStrategy updateStrategy
+        +update(GameContext)
+    }
+
+    class Building {
+        -BuildingType type
+        -int durability
+        -int population
+        +getType()
+        +applyDamage(int)
+    }
+
+    class Resident {
+        -ResidentType type
+        -ResidentState state
+        -Point2D homePosition
+        -Point2D relocationTarget
+        +setState()
+        +requestRelocation()
+    }
+
+    class Disaster {
+        -DisasterType type
+        -String animationName
+        +getAnimationName()
+    }
+
+    %% --- Strategies & Actions ---
+    class UpdateStrategy {
+        <<interface>>
+        +update(GameContext, BaseGameEntity)
+    }
+
+    class CompositeUpdateStrategy {
+        -GameAction action
+        -List~GameEffect~ effects
+        +update()
+    }
+
+    class GameAction {
+        <<interface>>
+        +execute(GameContext, BaseGameEntity)
+    }
+
+    class GameEffect {
+        <<interface>>
+        +apply(GameContext, BaseGameEntity)
+    }
+
+    %% --- Enumerations ---
+    class BuildingType { <<enumeration>> }
+    class ResidentType { <<enumeration>> }
+    class ResidentState { <<enumeration>> }
+    class DisasterType { <<enumeration>> }
+    class TerrainType { <<enumeration>> }
+
+    %% --- Relationships ---
+    
+    %% Implementation
+    GameContext <|.. GameModel
+    SimulationStep <|.. GameModel
+    LifecycleAware <|.. BaseGameEntity
+    Animatable <|.. BaseGameEntity
+    GameEntity <|.. BaseGameEntity
+
+    %% Inheritance
+    BaseGameEntity <|-- Building
+    BaseGameEntity <|-- Resident
+    BaseGameEntity <|-- Disaster
+
+    %% Composition (GameModel)
+    GameModel *-- GameMap
+    GameModel *-- EntityManager
+    GameModel *-- SoulManager
+    GameModel *-- TimeManager
+    GameModel *-- PopulationManager
+    GameModel *-- BuildingManager
+    GameModel *-- RelocationManager
+    GameModel *-- ResidentPanicManager
+    GameModel *-- BuildingPreview
+
+    %% Map Structure
+    GameMap "1" *-- "many" MapCell
+    MapCell *-- Terrain
+    MapCell o-- Building : optional ref
+    Terrain --> TerrainType
+
+    %% Entity Structure
+    BaseGameEntity --> UpdateStrategy
+    UpdateStrategy <|.. CompositeUpdateStrategy
+    CompositeUpdateStrategy o-- GameAction
+    CompositeUpdateStrategy o-- "many" GameEffect
+
+    %% Entity Types
+    Building --> BuildingType
+    Resident --> ResidentType
+    Resident --> ResidentState
+    Disaster --> DisasterType
+
+    %% Manager Dependencies
+    EntityManager o-- "many" BaseGameEntity : manages
+    BuildingManager --> GameMap : uses
+    SoulManager --> EntityManager : scans for souls

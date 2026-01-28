@@ -1,0 +1,152 @@
+classDiagram
+    %% --- Main Window & Flow ---
+    class GameWindow {
+        -JFrame frame
+        -GameFlowController flowController
+        +setVisible(boolean)
+    }
+
+    class GameFlowController {
+        -GameModel model
+        -SceneNavigator navigator
+        +startGame()
+        +toTitle()
+        +toGame()
+        +toEnd()
+    }
+
+    class SceneNavigator {
+        <<interface>>
+        +changeScene(SceneId)
+    }
+
+    %% --- Panels (Scenes) ---
+    class CustomPanel {
+        <<JPanel>>
+        #Image backgroundImage
+        +paintComponent(Graphics)
+    }
+
+    class UiRefreshable {
+        <<interface>>
+        +refreshUi()
+    }
+
+    class TitlePanel {
+        -GameFlowController controller
+        +onStartClicked()
+    }
+
+    class EndPanel {
+        -GameFlowController controller
+        +onToTitleClicked()
+    }
+
+    class GameMapPanel {
+        -GameModel model
+        -GameMapController controller
+        -BuildPreviewUI buildPreviewUI
+        -ResourceViewerPanel resourceViewer
+        -PaintObjectSelectUI objectSelectUI
+        -ToastPanel toastPanel
+        +paintComponent(Graphics)
+    }
+
+    %% --- Sub-UI Components ---
+    class BuildPreviewUI {
+        -GameModel model
+        -BuildPreviewEventHandler handler
+        +drawPreview(Graphics2D)
+    }
+
+    class ResourceViewerPanel {
+        -GameModel model
+        -PaintResourceViewerUI painter
+        +refreshUi()
+    }
+
+    class PaintResourceViewerUI {
+        +paint(Graphics2D, GameModel)
+    }
+
+    class PaintObjectSelectUI {
+        -GameModel model
+        -GameMapController controller
+        -List~MenuNode~ rootNodes
+        +paint(Graphics2D)
+        +handleClick(Point)
+    }
+
+    class ToastPanel {
+        -ToastManager manager
+        +addToast(String)
+    }
+
+    class ToastManager {
+        -List~Toast~ toasts
+        +update(double)
+    }
+
+    %% --- Graphics & Assets ---
+    class ImageManager {
+        <<Singleton>>
+        +getImage(String)
+    }
+
+    class AnimationManager {
+        <<Singleton>>
+        +getAnimation(String)
+    }
+
+    class PaintGameObject {
+        <<Utility>>
+        +drawTerrain(Graphics2D, Terrain)
+        +drawBuilding(Graphics2D, Building)
+        +drawResident(Graphics2D, Resident)
+        +drawDisaster(Graphics2D, Disaster)
+    }
+
+    %% --- Model References (for context) ---
+    class GameModel {
+        <<Model>>
+    }
+
+    %% --- Relationships ---
+
+    %% Inheritance
+    CustomPanel <|-- TitlePanel
+    CustomPanel <|-- EndPanel
+    CustomPanel <|-- GameMapPanel
+    CustomPanel <|-- BuildPreviewUI
+    CustomPanel <|-- ResourceViewerPanel
+    CustomPanel <|-- PaintObjectSelectUI
+    CustomPanel <|-- ToastPanel
+    
+    UiRefreshable <|.. TitlePanel
+    UiRefreshable <|.. EndPanel
+    UiRefreshable <|.. GameMapPanel
+
+    %% Composition / Association
+    GameWindow *-- GameFlowController
+    GameFlowController o-- SceneNavigator
+    GameFlowController o-- GameModel
+    
+    SceneNavigator ..> TitlePanel : navigates to
+    SceneNavigator ..> GameMapPanel : navigates to
+    SceneNavigator ..> EndPanel : navigates to
+
+    %% GameMapPanel Composition
+    GameMapPanel *-- BuildPreviewUI
+    GameMapPanel *-- ResourceViewerPanel
+    GameMapPanel *-- PaintObjectSelectUI
+    GameMapPanel *-- ToastPanel
+    GameMapPanel o-- GameModel : observes
+    
+    %% Rendering Delegation
+    GameMapPanel ..> PaintGameObject : uses
+    PaintGameObject ..> ImageManager : uses
+    PaintGameObject ..> AnimationManager : uses
+
+    %% Sub-UI Details
+    ResourceViewerPanel *-- PaintResourceViewerUI
+    ToastPanel *-- ToastManager

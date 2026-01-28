@@ -4,6 +4,7 @@ import java.awt.geom.Point2D;
 import java.util.function.BiFunction;
 
 import io.github.sasori_256.town_planning.entity.disaster.strategy.MeteorDisasterAction;
+import io.github.sasori_256.town_planning.entity.disaster.strategy.PlagueDisasterAction;
 import io.github.sasori_256.town_planning.entity.model.CategoryType;
 import io.github.sasori_256.town_planning.entity.model.GameAction;
 
@@ -12,7 +13,7 @@ import io.github.sasori_256.town_planning.entity.model.GameAction;
  */
 public enum DisasterType {
   METEOR("隕石", "meteor", 200, 3, 100, CategoryType.METEOR, (pos, type) -> new MeteorDisasterAction(pos, type)),
-  PLAGUE("疫病", "plague", 150, 5, 20, CategoryType.PLAGUE);
+  PLAGUE("疫病", "loading", 150, 5, 20, CategoryType.PLAGUE, (pos, type) -> new PlagueDisasterAction(pos, type));
 
   private final String displayName;
   private final String imageName;

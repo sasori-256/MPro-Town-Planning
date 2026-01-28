@@ -235,14 +235,14 @@ public class GameModel implements GameContext, SimulationStep {
     int damage = type.getDamage();
     double panicRadius = damageRadius + GameConfig.getDisasterPanicRadiusOffsetTiles();
     withWriteLock(() -> {
-      killResidentsWithin(center, damageRadius);
+      damageResidentsWithin(center, damageRadius, damage);
       List<Building> destroyed = buildingManager.damageBuildings(this, center, damageRadius, damage);
       residentPanicManager.panicResidentsByDestroyedBuildings(this, destroyed);
       residentPanicManager.panicResidentsInRing(this, center, damageRadius, panicRadius);
     });
   }
 
-  private void killResidentsWithin(Point2D.Double center, double radius) {
+  private void damageResidentsWithin(Point2D.Double center, double radius, double amount) {
     if (center == null || radius <= 0.0) {
       return;
     }
@@ -254,8 +254,7 @@ public class GameModel implements GameContext, SimulationStep {
         continue;
       }
       if (resident.getPosition().distance(center) <= radius) {
-        resident.markDead();
-        eventBus.publish(new ResidentDiedEvent(resident, getPopulationAlive()));
+        resident.damage(amount);
       }
     }
   }

@@ -253,7 +253,7 @@ public class GameModel implements GameContext, SimulationStep {
       if (resident.getState() == ResidentState.DEAD || resident.getState() == ResidentState.AT_HOME) {
         continue;
       }
-      if (resident.getPosition().distance(center) <= radius) {
+      if (resident.getPosition().distanceSq(center) <= radius * radius) {
         resident.damage(amount);
       }
     }

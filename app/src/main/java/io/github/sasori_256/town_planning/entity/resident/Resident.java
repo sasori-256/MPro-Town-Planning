@@ -183,6 +183,16 @@ public class Resident extends BaseGameEntity {
   }
 
   /**
+   * 指定したデバフにかかっているかを返す。
+   *
+   * @param type デバフ種類
+   * @return かかっていればtrue
+   */
+  public boolean hasDebuff(DebuffType type) {
+    return debuffTimers.containsKey(type);
+  }
+
+  /**
    * 現在のHPを返す。
 
   /**

@@ -134,6 +134,7 @@ public class Resident extends BaseGameEntity {
     if (state == ResidentState.DEAD) {
       debuffTimers.clear();
       debuffLevels.clear();
+      debuffIntervals.clear();
       return;
     }
 

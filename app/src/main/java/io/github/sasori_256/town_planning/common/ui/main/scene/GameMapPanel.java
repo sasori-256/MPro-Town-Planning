@@ -10,17 +10,10 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 
 import javax.swing.JPanel;
-import javax.swing.AbstractAction;
-import javax.swing.JComponent;
-import javax.swing.KeyStroke;
-import java.awt.Graphics;
-import java.awt.geom.Point2D;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-
 import io.github.sasori_256.town_planning.common.ui.AnimationManager;
 import io.github.sasori_256.town_planning.common.ui.ImageManager;
 import io.github.sasori_256.town_planning.common.ui.PaintGameObject;
+import io.github.sasori_256.town_planning.common.ui.buildPreview.view.BuildPreviewUI;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.view.PaintObjectSelectUI;
 import io.github.sasori_256.town_planning.common.ui.main.GameFlowNavigator;
@@ -47,8 +40,8 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
   private final AnimationManager animationManager;
   private final PaintGameObject paintGameObject;
   private final PaintObjectSelectUI paintObjectSelectUI;
+  private final BuildPreviewUI buildPreviewUI;
   private final ReadWriteLock stateLock;
-  private final GameFlowNavigator navigator;
 
   /**
    * マップ描画パネルを生成する。
@@ -65,8 +58,7 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
       Camera camera,
       CategoryNode root,
       ReadWriteLock stateLock,
-      ImageManager imageManager,
-      GameFlowNavigator navigator) {
+      ImageManager imageManager) {
     this.gameMap = gameMap;
     this.gameModel = gameModel;
     this.camera = camera;
@@ -75,36 +67,25 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
     this.animationManager = new AnimationManager();
     this.paintGameObject = new PaintGameObject();
     this.stateLock = stateLock;
-    this.navigator = navigator;
     this.setLayout(null);
     setBackground(new Color(19, 175, 251)); // 海の色
+    this.buildPreviewUI = new BuildPreviewUI(imageManager, camera, gameModel);
     this.paintObjectSelectUI = new PaintObjectSelectUI(imageManager, this, root);
     this.add(new PaintResourceViewerUI(gameModel, imageManager, 1.0));
+    buildPreviewUI.setVisible(false);
+    this.add(buildPreviewUI);
+
     paintObjectSelectUI.paint();
-    setupNavigationBindings();
     revalidate();
     repaint();
-  }
-
-  private void setupNavigationBindings() {
-    if (navigator == null) {
-      return;
-    }
-    getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
-        .put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "goTitle");
-    getActionMap().put("goTitle", new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        navigator.goToTitle();
-      }
-    });
   }
 
   /**
    * gameMapの内容を描画する
    *
    * @param g 描画に使用するGraphicsオブジェクト
-   * @implNote 画像ファイルが見つからない場合、"Warning Image not found: imageName.png at (x,y)"
+   * @implNote 画像ファイルが見つからない場合、"Warning Image not found: imageName.pn
+   *           at (x,y)"
    *           という警告が出力されます。
    * @see GameMap
    */
@@ -181,6 +162,14 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
               animationManager, this);
         }
       }
+
+      // 建物プレビューを描画
+      if (gameModel.getBuildingPreview().getBuildingPreviewType() != null
+          && gameModel.getBuildingPreview().getBuildingPreviewPos() != null) {
+        paintGameObject.paintPreviewBuilding(g, gameModel.getBuildingPreview().getBuildingPreviewPos(),
+            gameModel.getBuildingPreview().getBuildingPreviewType(), camera, imageManager, this,
+            gameModel.getBuildingPreview().getBuildable());
+      }
     } finally {
       readLock.unlock();
     }
@@ -206,6 +195,31 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
   @Override
   public void repaintUI() {
     this.paintObjectSelectUI.repaintUI();
+  }
+
+  /**
+   * 建物プレビューを表示し、位置を更新する。
+   */
+  public void showBuildPreview() {
+    buildPreviewUI.setVisible(true);
+    updateBuildPreviewPosition();
+  }
+
+  /**
+   * 建物プレビューを非表示にする。
+   */
+  public void hideBuildPreview() {
+    buildPreviewUI.setVisible(false);
+  }
+
+  /**
+   * 建物プレビューの位置を更新する。
+   */
+  public void updateBuildPreviewPosition() {
+    if (!buildPreviewUI.isVisible()) {
+      return;
+    }
+    buildPreviewUI.updateUpPos(gameModel.getBuildingPreview().getBuildingPreviewPos());
   }
 
   private enum DrawKind {

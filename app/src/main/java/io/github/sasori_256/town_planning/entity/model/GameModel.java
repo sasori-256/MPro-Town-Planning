@@ -14,6 +14,7 @@ import io.github.sasori_256.town_planning.common.core.GameConfig;
 import io.github.sasori_256.town_planning.common.core.GameLoop;
 import io.github.sasori_256.town_planning.common.core.SimulationStep;
 import io.github.sasori_256.town_planning.common.event.EventBus;
+import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailureReason;
 import io.github.sasori_256.town_planning.common.event.events.ResidentDiedEvent;
 import io.github.sasori_256.town_planning.entity.building.Building;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
@@ -29,6 +30,7 @@ import io.github.sasori_256.town_planning.entity.model.manager.TimeManager;
 import io.github.sasori_256.town_planning.entity.resident.Resident;
 import io.github.sasori_256.town_planning.entity.resident.ResidentState;
 import io.github.sasori_256.town_planning.entity.resident.ResidentType;
+import io.github.sasori_256.town_planning.map.model.BuildingPreview;
 import io.github.sasori_256.town_planning.map.model.GameMap;
 import io.github.sasori_256.town_planning.map.model.TerrainType;
 
@@ -53,6 +55,8 @@ public class GameModel implements GameContext, SimulationStep {
   private final GameMap gameMap;
   /** 共有状態を保護する読み書きロック。 */
   private final ReadWriteLock stateLock = new ReentrantReadWriteLock();
+  /** 建設プレビュー情報。 */
+  private final BuildingPreview buildingPreview;
   /** ゲームループの参照。startGameLoop() で初期化される。 */
   private GameLoop gameLoop;
 
@@ -84,7 +88,7 @@ public class GameModel implements GameContext, SimulationStep {
    */
   public GameModel(int mapWidth, int mapHeight, long seed) {
     this.gameMap = new GameMap(mapWidth, mapHeight, seed);
-
+    this.buildingPreview = new BuildingPreview(stateLock, gameMap);
     this.entityManager = new EntityManager(stateLock);
     this.soulManager = new SoulManager(stateLock, entityManager, INITIAL_SOUL);
     this.timeManager = new TimeManager(stateLock);
@@ -338,6 +342,17 @@ public class GameModel implements GameContext, SimulationStep {
     return constructed;
   }
 
+  /**
+   * 建物の建設可否を判定する。
+   *
+   * @param pos  設置位置
+   * @param type 建物種別
+   * @return 問題があれば失敗理由、問題なければnull
+   */
+  public EntitySpawnFailureReason validateConstruction(Point2D.Double pos, BuildingType type) {
+    return buildingManager.validateConstruction(pos, type);
+  }
+
   // getters / setters
   /**
    * マップを返す。
@@ -365,6 +380,15 @@ public class GameModel implements GameContext, SimulationStep {
   public GameLoop getGameLoop() {
     return gameLoop;
   } // 現状、startGameLoopで新しいループが作られるので、このgetterの用途は不明
+
+  /**
+   * 建設プレビュー情報を返す。
+   *
+   * @return 建設プレビュー情報
+   */
+  public BuildingPreview getBuildingPreview() {
+    return buildingPreview;
+  }
 
   /**
    * 日数を設定する。

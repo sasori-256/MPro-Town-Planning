@@ -1,13 +1,18 @@
 package io.github.sasori_256.town_planning.common.ui.main;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
 import java.util.concurrent.locks.ReadWriteLock;
+import javax.swing.AbstractAction;
 import javax.swing.JComponent;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.Subscription;
 import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
 import io.github.sasori_256.town_planning.common.ui.ImageManager;
+import io.github.sasori_256.town_planning.common.ui.buildPreview.controller.BuildPreviewEventHandler;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.CategoryNode;
 import io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller.NodeMenuInitializer;
 import io.github.sasori_256.town_planning.common.ui.main.scene.GameMapPanel;
@@ -24,6 +29,8 @@ public class GameSession {
   private final ReadWriteLock stateLock;
   private final GameMapController gameMapController;
   private final GameMapPanel gameMapPanel;
+  private final GameFlowNavigator navigator;
+  private final BuildPreviewEventHandler buildPreviewEventHandler;
   private Subscription mapSub;
 
   /**
@@ -50,15 +57,18 @@ public class GameSession {
     this.stateLock = gameModel.getStateLock();
     this.camera = new Camera(1, windowWidth, windowHeight, mapWidth, mapHeight);
     this.gameMapController = new GameMapController(camera, stateLock);
+    this.navigator = navigator;
 
     CategoryNode root = NodeMenuInitializer.setup(this.gameMapController, this.gameModel);
     this.gameMapPanel = new GameMapPanel(this.gameMap, this.gameModel, this.camera, root, this.stateLock,
-        imageManager, navigator);
+        imageManager);
     this.gameMapPanel.addMouseListener(this.gameMapController);
     this.gameMapPanel.addMouseMotionListener(this.gameMapController);
     this.gameMapPanel.addMouseWheelListener(this.gameMapController);
     this.gameMapPanel.addKeyListener(this.gameMapController);
     this.gameMapPanel.setFocusable(true);
+    setupNavigationBindings();
+    this.buildPreviewEventHandler = new BuildPreviewEventHandler(this.gameMapPanel);
 
     this.mapSub = eventBus.subscribe(MapUpdatedEvent.class, event -> {
       if (SwingUtilities.isEventDispatchThread()) {
@@ -115,6 +125,7 @@ public class GameSession {
    */
   public void dispose() {
     stop();
+    buildPreviewEventHandler.dispose();
     if (mapSub != null) {
       mapSub.unsubscribe();
       mapSub = null;
@@ -137,5 +148,19 @@ public class GameSession {
    */
   public void updateCameraScreenSize(int width, int height) {
     camera.setScreenSize(width, height);
+  }
+
+  private void setupNavigationBindings() {
+    if (navigator == null) {
+      return;
+    }
+    gameMapPanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
+        .put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "goTitle");
+    gameMapPanel.getActionMap().put("goTitle", new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        navigator.goToTitle();
+      }
+    });
   }
 }

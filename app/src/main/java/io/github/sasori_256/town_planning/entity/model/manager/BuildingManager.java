@@ -58,18 +58,10 @@ public class BuildingManager {
    */
   public boolean constructBuilding(GameContext context, Point2D.Double pos, BuildingType type) {
     return withWriteLock(() -> {
-      String detail = "type=" + type + ", cost=" + type.getCost();
-      if (!soulManager.canAffordInternal(type.getCost())) {
-        publishSpawnFailure(pos, EntitySpawnFailureReason.INSUFFICIENT_SOUL, detail);
-        return false;
-      }
-
-      if (!gameMap.isValidPosition(pos)) {
-        publishSpawnFailure(pos, EntitySpawnFailureReason.INVALID_POSITION, detail);
-        return false;
-      }
-      if (!gameMap.getCell(pos).canBuild()) {
-        publishSpawnFailure(pos, EntitySpawnFailureReason.PLACEMENT_BLOCKED, detail);
+      String detail = BuildingType.getDetailString(type);
+      EntitySpawnFailureReason reason = validateConstructionInternal(pos, type);
+      if (reason != null) {
+        publishSpawnFailure(pos, reason, detail);
         return false;
       }
 
@@ -85,6 +77,17 @@ public class BuildingManager {
       publishSpawnFailure(pos, EntitySpawnFailureReason.PLACEMENT_BLOCKED, detail);
       return false;
     });
+  }
+
+  /**
+   * 建物を建設できるか判定する。
+   *
+   * @param pos  設置位置
+   * @param type 建物種別
+   * @return 問題があれば失敗理由、問題なければnull
+   */
+  public EntitySpawnFailureReason validateConstruction(Point2D.Double pos, BuildingType type) {
+    return withReadLock(() -> validateConstructionInternal(pos, type));
   }
 
   /**
@@ -170,8 +173,34 @@ public class BuildingManager {
     }
   }
 
+  private <T> T withReadLock(Supplier<T> supplier) {
+    Lock readLock = stateLock.readLock();
+    readLock.lock();
+    try {
+      return supplier.get();
+    } finally {
+      readLock.unlock();
+    }
+  }
+
   private void publishSpawnFailure(Point2D.Double pos, EntitySpawnFailureReason reason,
       String detail) {
     eventBus.publish(new EntitySpawnFailedEvent(EntitySpawnKind.BUILDING, reason, pos, detail));
+  }
+
+  private EntitySpawnFailureReason validateConstructionInternal(Point2D.Double pos, BuildingType type) {
+    if (type == null) {
+      return EntitySpawnFailureReason.INVALID_ENTITY;
+    }
+    if (pos == null || !gameMap.isValidPosition(pos)) {
+      return EntitySpawnFailureReason.INVALID_POSITION;
+    }
+    if (!gameMap.canPlaceBuilding(pos, type)) {
+      return EntitySpawnFailureReason.PLACEMENT_BLOCKED;
+    }
+    if (!soulManager.canAffordInternal(type.getCost())) {
+      return EntitySpawnFailureReason.INSUFFICIENT_SOUL;
+    }
+    return null;
   }
 }

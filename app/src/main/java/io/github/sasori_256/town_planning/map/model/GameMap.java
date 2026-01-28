@@ -299,7 +299,7 @@ public class GameMap implements MapContext {
       // またはnullを返す、境界用のダミーセルを返すなどの方法も考えられる
       throw new IndexOutOfBoundsException("Invalid position: " + pos);
     }
-    return cells[(int) pos.getY()][(int) pos.getX()];
+    return cells[(int) Math.round(pos.getY())][(int) Math.round(pos.getX())];
   }
 
   /** {@inheritDoc} */
@@ -321,6 +321,38 @@ public class GameMap implements MapContext {
     int originY = anchorY - type.getAnchorY();
     boolean[][] footprint = type.getFootprintMask();
 
+    if (!canPlaceBuilding(pos, type)) {
+      return false;
+    }
+    building.setOrigin(originX, originY);
+    building.setPosition(anchorPos);
+
+    for (int y = 0; y < type.getHeight(); y++) {
+      for (int x = 0; x < type.getWidth(); x++) {
+        if (!footprint[y][x]) {
+          continue;
+        }
+        int mapX = originX + x;
+        int mapY = originY + y;
+        Point2D.Double cellPos = new Point2D.Double(mapX, mapY);
+        getCell(cellPos).setBuilding(building, x, y);
+      }
+    }
+
+    eventBus.publish(new MapUpdatedEvent(anchorPos));
+    return true;
+  }
+
+  public boolean canPlaceBuilding(Point2D.Double pos, BuildingType type) {
+    if (pos == null || type == null) {
+      return false;
+    }
+    int anchorX = (int) Math.round(pos.getX());
+    int anchorY = (int) Math.round(pos.getY());
+    int originX = anchorX - type.getAnchorX();
+    int originY = anchorY - type.getAnchorY();
+    boolean[][] footprint = type.getFootprintMask();
+
     for (int y = 0; y < type.getHeight(); y++) {
       for (int x = 0; x < type.getWidth(); x++) {
         if (!footprint[y][x]) {
@@ -338,23 +370,6 @@ public class GameMap implements MapContext {
         }
       }
     }
-
-    building.setOrigin(originX, originY);
-    building.setPosition(anchorPos);
-
-    for (int y = 0; y < type.getHeight(); y++) {
-      for (int x = 0; x < type.getWidth(); x++) {
-        if (!footprint[y][x]) {
-          continue;
-        }
-        int mapX = originX + x;
-        int mapY = originY + y;
-        Point2D.Double cellPos = new Point2D.Double(mapX, mapY);
-        getCell(cellPos).setBuilding(building, x, y);
-      }
-    }
-
-    eventBus.publish(new MapUpdatedEvent(anchorPos));
     return true;
   }
 

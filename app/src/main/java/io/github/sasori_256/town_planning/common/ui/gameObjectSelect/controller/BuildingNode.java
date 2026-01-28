@@ -8,6 +8,7 @@ import io.github.sasori_256.town_planning.entity.building.BuildingType;
 import io.github.sasori_256.town_planning.entity.model.GameModel;
 import io.github.sasori_256.town_planning.map.controller.GameMapController;
 import io.github.sasori_256.town_planning.map.controller.handler.PlaceBuildingHandler;
+import io.github.sasori_256.town_planning.map.controller.handler.PreviewBuildingHandler;
 
 /**
  * 建物選択用のメニューノード。
@@ -27,7 +28,7 @@ public class BuildingNode implements MenuNode {
      * @param gameModel         ゲームモデル
      */
     public BuildingNode(BuildingType buildingType, Function<Point2D.Double, Building> generator,
-        GameMapController gameMapController, GameModel gameModel) {
+            GameMapController gameMapController, GameModel gameModel) {
         this.type = buildingType;
         this.generator = generator;
         this.gameMapController = gameMapController;
@@ -39,15 +40,21 @@ public class BuildingNode implements MenuNode {
      *
      * @return 建物種別
      */
-    public BuildingType getType() { return type; }
+    public BuildingType getType() {
+        return type;
+    }
 
     /** {@inheritDoc} */
     @Override
-    public String getName() { return type.getDisplayName(); }
+    public String getName() {
+        return type.getDisplayName();
+    }
 
     /** {@inheritDoc} */
     @Override
-    public boolean isLeaf() { return true; }
+    public boolean isLeaf() {
+        return true;
+    }
 
     /** {@inheritDoc} */
     @Override
@@ -58,8 +65,9 @@ public class BuildingNode implements MenuNode {
     /** {@inheritDoc} */
     @Override
     public void actionPerformed(java.awt.event.ActionEvent e) {
-        //TODO: Viewと連携する.
+        // TODO: Viewと連携する.
         gameMapController.setSelectedEntityGenerator(generator);
-        gameMapController.setActionOnClick(new PlaceBuildingHandler(gameModel, gameMapController));
+        gameMapController.setActionOnClick(new PlaceBuildingHandler(gameModel));
+        gameMapController.setActionOnMove(new PreviewBuildingHandler(gameModel, type));
     }
 }

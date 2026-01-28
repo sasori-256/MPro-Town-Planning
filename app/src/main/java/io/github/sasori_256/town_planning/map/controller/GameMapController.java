@@ -16,6 +16,9 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import javax.swing.SwingUtilities;
 
+import io.github.sasori_256.town_planning.common.event.EventBus;
+import io.github.sasori_256.town_planning.common.event.events.CancelBuildEvent;
+import io.github.sasori_256.town_planning.common.event.events.TemporaryBuildEvent;
 import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.map.controller.handler.*;
@@ -25,8 +28,10 @@ import io.github.sasori_256.town_planning.map.controller.handler.*;
  */
 public class GameMapController implements MouseListener, MouseMotionListener, KeyListener, MouseWheelListener {
   private Camera camera;
+  private final EventBus eventBus = EventBus.getInstance();
   private final ReadWriteLock stateLock;
   private BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> actionOnClick;
+  private BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> actionOnMove;
   private Function<Point2D.Double, ? extends BaseGameEntity> selectedEntityGenerator;
   private Point previousMiddleMousePos;
 
@@ -40,7 +45,17 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
     this.camera = camera;
     this.stateLock = stateLock;
     this.actionOnClick = new ClickGameMapHandler();
+    this.actionOnMove = new MoveGameMapHandler();
     this.selectedEntityGenerator = (point) -> null;
+    eventBus.subscribe(CancelBuildEvent.class, event -> {
+      this.selectedEntityGenerator = (point) -> null;
+      this.actionOnClick = new ClickGameMapHandler();
+      this.actionOnMove = new MoveGameMapHandler();
+    });
+    eventBus.subscribe(TemporaryBuildEvent.class, event -> {
+      this.actionOnClick = new ClickGameMapHandler();
+      this.actionOnMove = new MoveGameMapHandler();
+    });
   }
 
   /**
@@ -50,6 +65,15 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
    */
   public void setActionOnClick(BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> action) {
     this.actionOnClick = action;
+  }
+
+  /**
+   * GameMap上での移動時の動作を設定する
+   * 
+   * @param action
+   */
+  public void setActionOnMove(BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> action) {
+    this.actionOnMove = action;
   }
 
   /**
@@ -160,6 +184,8 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
    */
   @Override
   public void mouseMoved(MouseEvent e) {
+    Point2D.Double isoPoint = camera.screenToIso(new Point2D.Double(e.getX(), e.getY()));
+    actionOnMove.accept(isoPoint, selectedEntityGenerator);
   }
 
   /**

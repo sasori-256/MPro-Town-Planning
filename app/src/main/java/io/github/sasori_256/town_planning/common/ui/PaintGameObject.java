@@ -30,6 +30,7 @@ public class PaintGameObject {
   private static final double DEAD_ROTATION_DEGREES = 90.0;
   private static final float DEAD_HUE_SHIFT = 0.5f;
   private final Map<String, BufferedImage> deadTintCache = new HashMap<>();
+  private final Map<String, BufferedImage> damagedTintCache = new HashMap<>();
 
   /**
    * 垂直方向の高さを持つ画像のシフト量を計算する
@@ -160,6 +161,16 @@ public class PaintGameObject {
           resident.getDeathAnimationProgress());
       return;
     }
+    
+    // ダメージ表現
+    if (resident.isDamaged()) {
+      BufferedImage damagedImg = getDamagedTintedImage(imageName, imageStorage.image);
+      if (damagedImg != null) {
+        paintImage(g, pos, damagedImg, camera, panel, false);
+        return;
+      }
+    }
+
     // Residents move with sub-tile positions, so don't snap to grid.
     paintImage(g, pos, imageStorage.image, camera, panel, false);
   }
@@ -307,6 +318,52 @@ public class PaintGameObject {
     }
     return tinted;
   }
+  
+  private BufferedImage getDamagedTintedImage(String imageName, BufferedImage baseImage) {
+    if (imageName == null || baseImage == null) {
+      return null;
+    }
+    BufferedImage cached = damagedTintCache.get(imageName);
+    if (cached != null) {
+      return cached;
+    }
+    BufferedImage tinted = createRedTintedImage(baseImage);
+    if (tinted != null) {
+      damagedTintCache.put(imageName, tinted);
+    }
+    return tinted;
+  }
+
+  private BufferedImage createRedTintedImage(BufferedImage baseImage) {
+    int width = baseImage.getWidth();
+    int height = baseImage.getHeight();
+    if (width <= 0 || height <= 0) {
+      return null;
+    }
+    BufferedImage shifted = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        int argb = baseImage.getRGB(x, y);
+        int alpha = (argb >>> 24) & 0xFF;
+        if (alpha == 0) {
+          shifted.setRGB(x, y, 0);
+          continue;
+        }
+        int r = (argb >> 16) & 0xFF;
+        int g = (argb >> 8) & 0xFF;
+        int b = argb & 0xFF;
+        
+        // 赤色強調
+        int newR = Math.min(255, r + 150);
+        int newG = g / 2;
+        int newB = b / 2;
+        
+        int tintedArgb = (alpha << 24) | (newR << 16) | (newG << 8) | newB;
+        shifted.setRGB(x, y, tintedArgb);
+      }
+    }
+    return shifted;
+  }
 
   private BufferedImage createHueShiftedImage(BufferedImage baseImage, float hueShift) {
     int width = baseImage.getWidth();
@@ -343,3 +400,4 @@ public class PaintGameObject {
     return shifted;
   }
 }
+

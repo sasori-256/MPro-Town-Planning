@@ -155,10 +155,14 @@ public class Resident extends BaseGameEntity {
       // 効果発動判定 (1秒ごと)
       double interval = debuffIntervals.getOrDefault(type, 0.0);
       interval += dt;
-      if (interval >= 1.0) {
-        interval -= 1.0;
+      
+      int triggerCount = (int) (interval / 1.0);
+      if (triggerCount > 0) {
+        interval -= triggerCount * 1.0;
         int level = debuffLevels.get(type);
-        type.apply(context, this, level);
+        for (int i = 0; i < triggerCount; i++) {
+          type.apply(context, this, level);
+        }
       }
       debuffIntervals.put(type, interval);
     }

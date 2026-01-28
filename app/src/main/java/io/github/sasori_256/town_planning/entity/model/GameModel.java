@@ -246,6 +246,7 @@ public class GameModel implements GameContext, SimulationStep {
     if (center == null || radius <= 0.0) {
       return;
     }
+    double radiusSq = radius * radius;
     for (Resident resident : entityManager.snapshotResidents()) {
       if (resident == null) {
         continue;
@@ -253,7 +254,7 @@ public class GameModel implements GameContext, SimulationStep {
       if (resident.getState() == ResidentState.DEAD || resident.getState() == ResidentState.AT_HOME) {
         continue;
       }
-      if (resident.getPosition().distanceSq(center) <= radius * radius) {
+      if (resident.getPosition().distanceSq(center) <= radiusSq) {
         resident.damage(amount);
       }
     }

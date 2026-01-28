@@ -1,8 +1,5 @@
 package io.github.sasori_256.town_planning.entity.resident;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 import io.github.sasori_256.town_planning.entity.model.GameContext;
 
 /**
@@ -25,18 +22,16 @@ public enum DebuffType {
         // 近くの生存者を探す
         // 注意: 毎フレーム全探索は重いが、今回はResident数が数百程度と仮定。
         // 必要ならSpatialPartitioningなどを導入するが、まずはシンプルに実装。
-        List<Resident> targets = context.getResidentEntities()
+        context.getResidentEntities()
             .filter(r -> r.getState() != ResidentState.DEAD)
             .filter(r -> r.getState() != ResidentState.AT_HOME) // 家にいる住民は対象外
             .filter(r -> r != self) // 自分以外
             .filter(r -> r.getPosition().distanceSq(self.getPosition()) <= radiusSq)
-            .collect(Collectors.toList());
-            
-        for (Resident target : targets) {
-           // 感染（レベルを下げて伝染）。持続時間は10秒でリセット。
-           // 既に感染していても、より高いレベル（若い世代）の菌なら更新されるロジックはaddDebuff側で制御
-           target.addDebuff(PLAGUE, INFECTION_DURATION_SECONDS, level - 1);
-        }
+            .forEach(target -> {
+               // 感染（レベルを下げて伝染）。持続時間は10秒でリセット。
+               // 既に感染していても、より高いレベル（若い世代）の菌なら更新されるロジックはaddDebuff側で制御
+               target.addDebuff(PLAGUE, INFECTION_DURATION_SECONDS, level - 1);
+            });
       }
     }
   };

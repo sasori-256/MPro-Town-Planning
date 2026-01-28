@@ -1,19 +1,25 @@
 package io.github.sasori_256.town_planning.entity.resident;
 
 import java.awt.geom.Point2D;
+import java.util.HashMap;
+import java.util.Map;
 
 import io.github.sasori_256.town_planning.common.core.GameConfig;
 import io.github.sasori_256.town_planning.common.core.strategy.CompositeUpdateStrategy;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
+import io.github.sasori_256.town_planning.entity.model.GameContext;
 import io.github.sasori_256.town_planning.entity.resident.strategy.ResidentBehaviorAction;
 import io.github.sasori_256.town_planning.entity.resident.strategy.ResidentCorpseCleanupEffect;
 import io.github.sasori_256.town_planning.entity.resident.strategy.ResidentLifeCycleEffect;
+import io.github.sasori_256.town_planning.entity.resident.strategy.ResidentStatusEffect;
 
 /**
  * 住民エンティティを表すクラス。
  */
 public class Resident extends BaseGameEntity {
   private static final double DEATH_ANIMATION_DURATION = GameConfig.getResidentDeathAnimationDurationSeconds();
+  private static final double DAMAGE_EFFECT_DURATION = 0.5; // 赤色化する時間
+
   private final ResidentType type;
   private Point2D.Double homePosition;
   private Point2D.Double relocationTarget;
@@ -22,6 +28,14 @@ public class Resident extends BaseGameEntity {
   private int layerIndex;
   private ResidentState state;
   private double deathAnimationElapsed;
+  private double maxHp;
+  private double currentHp;
+  
+  // Status Effects
+  private final Map<DebuffType, Double> debuffTimers = new HashMap<>();
+  private final Map<DebuffType, Integer> debuffLevels = new HashMap<>();
+  private final Map<DebuffType, Double> debuffIntervals = new HashMap<>();
+  private double damageEffectTimer = 0.0;
 
   /**
    * 住民を生成する。
@@ -41,11 +55,14 @@ public class Resident extends BaseGameEntity {
     this.layerIndex = 0;
     this.state = state;
     this.deathAnimationElapsed = 0.0;
+    this.maxHp = residentType.getMaxHp();
+    this.currentHp = this.maxHp;
 
     CompositeUpdateStrategy strategy = new CompositeUpdateStrategy();
     strategy.setAction(new ResidentBehaviorAction());
     strategy.addEffect(new ResidentLifeCycleEffect());
     strategy.addEffect(new ResidentCorpseCleanupEffect());
+    strategy.addEffect(new ResidentStatusEffect());
     this.setUpdateStrategy(strategy);
   }
 
@@ -59,6 +76,131 @@ public class Resident extends BaseGameEntity {
    */
   public Resident(Point2D.Double position, ResidentType residentType, ResidentState state) {
     this(position, residentType, state, position);
+  }
+
+  /**
+   * ダメージを受ける。
+   *
+   * @param amount ダメージ量
+   */
+  public void damage(double amount) {
+    if (state == ResidentState.DEAD) {
+      return;
+    }
+    this.currentHp -= amount;
+    this.damageEffectTimer = DAMAGE_EFFECT_DURATION; // 赤色化開始
+
+    if (this.currentHp <= 0) {
+      this.currentHp = 0;
+      // markDead()はLifeCycleEffectで呼ぶのでここでは呼ばない
+    }
+  }
+
+  /**
+   * デバフを付与または更新する。
+   *
+   * @param type     デバフ種類
+   * @param duration 持続時間
+   * @param level    強度（レベルが高いほど強い、または若い世代）
+   */
+  public void addDebuff(DebuffType type, double duration, int level) {
+    if (state == ResidentState.DEAD) {
+      return;
+    }
+    // 既存のデバフよりレベルが低い（弱い）場合は更新しない？
+    // 今回は「感染源に近い（levelが高い）」菌に触れたら更新されるとする。
+    // または、単純に上書きする。
+    if (debuffLevels.containsKey(type)) {
+      int currentLevel = debuffLevels.get(type);
+      if (level < currentLevel) {
+         // 弱い菌には感染しない（あるいは効果延長のみ？）
+         // ここではシンプルに「常に上書き」にする（再感染）
+      }
+    }
+    
+    debuffTimers.put(type, duration);
+    debuffLevels.put(type, level);
+    // Intervalはリセットしない（ダメージタイミングをずらさないため）
+    debuffIntervals.putIfAbsent(type, 0.0);
+  }
+
+  /**
+   * デバフの状態を更新する。
+   * Strategyから呼ばれることを想定。
+   *
+   * @param context ゲームコンテキスト
+   */
+  public void updateDebuffs(GameContext context) {
+    if (state == ResidentState.DEAD) {
+      debuffTimers.clear();
+      debuffLevels.clear();
+      return;
+    }
+
+    double dt = context.getDeltaTime();
+
+    // 赤色化タイマー更新
+    if (damageEffectTimer > 0) {
+      damageEffectTimer -= dt;
+    }
+
+    // デバフ更新
+    // 削除リスト作成
+    var iterator = debuffTimers.entrySet().iterator();
+    while (iterator.hasNext()) {
+      var entry = iterator.next();
+      DebuffType type = entry.getKey();
+      double timeLeft = entry.getValue();
+
+      timeLeft -= dt;
+      if (timeLeft <= 0) {
+        iterator.remove();
+        debuffLevels.remove(type);
+        debuffIntervals.remove(type);
+        continue;
+      }
+      entry.setValue(timeLeft);
+
+      // 効果発動判定 (1秒ごと)
+      double interval = debuffIntervals.getOrDefault(type, 0.0);
+      interval += dt;
+      if (interval >= 1.0) {
+        interval -= 1.0;
+        int level = debuffLevels.get(type);
+        type.apply(context, this, level);
+      }
+      debuffIntervals.put(type, interval);
+    }
+  }
+
+  /**
+   * 現在ダメージを受けているか（赤色表示するか）。
+   *
+   * @return trueならダメージ状態
+   */
+  public boolean isDamaged() {
+    return damageEffectTimer > 0;
+  }
+
+  /**
+   * 現在のHPを返す。
+
+  /**
+   * 現在のHPを返す。
+   *
+   * @return 現在のHP
+   */
+  public double getHp() {
+    return this.currentHp;
+  }
+
+  /**
+   * 最大HPを返す。
+   *
+   * @return 最大HP
+   */
+  public double getMaxHp() { // BaseGameEntityのメソッドと被らないか注意だが、BaseGameEntityにはないはず
+    return this.maxHp;
   }
 
   /**

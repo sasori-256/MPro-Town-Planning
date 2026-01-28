@@ -28,6 +28,12 @@ public class ResidentLifeCycleEffect implements UpdateStrategy, GameEffect {
       return; // 生きてなければ加齢しない（死体処理は別途）
     }
 
+    // HPチェック（ダメージによる死亡）
+    if (resident.getHp() <= 0) {
+      die(context, self);
+      return;
+    }
+
     double dt = context.getDeltaTime();
 
     // 年齢取得と加齢

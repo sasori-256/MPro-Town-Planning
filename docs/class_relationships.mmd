@@ -1,150 +1,150 @@
 classDiagram
     %% ==========================================
-    %% Relationships and Inheritance (Detailed)
+    %% Relationships Only (No Methods, No Blocks)
     %% ==========================================
 
     %% --- Inheritance (IS-A) ---
     %% Core & Base Interfaces
-    common_core.Animatable <|.. entity_model.BaseGameEntity
-    common_core.SimulationStep <|.. entity_model.GameModel
+    Animatable <|.. BaseGameEntity
+    SimulationStep <|.. GameModel
     
     %% Entity Hierarchies
-    entity_model.GameEntity <|.. entity_model.BaseGameEntity
-    entity_model.LifecycleAware <|.. entity_model.BaseGameEntity
-    entity_model.GameContext <|.. entity_model.GameModel
+    GameEntity <|.. BaseGameEntity
+    LifecycleAware <|.. BaseGameEntity
+    GameContext <|.. GameModel
     
-    entity_model.BaseGameEntity <|-- entity_building.Building
-    entity_model.BaseGameEntity <|-- entity_resident.Resident
-    entity_model.BaseGameEntity <|-- entity_disaster.Disaster
+    BaseGameEntity <|-- Building
+    BaseGameEntity <|-- Resident
+    BaseGameEntity <|-- Disaster
 
     %% UI Hierarchies
-    common_ui.CustomPanel <|-- common_ui_main_scene.GameMapPanel
-    common_ui.CustomPanel <|-- common_ui_main_scene.TitlePanel
-    common_ui.CustomPanel <|-- common_ui_main_scene.EndPanel
-    common_ui.CustomPanel <|-- common_ui_buildPreview.BuildPreviewUI
-    common_ui.CustomPanel <|-- common_ui_resourceViewer_view.ResourceViewerPanel
-    common_ui.CustomPanel <|-- common_ui_gameObjectSelect_view.PaintObjectSelectUI
-    common_ui.CustomPanel <|-- common_ui.ToastPanel
+    CustomPanel <|-- GameMapPanel
+    CustomPanel <|-- TitlePanel
+    CustomPanel <|-- EndPanel
+    CustomPanel <|-- BuildPreviewUI
+    CustomPanel <|-- ResourceViewerPanel
+    CustomPanel <|-- PaintObjectSelectUI
+    CustomPanel <|-- ToastPanel
 
-    common_ui_main.UiRefreshable <|.. common_ui_main_scene.GameMapPanel
-    common_ui_main.UiRefreshable <|.. common_ui_main_scene.TitlePanel
-    common_ui_main.UiRefreshable <|.. common_ui_main_scene.EndPanel
+    UiRefreshable <|.. GameMapPanel
+    UiRefreshable <|.. TitlePanel
+    UiRefreshable <|.. EndPanel
     
-    common_ui_main.SceneNavigator <|.. common_ui_main.GameFlowNavigator
+    SceneNavigator <|.. GameFlowNavigator
 
     %% Strategy & Action Hierarchies
-    common_core_strategy.UpdateStrategy <|.. common_core_strategy.CompositeUpdateStrategy
+    UpdateStrategy <|.. CompositeUpdateStrategy
     
-    entity_model.GameAction <|.. entity_resident_strategy.ResidentBehaviorAction
-    entity_model.GameAction <|.. entity_resident_strategy.PanicMoveAction
-    entity_model.GameAction <|.. entity_resident_strategy.DestinationMoveAction
-    entity_model.GameAction <|.. entity_disaster_strategy.MeteorDisasterAction
+    GameAction <|.. ResidentBehaviorAction
+    GameAction <|.. PanicMoveAction
+    GameAction <|.. DestinationMoveAction
+    GameAction <|.. MeteorDisasterAction
 
-    entity_model.GameEffect <|.. common_core_strategy.CompositeGameEffect
-    entity_model.GameEffect <|.. entity_building_strategy.PopulationGrowthEffect
-    entity_model.GameEffect <|.. entity_resident_strategy.ResidentLifeCycleEffect
-    entity_model.GameEffect <|.. entity_resident_strategy.ResidentCorpseCleanupEffect
+    GameEffect <|.. CompositeGameEffect
+    GameEffect <|.. PopulationGrowthEffect
+    GameEffect <|.. ResidentLifeCycleEffect
+    GameEffect <|.. ResidentCorpseCleanupEffect
 
     %% Map Hierarchies
-    map_model.MapContext <|.. map_model.GameMap
+    MapContext <|.. GameMap
 
     %% Menu Hierarchies
-    common_ui_gameObjectSelect_controller.MenuNode <|-- common_ui_gameObjectSelect_controller.CategoryNode
-    common_ui_gameObjectSelect_controller.MenuNode <|-- common_ui_gameObjectSelect_controller.BuildingNode
-    common_ui_gameObjectSelect_controller.MenuNode <|-- common_ui_gameObjectSelect_controller.DisasterNode
+    MenuNode <|-- CategoryNode
+    MenuNode <|-- BuildingNode
+    MenuNode <|-- DisasterNode
 
 
     %% --- Composition (HAS-A) ---
     %% App -> UI
-    app.App *-- common_ui_main.GameWindow
-    common_ui_main.GameWindow *-- common_ui_main.GameFlowController
+    App *-- GameWindow
+    GameWindow *-- GameFlowController
     
     %% Game Model Structure (Central Hub)
-    entity_model.GameModel *-- entity_model_manager.EntityManager
-    entity_model.GameModel *-- entity_model_manager.SoulManager
-    entity_model.GameModel *-- entity_model_manager.TimeManager
-    entity_model.GameModel *-- entity_model_manager.RelocationManager
-    entity_model.GameModel *-- entity_model_manager.PopulationManager
-    entity_model.GameModel *-- entity_model_manager.BuildingManager
-    entity_model.GameModel *-- entity_model_manager.ResidentPanicManager
-    entity_model.GameModel *-- map_model.GameMap
-    entity_model.GameModel *-- map_model.BuildingPreview
-    entity_model.GameModel *-- common_core.GameLoop
+    GameModel *-- EntityManager
+    GameModel *-- SoulManager
+    GameModel *-- TimeManager
+    GameModel *-- RelocationManager
+    GameModel *-- PopulationManager
+    GameModel *-- BuildingManager
+    GameModel *-- ResidentPanicManager
+    GameModel *-- GameMap
+    GameModel *-- BuildingPreview
+    GameModel *-- GameLoop
 
     %% Map Structure
-    map_model.GameMap "1" *-- "many" map_model.MapCell
-    map_model.MapCell *-- map_model.Terrain
-    map_model.MapCell o-- entity_building.Building
+    GameMap "1" *-- "many" MapCell
+    MapCell *-- Terrain
+    MapCell o-- Building
 
     %% Entity Structure
-    entity_model.BaseGameEntity o-- common_core_strategy.UpdateStrategy
-    common_core_strategy.CompositeUpdateStrategy o-- entity_model.GameAction
-    common_core_strategy.CompositeUpdateStrategy o-- entity_model.GameEffect
-    entity_model_manager.EntityManager o-- "many" entity_model.BaseGameEntity : manages
+    BaseGameEntity o-- UpdateStrategy
+    CompositeUpdateStrategy o-- GameAction
+    CompositeUpdateStrategy o-- GameEffect
+    EntityManager o-- "many" BaseGameEntity : manages
 
     %% UI Structure
-    common_ui_main.GameFlowController *-- common_ui_main.GameFlowNavigator
-    common_ui_main.GameFlowController o-- entity_model.GameModel
+    GameFlowController *-- GameFlowNavigator
+    GameFlowController o-- GameModel
     
-    common_ui_main_scene.GameMapPanel *-- common_ui_buildPreview.BuildPreviewUI
-    common_ui_main_scene.GameMapPanel *-- common_ui_resourceViewer_view.ResourceViewerPanel
-    common_ui_main_scene.GameMapPanel *-- common_ui_gameObjectSelect_view.PaintObjectSelectUI
-    common_ui_main_scene.GameMapPanel *-- common_ui.ToastPanel
-    common_ui_main_scene.GameMapPanel o-- map_controller.GameMapController
-    common_ui_main_scene.GameMapPanel o-- entity_model.GameModel
+    GameMapPanel *-- BuildPreviewUI
+    GameMapPanel *-- ResourceViewerPanel
+    GameMapPanel *-- PaintObjectSelectUI
+    GameMapPanel *-- ToastPanel
+    GameMapPanel o-- GameMapController
+    GameMapPanel o-- GameModel
 
     %% Controller Structure
-    map_controller.GameMapController *-- map_controller_handler.ClickGameMapHandler
-    map_controller.GameMapController *-- map_controller_handler.MoveGameMapHandler
-    map_controller.GameMapController *-- map_controller_handler.ActionDisasterHandler
-    map_controller.GameMapController *-- map_controller_handler.PlaceBuildingHandler
-    map_controller.GameMapController *-- map_controller_handler.PreviewBuildingHandler
-    map_controller.GameMapController o-- entity_model.GameModel
+    GameMapController *-- ClickGameMapHandler
+    GameMapController *-- MoveGameMapHandler
+    GameMapController *-- ActionDisasterHandler
+    GameMapController *-- PlaceBuildingHandler
+    GameMapController *-- PreviewBuildingHandler
+    GameMapController o-- GameModel
 
     %% Sub-Controller / Handlers
-    common_ui_buildPreview.BuildPreviewUI o-- common_ui_buildPreview_controller.BuildPreviewEventHandler
-    common_ui_buildPreview_controller.BuildPreviewEventHandler o-- entity_model.GameModel
-    common_ui_buildPreview_controller.BuildPreviewEventHandler *-- common_ui_buildPreview_controller.BuildAccept
-    common_ui_buildPreview_controller.BuildPreviewEventHandler *-- common_ui_buildPreview_controller.BuildCancel
-    common_ui_buildPreview_controller.BuildPreviewEventHandler *-- common_ui_buildPreview_controller.BuildRotate
+    BuildPreviewUI o-- BuildPreviewEventHandler
+    BuildPreviewEventHandler o-- GameModel
+    BuildPreviewEventHandler *-- BuildAccept
+    BuildPreviewEventHandler *-- BuildCancel
+    BuildPreviewEventHandler *-- BuildRotate
 
     %% Menu Logic
-    common_ui_gameObjectSelect_view.PaintObjectSelectUI o-- common_ui_gameObjectSelect_controller.NodeMenuInitializer
-    common_ui_gameObjectSelect_controller.NodeMenuInitializer ..> common_ui_gameObjectSelect_controller.MenuNode : creates
-    common_ui_gameObjectSelect_controller.BuildingNode --> map_controller_handler.PlaceBuildingHandler : uses
-    common_ui_gameObjectSelect_controller.DisasterNode --> map_controller_handler.ActionDisasterHandler : uses
+    PaintObjectSelectUI o-- NodeMenuInitializer
+    NodeMenuInitializer ..> MenuNode : creates
+    BuildingNode --> PlaceBuildingHandler : uses
+    DisasterNode --> ActionDisasterHandler : uses
 
 
     %% --- Dependencies (USES / References) ---
     %% Type Definitions
-    entity_building.Building --> entity_building.BuildingType
-    entity_resident.Resident --> entity_resident.ResidentType
-    entity_resident.Resident --> entity_resident.ResidentState
-    entity_disaster.Disaster --> entity_disaster.DisasterType
-    map_model.Terrain --> map_model.TerrainType
+    Building --> BuildingType
+    Resident --> ResidentType
+    Resident --> ResidentState
+    Disaster --> DisasterType
+    Terrain --> TerrainType
 
     %% Logic Connections
-    map_controller_handler.PlaceBuildingHandler ..> entity_model.GameModel : constructs
-    map_controller_handler.ActionDisasterHandler ..> entity_model.GameModel : impacts
-    map_controller_handler.PreviewBuildingHandler ..> map_model.BuildingPreview : modifies
-    map_controller_handler.ClickGameMapHandler ..> entity_model.GameModel : queries
-    map_controller_handler.MoveGameMapHandler ..> entity_model.GameModel : moves camera (implied)
+    PlaceBuildingHandler ..> GameModel : constructs
+    ActionDisasterHandler ..> GameModel : impacts
+    PreviewBuildingHandler ..> BuildingPreview : modifies
+    ClickGameMapHandler ..> GameModel : queries
+    MoveGameMapHandler ..> GameModel : moves camera (implied)
 
     %% Rendering Connections
-    common_ui.PaintGameObject ..> common_ui.ImageManager : uses
-    common_ui.PaintGameObject ..> common_ui.AnimationManager : uses
-    common_ui_main_scene.GameMapPanel ..> common_ui.PaintGameObject : delegates paint
-    common_ui_resourceViewer_view.PaintResourceViewerUI ..> common_ui.ImageManager : uses
-    common_ui_resourceViewer_view.ResourceViewerPanel ..> common_ui_resourceViewer_view.PaintResourceViewerUI : delegates paint
+    PaintGameObject ..> ImageManager : uses
+    PaintGameObject ..> AnimationManager : uses
+    GameMapPanel ..> PaintGameObject : delegates paint
+    PaintResourceViewerUI ..> ImageManager : uses
+    ResourceViewerPanel ..> PaintResourceViewerUI : delegates paint
     
     %% Managers to Logic
-    entity_model_manager.BuildingManager ..> map_model.GameMap : places on
-    entity_model_manager.BuildingManager ..> entity_model_manager.SoulManager : consumes soul
-    entity_model_manager.PopulationManager ..> entity_model_manager.EntityManager : counts residents
+    BuildingManager ..> GameMap : places on
+    BuildingManager ..> SoulManager : consumes soul
+    PopulationManager ..> EntityManager : counts residents
 
     %% Event Bus Connections
-    entity_model.GameModel ..> common_event.EventBus : publishes
-    map_model.GameMap ..> common_event.EventBus : publishes
-    common_ui.ToastManager ..> common_event.EventBus : subscribes
-    common_ui_main_scene.GameMapPanel ..> common_event.EventBus : subscribes
-    common_ui_main.GameFlowController ..> common_event.EventBus : subscribes
+    GameModel ..> EventBus : publishes
+    GameMap ..> EventBus : publishes
+    ToastManager ..> EventBus : subscribes
+    GameMapPanel ..> EventBus : subscribes
+    GameFlowController ..> EventBus : subscribes

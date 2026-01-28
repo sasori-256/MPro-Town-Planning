@@ -107,17 +107,7 @@ public class Resident extends BaseGameEntity {
     if (state == ResidentState.DEAD) {
       return;
     }
-    // 既存のデバフよりレベルが低い（弱い）場合は更新しない？
-    // 今回は「感染源に近い（levelが高い）」菌に触れたら更新されるとする。
-    // または、単純に上書きする。
-    if (debuffLevels.containsKey(type)) {
-      int currentLevel = debuffLevels.get(type);
-      if (level < currentLevel) {
-         // 弱い菌には感染しない（あるいは効果延長のみ？）
-         // ここではシンプルに「常に上書き」にする（再感染）
-      }
-    }
-    
+    // 現在の仕様: 同じ種類のデバフは常に上書きする（再感染として扱う）
     debuffTimers.put(type, duration);
     debuffLevels.put(type, level);
     // Intervalはリセットしない（ダメージタイミングをずらさないため）
@@ -134,6 +124,7 @@ public class Resident extends BaseGameEntity {
     if (state == ResidentState.DEAD) {
       debuffTimers.clear();
       debuffLevels.clear();
+      debuffIntervals.clear();
       return;
     }
 

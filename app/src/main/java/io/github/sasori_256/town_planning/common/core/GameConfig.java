@@ -169,7 +169,7 @@ public final class GameConfig {
   }
 
   public static int getDisasterMeteorAnimationFps() {
-    return getPositiveInt("disaster.meteor.animationFps", 6);
+    return getPositiveInt("disaster.meteor.animationFps", 30);
   }
 
   public static void preload() {

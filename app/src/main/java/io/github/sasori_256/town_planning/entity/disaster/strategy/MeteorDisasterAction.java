@@ -16,10 +16,9 @@ import io.github.sasori_256.town_planning.entity.model.GameContext;
  * 生成されてから一定時間後に着弾し、範囲ダメージを与える。
  */
 public class MeteorDisasterAction implements GameAction {
-  private static final String IMPACT_ANIMATION_NAME = "meteor_impact";
+  private static final String IMPACT_ANIMATION_NAME = "meteor_hit";
   private static final int IMPACT_ANIMATION_FPS = GameConfig.getDisasterMeteorAnimationFps();
-  private static final double IMPACT_EFFECT_DURATION =
-      GameConfig.getDisasterMeteorEffectDurationSeconds();
+  private static final double IMPACT_EFFECT_DURATION = GameConfig.getDisasterMeteorEffectDurationSeconds();
   private final EventBus eventBus = EventBus.getInstance();
   private final Point2D.Double targetPos;
   private final DisasterType type;

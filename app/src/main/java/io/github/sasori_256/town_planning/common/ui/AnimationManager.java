@@ -16,7 +16,8 @@ import javax.imageio.ImageIO;
 /**
  * アニメーション（連番 PNG）を管理し、フレームを取得するクラス。
  *
- * <p>ファイル名は末尾に番号がついていることを期待します（例: walk_001.png）。
+ * <p>
+ * ファイル名は末尾に番号がついていることを期待します（例: walk_001.png）。
  */
 public class AnimationManager {
   private final Map<String, AnimationStorage> animations = new HashMap<>();
@@ -95,7 +96,8 @@ public class AnimationManager {
       if (!frames.isEmpty()) {
         AnimationStorage storage = new AnimationStorage(base, frames);
         this.animations.put(base.toLowerCase(), storage);
-        System.out.println("Loaded animation: " + base + " (" + frames.size() + " frames)");
+        // System.out.println("Loaded animation: " + base + " (" + frames.size() + "
+        // frames)");
       }
     }
   }

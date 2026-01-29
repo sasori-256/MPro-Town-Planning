@@ -80,7 +80,7 @@ public class GameFlowController implements GameFlowNavigator {
    */
   public void initialize() {
     this.titlePanel = new TitlePanel(this, imageManager);
-    this.endPanel = new EndPanel(this);
+    this.endPanel = new EndPanel(this, imageManager);
     window.setScene(SceneId.TITLE, titlePanel);
     window.setScene(SceneId.END, endPanel);
     window.showScene(SceneId.TITLE);

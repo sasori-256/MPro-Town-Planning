@@ -174,7 +174,7 @@ public class ImageManager extends Component {
   }
 
   private void createAndCacheRotateBuilding(ImageStorage baseStorage, Map<String, ImageStorage> targetCache) {
-    String previewImageName = (baseStorage.getName() + "_rotate")
+    String previewImageName = ("rotate_" + baseStorage.getName())
         .toLowerCase();
 
     BufferedImage source = baseStorage.getImage();

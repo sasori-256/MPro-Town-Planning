@@ -121,14 +121,15 @@ public class PaintGameObject {
    * @param buildable    建設可能かどうか
    */
   public void paintPreviewBuilding(Graphics g, Point2D.Double pos, BuildingType buildingType,
-      Camera camera, ImageManager imageManager, JPanel panel, boolean buildable) {
+      Camera camera, ImageManager imageManager, JPanel panel, boolean buildable, boolean isRotated) {
     for (int x = 0; x < buildingType.getWidth(); x++) {
       for (int y = 0; y < buildingType.getHeight(); y++) {
         Point2D.Double tilePos = new Point2D.Double(pos.x + x - buildingType.getAnchorX(),
             pos.y + y - buildingType.getAnchorY());
         String tileImageName = buildingType.getTileImageName(x, y);
         if (tileImageName != null) {
-          String previewImageName = tileImageName + (buildable ? "_preview_buildable" : "_preview_unbuildable");
+          String previewImageName = (isRotated ? "rotate_" : "") + tileImageName
+              + (buildable ? "_preview_buildable" : "_preview_unbuildable");
           paint(g, tilePos, previewImageName, camera, imageManager, panel, true);
         }
       }

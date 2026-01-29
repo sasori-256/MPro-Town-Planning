@@ -131,6 +131,7 @@ public class BuildingPreview {
       this.buildingPreviewPos = null;
       this.buildingPreviewType = null;
       this.buildable = false;
+      this.isRotated = false;
     } finally {
       stateLock.writeLock().unlock();
     }

@@ -124,19 +124,19 @@ public enum BuildingType {
           { 1_000_000, 1_000_000 }
       },
       new String[][] {
-          { "none", "none" },
-          { "none", "none" },
-          { "none", "church" }
+          { "none", "church4" },
+          { "none", "church3" },
+          { "church1", "church2" }
       },
       new DrawGroup[][] {
-          { DrawGroup.FLOOR, DrawGroup.FLOOR },
-          { DrawGroup.FLOOR, DrawGroup.FLOOR },
-          { DrawGroup.ACTOR, DrawGroup.FLOOR }
+          { DrawGroup.FLOOR, DrawGroup.ACTOR },
+          { DrawGroup.FLOOR, DrawGroup.ACTOR },
+          { DrawGroup.ACTOR, DrawGroup.ACTOR }
       },
       1, 2),
   GRAVEYARD("墓地",
       "graveyard",
-      100,
+      0,
       0,
       100,
       CategoryType.CEMETERY),

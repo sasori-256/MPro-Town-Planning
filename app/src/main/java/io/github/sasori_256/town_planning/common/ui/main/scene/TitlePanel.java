@@ -3,9 +3,7 @@ package io.github.sasori_256.town_planning.common.ui.main.scene;
 import java.awt.Dimension;
 
 import javax.swing.BoxLayout;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.ImageIcon;
 
 import io.github.sasori_256.town_planning.common.ui.CustomButton;
 import io.github.sasori_256.town_planning.common.ui.CustomPanel;

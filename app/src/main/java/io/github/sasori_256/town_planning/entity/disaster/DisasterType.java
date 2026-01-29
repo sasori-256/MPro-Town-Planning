@@ -13,7 +13,7 @@ import io.github.sasori_256.town_planning.entity.model.GameAction;
  */
 public enum DisasterType {
   METEOR("隕石", "meteor", 200, 3, 100, CategoryType.METEOR, (pos, type) -> new MeteorDisasterAction(pos, type)),
-  PLAGUE("疫病", "loading", 150, 5, 20, CategoryType.PLAGUE, (pos, type) -> new PlagueDisasterAction(pos, type));
+  PLAGUE("疫病", "ekibyo", 150, 5, 20, CategoryType.PLAGUE, (pos, type) -> new PlagueDisasterAction(pos, type));
 
   private final String displayName;
   private final String imageName;

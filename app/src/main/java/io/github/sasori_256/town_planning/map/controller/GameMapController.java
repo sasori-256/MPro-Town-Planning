@@ -18,6 +18,7 @@ import javax.swing.SwingUtilities;
 
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.CancelBuildEvent;
+import io.github.sasori_256.town_planning.common.event.events.SoulHarvestedEvent;
 import io.github.sasori_256.town_planning.common.event.events.TemporaryBuildEvent;
 import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
@@ -34,6 +35,7 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
   private BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> actionOnMove;
   private Function<Point2D.Double, ? extends BaseGameEntity> selectedEntityGenerator;
   private Point previousMiddleMousePos;
+  private boolean isContinue = false;
 
   /**
    * マップコントローラを生成する。
@@ -47,6 +49,7 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
     this.actionOnClick = new ClickGameMapHandler();
     this.actionOnMove = new MoveGameMapHandler();
     this.selectedEntityGenerator = (point) -> null;
+
     eventBus.subscribe(CancelBuildEvent.class, event -> {
       this.selectedEntityGenerator = (point) -> null;
       this.actionOnClick = new ClickGameMapHandler();
@@ -83,6 +86,24 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
    */
   public void setSelectedEntityGenerator(Function<Point2D.Double, ? extends BaseGameEntity> entityGenerator) {
     this.selectedEntityGenerator = entityGenerator;
+  }
+
+  /**
+   * 継続モードを設定する。
+   *
+   * @param isContinue 継続モードかどうか
+   */
+  public void setIsContinue(boolean isContinue) {
+    this.isContinue = isContinue;
+  }
+
+  /**
+   * 継続モードかどうかを返す。
+   *
+   * @return 継続モードかどうか
+   */
+  public boolean getIsContinue() {
+    return this.isContinue;
   }
 
   /**
@@ -209,6 +230,12 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
       case KeyEvent.VK_D:
         camera.moveRight();
         break;
+      case KeyEvent.VK_UP:
+        eventBus.publish(new SoulHarvestedEvent(500));
+        break;
+      case KeyEvent.VK_SHIFT:
+        this.setIsContinue(true);
+        break;
       default:
         break;
     }
@@ -221,6 +248,14 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
    */
   @Override
   public void keyReleased(KeyEvent e) {
+    int k = e.getKeyCode();
+    switch (k) {
+      case KeyEvent.VK_SHIFT:
+        this.setIsContinue(false);
+        break;
+      default:
+        break;
+    }
   }
 
   /**

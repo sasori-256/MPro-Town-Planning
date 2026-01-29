@@ -68,7 +68,11 @@ public class ActionDisasterHandler
           roundedPoint,
           "generated=" + (entity == null ? "null" : entity.getClass().getSimpleName())));
     }
-    gameMapController.setSelectedEntityGenerator((point) -> null);
-    gameMapController.setActionOnClick(new ClickGameMapHandler());
+    // シフトを押していたら連続発動モードにする
+    if (!gameMapController.getIsContinue()) {
+      gameMapController.setActionOnClick(new ClickGameMapHandler());
+      gameMapController.setActionOnMove(new MoveGameMapHandler());
+    }
+
   }
 }

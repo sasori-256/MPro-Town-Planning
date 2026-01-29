@@ -557,12 +557,15 @@ public class GameModel implements GameContext, SimulationStep {
     Point2D.Double townHallPos = new Point2D.Double(townHallX, townHallY);
     Building townHall = new Building(townHallPos, BuildingType.BLUE_ROOFED_HOUSE);
     if (gameMap.placeBuilding(townHallPos, townHall)) {
-      townHall.setCurrentPopulation(2);
+      // ------- プレゼンのための一時的なコード -------
+      int population = 30;
+      townHall.setCurrentPopulation(population); // TODO: 初期住人をもとに戻す(2二人)
       spawnEntity(townHall);
-      spawnEntity(new Resident(new Point2D.Double(townHallPos.y, townHallPos.x), ResidentType.CITIZEN,
-          ResidentState.AT_HOME, townHallPos));
-      spawnEntity(new Resident(new Point2D.Double(townHallPos.y, townHallPos.x),
-          ResidentType.CITIZEN, ResidentState.AT_HOME, townHallPos));
+      for (int i = 0; i < population; i++) {
+        spawnEntity(new Resident(new Point2D.Double(townHallPos.y, townHallPos.x), ResidentType.CITIZEN,
+            ResidentState.AT_HOME, townHallPos));
+      }
+      // ------- プレゼンのための一時的なコード -------
     }
   }
 }

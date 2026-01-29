@@ -23,9 +23,9 @@ public enum BuildingType {
       "青屋根の家",
       "blue_roofed_house",
       100,
-      8,
+      30, // TODO: 元の8に戻す
       150,
-      () -> new PopulationGrowthEffect(8),
+      () -> new PopulationGrowthEffect(30), // TODO: 元の8に戻す
       CategoryType.RESIDENTIAL),
   ROAD(
       "道",

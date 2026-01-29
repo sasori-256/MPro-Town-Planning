@@ -87,7 +87,8 @@ public class PaintGameObject {
   public void paintBuilding(Graphics g, Point2D.Double pos, GameMap gameMap, Camera camera,
       ImageManager imageManager, AnimationManager animationManager, JPanel panel) {
     MapCell cell = gameMap.getCell(pos);
-    if (cell.getBuilding() == null) {
+    if (cell.getBuilding() == null
+        || cell.getBuilding().getType().getTileImageName(cell.getLocalX(), cell.getLocalY()).equals("none")) {
       return;
     }
     Building building = cell.getBuilding();
@@ -127,7 +128,7 @@ public class PaintGameObject {
         Point2D.Double tilePos = new Point2D.Double(pos.x + x - buildingType.getAnchorX(),
             pos.y + y - buildingType.getAnchorY());
         String tileImageName = buildingType.getTileImageName(x, y);
-        if (tileImageName != null) {
+        if (tileImageName != null && !tileImageName.equals("none")) {
           String previewImageName = tileImageName + (buildable ? "_preview_buildable" : "_preview_unbuildable");
           paint(g, tilePos, previewImageName, camera, imageManager, panel, true);
         }

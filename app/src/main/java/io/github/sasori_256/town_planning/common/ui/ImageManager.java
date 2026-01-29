@@ -2,7 +2,9 @@ package io.github.sasori_256.town_planning.common.ui;
 
 import java.awt.Component;
 import java.awt.Graphics2D;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
+import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
 import java.util.HashMap;
@@ -130,6 +132,12 @@ public class ImageManager extends Component {
       createAndCachePreview(baseStorage, false, previewStorages);
     }
     this.imageStorages.putAll(previewStorages);
+    
+    Map<String, ImageStorage> rotateStorages = new HashMap<>();
+    for (ImageStorage baseStorage : new HashMap<>(this.imageStorages).values()) {
+      createAndCacheRotateBuilding(baseStorage, rotateStorages);
+    }
+    this.imageStorages.putAll(rotateStorages);
   }
 
   private void createAndCachePreview(ImageStorage baseStorage, boolean buildable,
@@ -173,17 +181,9 @@ public class ImageManager extends Component {
     }
 
     AffineTransform tf = AffineTransform.getScaleInstance(-1, 1);
-    RescaleOp rescaleOp = new RescaleOp(scales, offsets, null);
-    if (source.getType() != BufferedImage.TYPE_INT_ARGB) { // ARGB でない場合は変換
-      BufferedImage argbImage = new BufferedImage(source.getWidth(), source.getHeight(),
-          BufferedImage.TYPE_INT_ARGB);
-      Graphics2D g2 = argbImage.createGraphics();
-      g2.drawImage(source, 0, 0, null);
-      g2.dispose();
-      source = argbImage;
-    }
-
-    BufferedImage filteredImage = rescaleOp.filter(source, null);
+    tf.translate(-source.getWidth(), 0);
+    AffineTransformOp flipOp = new AffineTransformOp(tf, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
+    BufferedImage filteredImage = flipOp.filter(source, null);
     ImageStorage previewStorage = new ImageStorage(previewImageName, filteredImage);
     targetCache.put(previewImageName, previewStorage);
   }

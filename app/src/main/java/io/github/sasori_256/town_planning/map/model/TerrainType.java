@@ -1,15 +1,23 @@
 package io.github.sasori_256.town_planning.map.model;
 
 import static java.util.Collections.unmodifiableMap;
+import static java.util.Collections.unmodifiableList;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 /**
  * 地形の種別を表す列挙型。
  */
 public enum TerrainType implements Terrain {
   ERROR("Error", "Error", false, false, 1_000_000),
-  GRASS("Grass", "Grass", true, true, 2),
+  GRASS("Grass", "Grass", true, true, 2, 90),
+  GRASS2("Grass2", "Grass", true, true, 2, 2),
+  GRASS3("Grass3", "Grass", true, true, 2, 5),
+  GRASS4("Grass4", "Grass", true, true, 2, 3),
   WATER("Water", "Water", false, false, 1_000_000),
   MOUNTAIN("Mountain", "Mountain", false, false, 1_000_000),
 
@@ -65,13 +73,19 @@ public enum TerrainType implements Terrain {
   private final boolean walkable;
   private final boolean buildable;
   private final int moveCost;
+  private final int weight;
 
-  TerrainType(String displayName, String kind, boolean buildable, boolean walkable, int moveCost) {
+  TerrainType(String displayName, String kind, boolean buildable, boolean walkable, int moveCost, int weight) {
     this.displayName = displayName;
     this.kind = kind;
     this.buildable = buildable;
     this.walkable = walkable;
     this.moveCost = moveCost;
+    this.weight = weight;
+  }
+
+  TerrainType(String displayName, String kind, boolean buildable, boolean walkable, int moveCost) {
+    this(displayName, kind, buildable, walkable, moveCost, 0);
   }
 
   /** {@inheritDoc} */
@@ -104,6 +118,10 @@ public enum TerrainType implements Terrain {
     return moveCost;
   }
 
+  public int getWeight() {
+    return weight;
+  }
+
   /** {@inheritDoc} */
   @Override
   public void draw() {
@@ -129,5 +147,37 @@ public enum TerrainType implements Terrain {
     if (name == null)
       return null;
     return BY_DISPLAY_NAME.get(name);
+  }
+
+  private static final List<TerrainType> GRASS_TYPES;
+  private static final int TOTAL_GRASS_WEIGHT;
+
+  static {
+    List<TerrainType> grassList = new ArrayList<>();
+    int totalWeight = 0;
+
+    for (TerrainType type : values()) {
+      if (type.getKind().equals("Grass") && type.getWeight() > 0) {
+        grassList.add(type);
+        totalWeight += type.getWeight();
+      }
+    }
+    GRASS_TYPES = unmodifiableList(grassList);
+    TOTAL_GRASS_WEIGHT = totalWeight;
+  }
+
+  public static TerrainType getRandomGrassType(Random random) {
+    if (TOTAL_GRASS_WEIGHT <= 0) {
+      return GRASS;
+    }
+    int randomValue = random.nextInt(TOTAL_GRASS_WEIGHT);
+    int cumulativeWeight = 0;
+    for (TerrainType type : GRASS_TYPES) {
+      cumulativeWeight += type.getWeight();
+      if (randomValue < cumulativeWeight) {
+        return type;
+      }
+    }
+    return GRASS;
   }
 }

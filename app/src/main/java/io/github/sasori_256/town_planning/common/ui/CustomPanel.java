@@ -18,6 +18,7 @@ public class CustomPanel extends JPanel {
     public CustomPanel(Image bgImage) {
         super();
         this.bgImage = bgImage;
+        this.setFocusable(false);
         this.setOpaque(false);
     }
 

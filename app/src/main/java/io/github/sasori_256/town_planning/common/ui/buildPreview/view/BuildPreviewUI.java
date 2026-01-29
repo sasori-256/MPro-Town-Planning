@@ -33,6 +33,7 @@ public class BuildPreviewUI extends JPanel {
   }
 
   private void initUI(Point2D.Double pos) {
+    this.setFocusable(false);
     this.setOpaque(false);
     this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
     this.setAlignmentX(JPanel.LEFT_ALIGNMENT);

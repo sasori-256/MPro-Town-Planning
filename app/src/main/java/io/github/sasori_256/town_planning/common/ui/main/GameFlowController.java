@@ -96,6 +96,7 @@ public class GameFlowController implements GameFlowNavigator {
     currentSession = new GameSession(windowWidth, windowHeight, mapWidth, mapHeight, seed, imageManager, this);
     window.setScene(SceneId.GAME, currentSession.getView());
     window.showScene(SceneId.GAME);
+    currentSession.getView().requestFocusInWindow();
     attachSessionSubscriptions(currentSession);
     updateCameraToWindow();
     currentSession.start(window::repaint);

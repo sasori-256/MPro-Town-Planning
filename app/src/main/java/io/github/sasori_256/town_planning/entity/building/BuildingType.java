@@ -101,11 +101,39 @@ public enum BuildingType {
       100,
       CategoryType.RELIGIOUS),
   CHURCH("教会",
-      "church",
-      150,
       0,
+      20,
       150,
-      CategoryType.RELIGIOUS),
+      () -> null,
+      CategoryType.RELIGIOUS,
+      2,
+      3,
+      new boolean[][] {
+          { true, true },
+          { true, true },
+          { true, true }
+      },
+      new boolean[][] {
+          { false, false },
+          { false, false },
+          { false, false }
+      },
+      new int[][] {
+          { 1_000_000, 1_000_000 },
+          { 1_000_000, 1_000_000 },
+          { 1_000_000, 1_000_000 }
+      },
+      new String[][] {
+          { "none", "none" },
+          { "none", "none" },
+          { "none", "church" }
+      },
+      new DrawGroup[][] {
+          { DrawGroup.FLOOR, DrawGroup.FLOOR },
+          { DrawGroup.FLOOR, DrawGroup.FLOOR },
+          { DrawGroup.ACTOR, DrawGroup.FLOOR }
+      },
+      1, 2),
   GRAVEYARD("墓地",
       "graveyard",
       100,

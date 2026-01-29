@@ -163,6 +163,31 @@ public class ImageManager extends Component {
     targetCache.put(previewImageName, previewStorage);
   }
 
+  private void createAndCacheRotateBuilding(ImageStorage baseStorage, Map<String, ImageStorage> targetCache) {
+    String previewImageName = (baseStorage.getName() + "_rotate")
+        .toLowerCase();
+
+    BufferedImage source = baseStorage.getImage();
+    if (source == null) {
+      return;
+    }
+
+    AffineTransform tf = AffineTransform.getScaleInstance(-1, 1);
+    RescaleOp rescaleOp = new RescaleOp(scales, offsets, null);
+    if (source.getType() != BufferedImage.TYPE_INT_ARGB) { // ARGB でない場合は変換
+      BufferedImage argbImage = new BufferedImage(source.getWidth(), source.getHeight(),
+          BufferedImage.TYPE_INT_ARGB);
+      Graphics2D g2 = argbImage.createGraphics();
+      g2.drawImage(source, 0, 0, null);
+      g2.dispose();
+      source = argbImage;
+    }
+
+    BufferedImage filteredImage = rescaleOp.filter(source, null);
+    ImageStorage previewStorage = new ImageStorage(previewImageName, filteredImage);
+    targetCache.put(previewImageName, previewStorage);
+  }
+
   /**
    * 画像マネージャを生成し、画像を読み込む。
    */

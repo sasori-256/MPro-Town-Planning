@@ -53,7 +53,7 @@ public class PlagueDisasterAction implements GameAction {
     if (!(self instanceof Disaster)) {
       return;
     }
-    
+
     // 初回実行時の処理
     if (!started) {
       started = true;
@@ -65,7 +65,7 @@ public class PlagueDisasterAction implements GameAction {
       // 今回はloading画像がDisasterTypeで指定される前提。
       // ただし、Disasterクラス側でアニメーションFPSなどはデフォルト値が使われる。
       // loadingアニメは8枚あるとしてFPSを設定するならここ。
-       ((Disaster) self).setAnimation("loading", 8, true, true);
+      ((Disaster) self).setAnimation("ekibyo", 8, true, true);
     }
 
     double dt = context.getDeltaTime();

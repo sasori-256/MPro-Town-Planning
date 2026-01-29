@@ -132,7 +132,9 @@ public class ImageManager extends Component {
       createAndCachePreview(baseStorage, false, previewStorages);
     }
     this.imageStorages.putAll(previewStorages);
-    
+
+    // 回転建物用画像の生成と保存
+    // TODO: PATHから画像を取得できるようになったらbuildingだけを対象にする。
     Map<String, ImageStorage> rotateStorages = new HashMap<>();
     for (ImageStorage baseStorage : new HashMap<>(this.imageStorages).values()) {
       createAndCacheRotateBuilding(baseStorage, rotateStorages);

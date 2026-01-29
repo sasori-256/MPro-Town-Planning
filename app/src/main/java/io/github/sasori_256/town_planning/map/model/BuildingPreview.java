@@ -6,6 +6,7 @@ import java.util.function.Function;
 
 import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.common.event.events.CancelBuildEvent;
+import io.github.sasori_256.town_planning.common.event.events.RotateBuildEvent;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 
@@ -15,6 +16,7 @@ public class BuildingPreview {
   private Function<Point2D.Double, ? extends BaseGameEntity> entityGenerator = (point) -> null;
   private Point2D.Double buildingPreviewPos = null;
   private BuildingType buildingPreviewType = null;
+  private boolean isRotated = false;
   private boolean buildable = false;
   private GameMap gameMap;
 
@@ -23,6 +25,9 @@ public class BuildingPreview {
     this.gameMap = gameMap;
     eventBus.subscribe(CancelBuildEvent.class, event -> {
       resetBuildingPreviewData();
+    });
+    eventBus.subscribe(RotateBuildEvent.class, event -> {
+      switchRotated();
     });
   }
 
@@ -97,6 +102,24 @@ public class BuildingPreview {
     try {
       stateLock.readLock().lock();
       return buildable;
+    } finally {
+      stateLock.readLock().unlock();
+    }
+  }
+
+  public void switchRotated() {
+    try {
+      stateLock.writeLock().lock();
+      this.isRotated = !this.isRotated;
+    } finally {
+      stateLock.writeLock().unlock();
+    }
+  }
+
+  public boolean isRotated() {
+    try {
+      stateLock.readLock().lock();
+      return isRotated;
     } finally {
       stateLock.readLock().unlock();
     }

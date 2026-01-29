@@ -558,7 +558,7 @@ public class GameModel implements GameContext, SimulationStep {
     Building townHall = new Building(townHallPos, BuildingType.BLUE_ROOFED_HOUSE);
     if (gameMap.placeBuilding(townHallPos, townHall)) {
       // ------- プレゼンのための一時的なコード -------
-      int population = 30;
+      int population = 15;
       townHall.setCurrentPopulation(population); // TODO: 初期住人をもとに戻す(2二人)
       spawnEntity(townHall);
       for (int i = 0; i < population; i++) {

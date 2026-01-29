@@ -181,9 +181,10 @@ public class GameMapPanel extends JPanel implements UiRefreshable {
     int panelHeight = this.getHeight();
     double cameraScale = camera.getScale();
     int margin = (int) (cameraScale * 32);
+    int downnMergin = (int) (cameraScale * 160); // 画面下部は余裕を多めに取る
     // 画面外にある場合は描画しない
     if (screenPos.x < -margin || screenPos.x > panelWidth + margin || screenPos.y < -margin
-        || screenPos.y > panelHeight + margin) {
+        || screenPos.y > panelHeight + margin + downnMergin) {
       return false;
     }
     return true;

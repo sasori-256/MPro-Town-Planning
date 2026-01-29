@@ -6,7 +6,7 @@ package io.github.sasori_256.town_planning.entity.model;
 public enum CategoryType {
   RESIDENTIAL("住居"),
   RELIGIOUS("宗教施設"),
-  CEMETERY("墓地"),
+  // CEMETERY("墓地"),
   INFRASTRUCTURE("インフラ"),
   NATURE("自然物"),
   NONE("なし"),

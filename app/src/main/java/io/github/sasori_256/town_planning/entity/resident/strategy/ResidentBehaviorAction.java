@@ -1,5 +1,15 @@
 package io.github.sasori_256.town_planning.entity.resident.strategy;
 
+import java.awt.Point;
+import java.awt.geom.Point2D;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
+
 import io.github.sasori_256.town_planning.common.core.GameConfig;
 import io.github.sasori_256.town_planning.entity.building.Building;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
@@ -10,15 +20,6 @@ import io.github.sasori_256.town_planning.entity.model.GameContext;
 import io.github.sasori_256.town_planning.entity.resident.Resident;
 import io.github.sasori_256.town_planning.entity.resident.ResidentState;
 import io.github.sasori_256.town_planning.map.model.GameMap;
-import java.awt.Point;
-import java.awt.geom.Point2D;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
 
 /**
  * 住民の移動・作業・帰宅を管理するアクション。
@@ -301,7 +302,7 @@ public class ResidentBehaviorAction implements GameAction {
     BuildingType type = building.getType();
     CategoryType category = type.getCategory();
     if (category != CategoryType.RELIGIOUS
-        && category != CategoryType.CEMETERY
+        // && category != CategoryType.CEMETERY
         && category != CategoryType.INFRASTRUCTURE) {
       return false;
     }
@@ -432,4 +433,3 @@ public class ResidentBehaviorAction implements GameAction {
     return isWalkable(map, pos);
   }
 }
-

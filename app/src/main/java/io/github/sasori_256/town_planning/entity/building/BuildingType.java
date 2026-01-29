@@ -1,6 +1,7 @@
 package io.github.sasori_256.town_planning.entity.building;
 
 import java.util.function.Supplier;
+
 import io.github.sasori_256.town_planning.entity.building.strategy.PopulationGrowthEffect;
 import io.github.sasori_256.town_planning.entity.model.CategoryType;
 import io.github.sasori_256.town_planning.entity.model.GameEffect;
@@ -78,28 +79,28 @@ public enum BuildingType {
       },
       1,
       1),
-  PARK(
-      "公園",
-      0,
-      0,
-      1,
-      () -> null, CategoryType.INFRASTRUCTURE,
-      5,
-      5,
-      filledMask(5, 5, true),
-      filledMask(5, 5, true),
-      filledCost(5, 5, 2),
-      filledTileImages(5, 5, "park_floor"),
-      filledDrawGroup(5, 5, DrawGroup.FLOOR),
-      2,
-      2),
-  CHAPEL(
-      "礼拝堂",
-      "chapel",
-      100,
-      0,
-      100,
-      CategoryType.RELIGIOUS),
+  // PARK(
+  // "公園",
+  // 0,
+  // 0,
+  // 1,
+  // () -> null, CategoryType.INFRASTRUCTURE,
+  // 5,
+  // 5,
+  // filledMask(5, 5, true),
+  // filledMask(5, 5, true),
+  // filledCost(5, 5, 2),
+  // filledTileImages(5, 5, "park_floor"),
+  // filledDrawGroup(5, 5, DrawGroup.FLOOR),
+  // 2,
+  // 2),
+  // CHAPEL(
+  // "礼拝堂",
+  // "chapel",
+  // 100,
+  // 0,
+  // 100,
+  // CategoryType.RELIGIOUS),
   CHURCH("教会",
       0,
       20,
@@ -139,7 +140,7 @@ public enum BuildingType {
       0,
       0,
       100,
-      CategoryType.CEMETERY),
+      CategoryType.RELIGIOUS),
   TREE11("木11",
       "smallTree11",
       10,

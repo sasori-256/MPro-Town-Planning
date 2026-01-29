@@ -23,6 +23,7 @@ public class EndPanel extends JPanel {
     this.navigator = navigator;
     setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
     setBackground(Color.BLACK);
+    setFocusable(false);
     setOpaque(true);
 
     JLabel titleLabel = new JLabel("Game Over");

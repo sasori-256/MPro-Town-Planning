@@ -11,11 +11,18 @@ import io.github.sasori_256.town_planning.common.ui.ImageManager;
 import io.github.sasori_256.town_planning.common.ui.ImageManager.ImageStorage;
 import io.github.sasori_256.town_planning.common.ui.main.GameFlowNavigator;
 
-public class TitlePanel extends JPanel {
+public class TitlePanel extends CustomPanel {
   private final GameFlowNavigator navigator;
   private final ImageManager imageManager;
 
   public TitlePanel(GameFlowNavigator navigator, ImageManager imageManager) {
+    ImageStorage backgroundImageStorage = imageManager.getImageStorage("background");
+    if (backgroundImageStorage == null || backgroundImageStorage.getImage() == null
+        || backgroundImageStorage.getName().equals("error")) {
+      System.err.println("\u001B[31mError: Image not found: " + "background" + "\u001B[0m");
+    }
+    super(backgroundImageStorage != null ? backgroundImageStorage.getImage() : null, false);
+
     this.navigator = navigator;
     this.imageManager = imageManager;
     initCenterComponent();

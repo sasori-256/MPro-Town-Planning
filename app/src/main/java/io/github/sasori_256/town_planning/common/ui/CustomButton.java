@@ -25,6 +25,7 @@ public class CustomButton extends JButton {
   private Thread animationThread;
   private final Image originalImage;
   private double animationProgress = 0.0;
+  private double UIScale = 1.0;
 
   private void addChangeListenerToModel() {
     // ボタンモデルにリスナーを追加
@@ -56,9 +57,12 @@ public class CustomButton extends JButton {
     this.originalImage = null;
     // いい感じに折り返せるようにHTMLを使う
     super("<html><div style='text-align: center;'>" + text + "</div></html>");
+    this.UIScale = 1.0; // デフォルトのUIスケールを設定
     addChangeListenerToModel();
     textPositionOptimize();
     setCustomBounds(xPos, yPos, width, height);
+    setFocusable(false);
+    setRolloverEnabled(false);
   }
 
   /**
@@ -75,16 +79,18 @@ public class CustomButton extends JButton {
     this.textContent = text;
     this.originalImage = imageStorage.getImage();
     super();
+    this.UIScale = 1.0; // デフォルトのUIスケールを設定
     addChangeListenerToModel();
     setImage(imageStorage.getImage(), width, height);
     setCustomBounds(xPos, yPos, width, height);
     setFocusable(false);
+    setRolloverEnabled(false);
   }
 
   public CustomButton(String text, ImageStorage imageStorage, int xPos, int yPos) {
     int width = imageStorage.getImage().getWidth(null);
     int height = imageStorage.getImage().getHeight(null);
-    this(text, imageStorage, xPos, yPos, width, height);
+    this(text, imageStorage, xPos, yPos, width, height); // ボタンサイズが指定されていない場合は画像のサイズを使用
   }
 
   /**
@@ -94,6 +100,25 @@ public class CustomButton extends JButton {
    */
   public String getTextContent() {
     return textContent;
+  }
+
+  /**
+   * UIの拡大率を設定する。
+   * 
+   * @param scale スケール値
+   */
+  public void setUIScale(double scale) {
+    this.UIScale = scale;
+    // UIスケールに基づいて位置とサイズを再設定
+    int xPos = (int) (getX());
+    int yPos = (int) (getY());
+    int newWidth = (int) (originalWidth * UIScale);
+    int newHeight = (int) (originalHeight * UIScale);
+    setCustomBounds(xPos, yPos, newWidth, newHeight);
+  }
+
+  public double getUIScale() {
+    return this.UIScale;
   }
 
   /**
@@ -146,6 +171,12 @@ public class CustomButton extends JButton {
     }
   }
 
+  /**
+   * 中心座標を基準に表示位置とサイズを設定する。
+   *
+   * @param width  幅
+   * @param height 高さ
+   */
   private void setBoundsCentered(int width, int height) {
     if (originalImage != null) {
       setImage(originalImage, width, height);

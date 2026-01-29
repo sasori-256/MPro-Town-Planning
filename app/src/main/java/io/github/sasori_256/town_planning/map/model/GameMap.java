@@ -57,12 +57,34 @@ public class GameMap implements MapContext {
         TerrainType terrainType;
         if (altitude < 0.4) {
           terrainType = TerrainType.WATER;
-        } else if (altitude < 0.7) {
-          terrainType = TerrainType.getRandomGrassType(random);
         } else {
-          terrainType = TerrainType.MOUNTAIN;
+          terrainType = TerrainType.getRandomGrassType(random);
+
         }
         cells[y][x] = new MapCell(new Point2D.Double(x, y), terrainType);
+        // 森を配置
+        if (altitude > 0.7) {
+          Building newTree = null;
+          Point2D.Double pos = new Point2D.Double(x, y);
+          if (altitude > 0.76) { // 高さが高いほど木を多く配置
+            switch ((int) (altitude * 1000) % 2) {
+              case 0 -> newTree = new Building(pos, BuildingType.TREE31);
+              case 1 -> newTree = new Building(pos, BuildingType.TREE32);
+            }
+          } else if (altitude > 0.73) {
+            switch ((int) (altitude * 1000) % 2) {
+              case 0 -> newTree = new Building(pos, BuildingType.TREE21);
+              case 1 -> newTree = new Building(pos, BuildingType.TREE22);
+            }
+          } else {
+            switch ((int) (altitude * 1000) % 3) {
+              case 0 -> newTree = new Building(pos, BuildingType.TREE11);
+              case 1 -> newTree = new Building(pos, BuildingType.TREE12);
+              case 2 -> newTree = new Building(pos, BuildingType.TREE13);
+            }
+          }
+          placeBuilding(pos, newTree);
+        }
       }
     }
   }

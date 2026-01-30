@@ -21,7 +21,7 @@ public class App {
     final int HEIGHT = 640;
     final int MAP_WIDTH = 100;
     final int MAP_HEIGHT = 100;
-    final long SEED = 0L;
+    final long SEED = new java.util.Random().nextLong();
 
     new FontManager();
     ImageManager imageManager = new ImageManager();

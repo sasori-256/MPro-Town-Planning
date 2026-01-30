@@ -215,7 +215,7 @@ public class CustomButton extends JButton {
     ImageIcon pressedIcon = new ImageIcon(darkenImage(icon.getImage(), width, height, 0.7f));
     this.setPressedIcon(pressedIcon);
     // フォーカス時の画像を通常時の画像の少し明るくしたバージョンに設定
-    ImageIcon rolloverIcon = new ImageIcon(brightenImage(icon.getImage(), width, height, 1.3f));
+    ImageIcon rolloverIcon = new ImageIcon(brightenImage(icon.getImage(), width, height, 1.15f));
     this.setRolloverIcon(rolloverIcon);
   }
 

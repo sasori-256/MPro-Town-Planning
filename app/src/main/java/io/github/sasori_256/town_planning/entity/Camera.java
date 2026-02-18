@@ -11,15 +11,15 @@ import io.github.sasori_256.town_planning.common.event.EventBus;
  */
 public class Camera {
   private double scale;
-  private int cellHeight;
-  private int cellWidth;
+  private int cellHeight; // マップの1セル(ひし形のやつ)の高さ(ピクセル)
+  private int cellWidth; // マップの1セル(ひし形のやつ)の幅(ピクセル)。横幅は縦幅の2倍になるようにする。
   private int offsetX;
   private int offsetY;
   private Point2D.Double isoOriginByScreen; // Iso座標系の原点をScreen座標系で表したときの位置
-  private int mapWidth;
-  private int mapHeight;
-  private int screenWidth;
-  private int screenHeight;
+  private int mapWidth; // ゲームのマップの幅(斜め右下方向)（セル数）
+  private int mapHeight; // ゲームのマップの高さ(斜め左下方向)（セル数）
+  private int screenWidth; // 画面の幅(実際のピクセル数)
+  private int screenHeight; // 画面の高さ(実際のピクセル数)
   private int zoomLevel;
   private static final double ZOOM_STEP = GameConfig.getCameraZoomStep();
   private static final int MIN_ZOOM_LEVEL = GameConfig.getCameraZoomMinLevel(); // 0.25倍
@@ -180,13 +180,11 @@ public class Camera {
    * @param screenHeight
    */
   public void updateOrigin(int screenWidth, int screenHeight) {
-    double centerIsoX = (this.mapWidth - 1) / 2.0;
-    double centerIsoY = (this.mapHeight - 1) / 2.0;
-    double centerScreenX = (centerIsoX - centerIsoY) * (this.cellWidth / 2.0);
-    double centerScreenY = (centerIsoX + centerIsoY) * (this.cellHeight / 2.0);
+    double centerIsoX = (this.mapWidth - 1) / 2.0; // Iso座標系の中心のX座標。インデックスが0からなので-1。
+    double centerIsoY = (this.mapHeight - 1) / 2.0; // Iso座標系の中心のY座標。インデックスが0からなので-1。
+    double centerScreenX = (centerIsoX - centerIsoY) * (this.cellWidth / 2.0); // Iso座標系の中心をscreen座標系に変換したときのX座標
+    double centerScreenY = (centerIsoX + centerIsoY) * (this.cellHeight / 2.0); // Iso座標系の中心をscreen座標系に変換したときのY座標
     this.isoOriginByScreen = new Point2D.Double(screenWidth / 2 - centerScreenX, screenHeight / 2 - centerScreenY);
-    // System.out.println("Screen Origin Updated: (" + this.isoOriginByScreen.x + ",
-    // " + this.isoOriginByScreen.y + ")");
   }
 
   /**
@@ -215,6 +213,13 @@ public class Camera {
     return new Point2D.Double(screenX, screenY);
   }
 
+  /**
+   * 画面オフセットが有効な範囲内に収まるかをチェックする
+   * 
+   * @param dx
+   * @param dy
+   * @return
+   */
   private boolean isValidOffset(int dx, int dy) {
     Point2D.Double centerIso = screenToIso(
         new Point2D.Double(this.screenWidth / 2.0 - dx, this.screenHeight / 2.0 - dy));

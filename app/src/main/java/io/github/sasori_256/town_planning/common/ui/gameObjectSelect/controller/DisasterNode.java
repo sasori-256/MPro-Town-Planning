@@ -30,8 +30,9 @@ public class DisasterNode implements MenuNode {
      * @param gameModel         ゲームモデル
      * @param mapContext        マップ参照
      */
-    public DisasterNode(DisasterType disasterType, Function<Point2D.Double, Disaster> generator, GameMapController gameMapController,
-        GameModel gameModel, MapContext mapContext) {
+    public DisasterNode(DisasterType disasterType, Function<Point2D.Double, Disaster> generator,
+            GameMapController gameMapController,
+            GameModel gameModel, MapContext mapContext) {
         this.type = disasterType;
         this.generator = generator;
         this.gameMapController = gameMapController;
@@ -44,15 +45,21 @@ public class DisasterNode implements MenuNode {
      *
      * @return 災害種別
      */
-    public DisasterType getType() { return type; }
+    public DisasterType getType() {
+        return type;
+    }
 
     /** {@inheritDoc} */
     @Override
-    public String getName() { return type.getDisplayName(); }
+    public String getName() {
+        return type.getDisplayName();
+    }
 
     /** {@inheritDoc} */
     @Override
-    public boolean isLeaf() { return true; }
+    public boolean isLeaf() {
+        return true;
+    }
 
     /** {@inheritDoc} */
     @Override
@@ -63,7 +70,7 @@ public class DisasterNode implements MenuNode {
     /** {@inheritDoc} */
     @Override
     public void actionPerformed(java.awt.event.ActionEvent e) {
-        //TODO: Viewと連携する.
+        // TODO: Viewと連携する.
         gameMapController.setSelectedEntityGenerator(generator);
         gameMapController.setActionOnClick(new ActionDisasterHandler(gameModel, gameMapController, mapContext));
     }

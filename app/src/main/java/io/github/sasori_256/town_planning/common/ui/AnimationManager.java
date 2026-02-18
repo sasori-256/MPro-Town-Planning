@@ -2,31 +2,34 @@ package io.github.sasori_256.town_planning.common.ui;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import javax.imageio.ImageIO;
 
 /**
  * アニメーション（連番 PNG）を管理し、フレームを取得するクラス。
- *
- * <p>
- * ファイル名は末尾に番号がついていることを期待します（例: walk_001.png）。
+ * JARファイル内でも動作するように修正済み。
  */
 public class AnimationManager {
   private final Map<String, AnimationStorage> animationStorages = new HashMap<>();
 
-  /**
-   * アニメーションマネージャを生成し、画像を読み込む。
-   */
   public AnimationManager() {
     this.loadAnimations();
   }
@@ -36,56 +39,22 @@ public class AnimationManager {
     ClassLoader cl = this.getClass().getClassLoader();
     List<String> resourcePaths = new ArrayList<>();
 
+    // 1. まず、画像ファイルの「パス（文字列）」だけをかき集める
     try {
-      java.net.URL dirURL = cl.getResource("animations");
-      if (dirURL != null) {
+      Enumeration<URL> urls = cl.getResources("animations");
+      while (urls.hasMoreElements()) {
+        URL dirURL = urls.nextElement();
+        if (dirURL == null)
+          continue;
+
         String protocol = dirURL.getProtocol();
         if ("file".equals(protocol)) {
-          // ディレクトリとして読み込める場合 (IDE実行など)
-          java.io.File root = new java.io.File(dirURL.toURI());
-          Deque<java.io.File> stack = new ArrayDeque<>();
-          stack.push(root);
-          while (!stack.isEmpty()) {
-            java.io.File cur = stack.pop();
-            java.io.File[] children = cur.listFiles();
-            if (children == null)
-              continue;
-            for (java.io.File child : children) {
-              if (child.isDirectory()) {
-                stack.push(child);
-              } else if (child.getName().toLowerCase().endsWith(".png")) {
-                // resources 内の相対パスを作る
-                String rel = root.toURI().relativize(child.toURI()).getPath();
-                // resource path は "animations/..." の形式
-                resourcePaths.add("animations/" + rel);
-              }
-            }
-          }
+          // IDE実行時: ファイルシステムを探索
+          File root = new File(dirURL.toURI());
+          scanDirectory(root, "animations", resourcePaths);
         } else if ("jar".equals(protocol)) {
-          // JAR 内の場合は JarFile を開いて entries を走査
-          String path = dirURL.getPath(); // like file:/path/to/jar.jar!/animations
-          int bang = path.indexOf("!");
-          String jarPath = (bang >= 0) ? path.substring(0, bang) : path;
-          if (jarPath.startsWith("file:")) {
-            jarPath = jarPath.substring("file:".length());
-          }
-          jarPath = java.net.URLDecoder.decode(jarPath, "UTF-8");
-          java.util.jar.JarFile jar = null;
-          try {
-            jar = new java.util.jar.JarFile(jarPath);
-            java.util.Enumeration<java.util.jar.JarEntry> entries = jar.entries();
-            while (entries.hasMoreElements()) {
-              java.util.jar.JarEntry entry = entries.nextElement();
-              String name = entry.getName();
-              if (name.startsWith("animations/") && name.toLowerCase().endsWith(".png")) {
-                resourcePaths.add(name);
-              }
-            }
-          } finally {
-            if (jar != null) {
-              jar.close();
-            }
-          }
+          // JAR実行時: JAR内部を探索
+          scanJar(dirURL, resourcePaths);
         }
       }
     } catch (Exception e) {
@@ -93,132 +62,142 @@ public class AnimationManager {
       e.printStackTrace();
     }
 
-    // 読み込んだリソースパスからファイルを作成
-    List<File> fileList = new ArrayList<>();
-    for (String resPath : resourcePaths) {
-      URL url = cl.getResource(resPath);
-      if (url != null) {
-        try {
-          File file = new File(url.getPath());
-          if (file.exists() && file.isFile()) {
-            fileList.add(file);
-          } else {
-            System.err.println("Resource URL does not point to a valid file: " + resPath);
-          }
-        } catch (Exception e) {
-          System.err.println("Error accessing animation resource: " + resPath + " - " + e.getMessage());
-          e.printStackTrace();
-        }
-      } else {
-        System.err.println("Resource not found for animation: " + resPath);
-      }
-    }
-
+    // 2. 集めたパスを使って画像を読み込む (Fileクラスは使わない)
     Pattern pattern = Pattern.compile("^(.*?)[_\\-]?(\\d+)$");
-    Map<String, List<FileWithIndex>> grouped = new HashMap<>();
-    for (File file : fileList) {
-      String name = file.getName().replaceFirst("[.][^.]+$", "").toLowerCase();
-      Matcher matcher = pattern.matcher(name);
-      String base;
+    Map<String, List<FrameInfo>> grouped = new HashMap<>();
+
+    for (String resPath : resourcePaths) {
+      // パスからファイル名を取得 (例: "animations/walk_01.png" -> "walk_01")
+      String fileName = new File(resPath).getName(); // パス解析のためだけにFileを使用(読み込みはしない)
+      String nameBase = fileName.replaceFirst("[.][^.]+$", "").toLowerCase(); // 拡張子削除
+
+      // 正規表現で名前とインデックスを分離
+      Matcher matcher = pattern.matcher(nameBase);
+      String animName;
       int idx = 0;
       if (matcher.matches()) {
-        base = matcher.group(1).isEmpty() ? name : matcher.group(1);
+        animName = matcher.group(1).isEmpty() ? nameBase : matcher.group(1);
         try {
           idx = Integer.parseInt(matcher.group(2));
         } catch (NumberFormatException e) {
           idx = 0;
         }
       } else {
-        base = name;
-        idx = 0;
+        animName = nameBase;
       }
-      grouped.computeIfAbsent(base, k -> new ArrayList<>()).add(new FileWithIndex(file, idx));
+
+      // ストリームから画像を読み込む
+      try (InputStream is = cl.getResourceAsStream(resPath)) {
+        if (is == null) {
+          System.err.println("Could not open stream for: " + resPath);
+          continue;
+        }
+        BufferedImage img = ImageIO.read(is);
+        if (img != null) {
+          grouped.computeIfAbsent(animName, k -> new ArrayList<>())
+              .add(new FrameInfo(img, idx));
+        }
+      } catch (IOException e) {
+        System.err.println("Error loading image: " + resPath);
+        e.printStackTrace();
+      }
     }
 
-    for (Map.Entry<String, List<FileWithIndex>> entry : grouped.entrySet()) {
+    // 3. 読み込んだ画像をソートして保存
+    for (Map.Entry<String, List<FrameInfo>> entry : grouped.entrySet()) {
       String base = entry.getKey();
-      List<FileWithIndex> list = entry.getValue();
+      List<FrameInfo> list = entry.getValue();
+      // インデックス順に並べ替え
       Collections.sort(list, Comparator.comparingInt(o -> o.index));
+
       List<BufferedImage> frames = new ArrayList<>();
-      for (FileWithIndex fi : list) {
-        try {
-          BufferedImage img = ImageIO.read(fi.file);
-          if (img != null) {
-            frames.add(img);
-          }
-        } catch (Exception ex) {
-          System.err.println("Error loading animation frame: " + fi.file.getName());
-          ex.printStackTrace();
-        }
+      for (FrameInfo fi : list) {
+        frames.add(fi.image);
       }
+
       if (!frames.isEmpty()) {
-        AnimationStorage storage = new AnimationStorage(base, frames);
-        this.animationStorages.put(base.toLowerCase(), storage);
-        // System.out.println("Loaded animation: " + base + " (" + frames.size() + "
-        // frames)");
+        this.animationStorages.put(base, new AnimationStorage(base, frames));
+        System.out.println("Loaded animation: " + base + " (" + frames.size() + " frames)");
       }
     }
   }
 
-  /**
-   * 指定したフレームを取得する。
-   *
-   * @param name       アニメーション名（拡張子・番号なし、小文字大文字不問）
-   * @param frameIndex フレーム番号
-   * @param loop       ループ再生する場合は true
-   * @return フレーム画像（存在しない場合は null）
-   */
+  // IDE用: 再帰的にディレクトリを探索
+  private void scanDirectory(File dir, String resourcePrefix, List<String> paths) {
+    File[] files = dir.listFiles();
+    if (files == null)
+      return;
+
+    for (File f : files) {
+      if (f.isDirectory()) {
+        scanDirectory(f, resourcePrefix + "/" + f.getName(), paths);
+      } else if (f.getName().toLowerCase().endsWith(".png")) {
+        paths.add(resourcePrefix + "/" + f.getName());
+      }
+    }
+  }
+
+  // JAR用: JarFileエントリを探索
+  private void scanJar(URL url, List<String> paths) throws IOException {
+    String path = url.getPath();
+    int bang = path.indexOf("!");
+    String jarPath = (bang >= 0) ? path.substring(0, bang) : path;
+    if (jarPath.startsWith("file:")) {
+      jarPath = jarPath.substring(5);
+    }
+    jarPath = URLDecoder.decode(jarPath, StandardCharsets.UTF_8.name());
+
+    try (JarFile jar = new JarFile(jarPath)) {
+      Enumeration<JarEntry> entries = jar.entries();
+      while (entries.hasMoreElements()) {
+        JarEntry entry = entries.nextElement();
+        String name = entry.getName();
+        // "animations/" で始まり、.png で終わるものを収集
+        if (name.startsWith("animations/") && !entry.isDirectory() && name.toLowerCase().endsWith(".png")) {
+          paths.add(name);
+        }
+      }
+    }
+  }
+
   public BufferedImage getFrame(String name, int frameIndex, boolean loop) {
-    if (name == null) { // 指定されたアニメーション名が存在しない場合は何もしない
+    if (name == null)
       return null;
-    }
     AnimationStorage storage = this.animationStorages.get(name.toLowerCase());
-    if (storage == null || storage.frames.isEmpty()) { // アニメーションが見つからない場合も何もしない
+    if (storage == null || storage.frames.isEmpty())
       return null;
-    }
-    int count = storage.frames.size(); // アニメーションの総フレーム数
-    if (count <= 0) { // アニメーションが存在するがフレームがない場合(そんなことはないはずだが)
-      return null;
-    }
-    int idx = frameIndex; // 再生するべきフレームのインデックス
+
+    int count = storage.frames.size();
+    int idx;
     if (loop) {
-      idx = Math.floorMod(frameIndex, count); // ループ再生の場合はフレーム数で割った余りをインデックスとする
+      idx = Math.floorMod(frameIndex, count);
     } else {
-      idx = Math.max(0, Math.min(frameIndex, count - 1)); // ループ再生でない場合はフレーム数の範囲内にインデックスを収める
+      idx = Math.max(0, Math.min(frameIndex, count - 1));
     }
     return storage.frames.get(idx);
   }
 
-  /**
-   * アニメーションのフレーム数を返す。
-   *
-   * @param name アニメーション名
-   * @return フレーム数（見つからない場合は0）
-   */
   public int getFrameCount(String name) {
-    if (name == null) {
+    if (name == null)
       return 0;
-    }
     AnimationStorage storage = this.animationStorages.get(name.toLowerCase());
-    if (storage == null) {
-      return 0;
-    }
-    return storage.frames.size();
+    return (storage == null) ? 0 : storage.frames.size();
   }
 
-  private static final class FileWithIndex {
-    final File file;
+  // 画像とインデックスを一時保持するクラス
+  private static final class FrameInfo {
+    final BufferedImage image;
     final int index;
 
-    FileWithIndex(File file, int idx) {
-      this.file = file;
+    FrameInfo(BufferedImage image, int idx) {
+      this.image = image;
       this.index = idx;
     }
   }
 
   private static final class AnimationStorage {
-    private final String name;
-    private final List<BufferedImage> frames;
+    final String name; // Warning抑制のため削除しても良いが残置
+    final List<BufferedImage> frames;
 
     AnimationStorage(String name, List<BufferedImage> frames) {
       this.name = name;

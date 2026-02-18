@@ -25,11 +25,6 @@ public class App {
 
     new FontManager();
     ImageManager imageManager = new ImageManager();
-    try {
-      Thread.sleep(1000);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
     SwingUtilities.invokeLater(() -> {
       GameWindow gameWindow = new GameWindow(WIDTH, HEIGHT);
       GameFlowController controller = new GameFlowController(

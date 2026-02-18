@@ -5,10 +5,6 @@ import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
-import java.io.File;
-import java.net.URL;
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,37 +18,98 @@ public class ImageManager extends Component {
   private final Map<String, ImageStorage> imageStorages = new HashMap<>();
 
   /**
-   * 所定の場所にある全ての画像を読み込む (ClassLoader#getResource を使用)
+   * 所定の場所にある全ての画像を読み込む (ClassLoader#getResourceAsStream を使用)
    */
   public void loadImages() {
-    URL imagesUrl = this.getClass().getClassLoader().getResource("images");
-    String path = imagesUrl != null ? imagesUrl.getPath() : null;
-    File dir = path != null ? new File(path) : null;
+    ClassLoader cl = this.getClass().getClassLoader();
+    java.util.List<String> resourcePaths = new java.util.ArrayList<>();
 
-    if (dir != null && dir.exists()) {
-      Deque<File> stack = new ArrayDeque<>();
-      stack.push(dir);
-      while (!stack.isEmpty()) {
-        File current = stack.pop();
-        File[] children = current.listFiles();
-        if (children == null) {
-          continue;
-        }
-        for (File child : children) {
-          if (child.isDirectory()) {
-            stack.push(child);
-          } else if (child.getName().toLowerCase().endsWith(".png")) {
-            String name = child.getName().substring(0, child.getName().length() - 4).toLowerCase();
-            try {
-              BufferedImage image = ImageIO.read(child);
-              ImageStorage storage = new ImageStorage(name, image);
-              this.imageStorages.put(name, storage);
-            } catch (Exception e) {
-              System.err.println("Failed to load image: " + child.getPath());
-              e.printStackTrace();
+    try {
+      java.net.URL dirURL = cl.getResource("images");
+      if (dirURL != null) {
+        String protocol = dirURL.getProtocol();
+        if ("file".equals(protocol)) {
+          // ディレクトリとして読み込める場合 (IDE実行など)
+          java.io.File root = new java.io.File(dirURL.toURI());
+          java.util.Deque<java.io.File> stack = new java.util.ArrayDeque<>();
+          stack.push(root);
+          while (!stack.isEmpty()) {
+            java.io.File cur = stack.pop();
+            java.io.File[] children = cur.listFiles();
+            if (children == null)
+              continue;
+            for (java.io.File child : children) {
+              if (child.isDirectory()) {
+                stack.push(child);
+              } else if (child.getName().toLowerCase().endsWith(".png")) {
+                // resources 内の相対パスを作る
+                String rel = root.toURI().relativize(child.toURI()).getPath();
+                // resource path は "images/..." の形式
+                resourcePaths.add("images/" + rel);
+              }
             }
           }
+        } else if ("jar".equals(protocol)) {
+          // JAR 内の場合は JarFile を開いて entries を走査
+          String path = dirURL.getPath(); // like file:/path/to/jar.jar!/images
+          int bang = path.indexOf("!");
+          String jarPath = (bang >= 0) ? path.substring(0, bang) : path;
+          if (jarPath.startsWith("file:")) {
+            jarPath = jarPath.substring("file:".length());
+          }
+          jarPath = java.net.URLDecoder.decode(jarPath, "UTF-8");
+          java.util.jar.JarFile jar = null;
+          try {
+            jar = new java.util.jar.JarFile(jarPath);
+            java.util.Enumeration<java.util.jar.JarEntry> entries = jar.entries();
+            while (entries.hasMoreElements()) {
+              java.util.jar.JarEntry entry = entries.nextElement();
+              String name = entry.getName();
+              if (name.startsWith("images/") && !entry.isDirectory() && name.toLowerCase().endsWith(".png")) {
+                resourcePaths.add(name);
+              }
+            }
+          } finally {
+            if (jar != null) {
+              try {
+                jar.close();
+              } catch (Exception ignored) {
+              }
+            }
+          }
+        } else {
+          // その他のプロトコル (例: vfs, etc.) - 試しに URL からストリームを直接探し、失敗したら何もしない
         }
+      } else {
+        // images ディレクトリが見つからない場合は試しにクラスパス全体を検索 (簡易)
+        java.util.Enumeration<java.net.URL> roots = cl.getResources("");
+        while (roots.hasMoreElements()) {
+          java.net.URL u = roots.nextElement();
+          // ここでは通常のケースは上の file/jar でカバーされるため特別な処理は行わない
+        }
+      }
+    } catch (Exception e) {
+      System.err.println("Error locating image resources");
+      e.printStackTrace();
+    }
+
+    // 読み込み
+    for (String resPath : resourcePaths) {
+      try (java.io.InputStream is = cl.getResourceAsStream(resPath)) {
+        if (is == null) {
+          System.err.println("Resource not found via stream: " + resPath);
+          continue;
+        }
+        BufferedImage img = ImageIO.read(is);
+        if (img == null) {
+          System.err.println("Failed to read image (not PNG?): " + resPath);
+          continue;
+        }
+        String imageName = new java.io.File(resPath).getName().replaceFirst("[.][^.]+$", "").toLowerCase();
+        this.imageStorages.put(imageName, new ImageStorage(imageName, img));
+      } catch (Exception e) {
+        System.err.println("Error loading resource image: " + resPath);
+        e.printStackTrace();
       }
     }
 
@@ -188,6 +245,5 @@ public class ImageManager extends Component {
      */
     public Point2D.Double getSize() {
       return size;
-    }
   }
 }

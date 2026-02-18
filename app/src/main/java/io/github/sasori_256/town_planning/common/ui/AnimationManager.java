@@ -3,9 +3,11 @@ package io.github.sasori_256.town_planning.common.ui;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.URL;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +22,7 @@ import javax.imageio.ImageIO;
  * ファイル名は末尾に番号がついていることを期待します（例: walk_001.png）。
  */
 public class AnimationManager {
-  private final Map<String, AnimationStorage> animations = new HashMap<>();
+  private final Map<String, AnimationStorage> animationStorages = new HashMap<>();
 
   /**
    * アニメーションマネージャを生成し、画像を読み込む。
@@ -37,8 +39,7 @@ public class AnimationManager {
 
     List<File> fileList = new ArrayList<>();
     if (dir != null && dir.exists()) {
-      // 再帰的に検索
-      java.util.Deque<File> stack = new java.util.ArrayDeque<>();
+      Deque<File> stack = new ArrayDeque<>();
       stack.push(dir);
       while (!stack.isEmpty()) {
         File current = stack.pop();
@@ -95,7 +96,7 @@ public class AnimationManager {
       }
       if (!frames.isEmpty()) {
         AnimationStorage storage = new AnimationStorage(base, frames);
-        this.animations.put(base.toLowerCase(), storage);
+        this.animationStorages.put(base.toLowerCase(), storage);
         // System.out.println("Loaded animation: " + base + " (" + frames.size() + "
         // frames)");
       }
@@ -111,22 +112,22 @@ public class AnimationManager {
    * @return フレーム画像（存在しない場合は null）
    */
   public BufferedImage getFrame(String name, int frameIndex, boolean loop) {
-    if (name == null) {
+    if (name == null) { // 指定されたアニメーション名が存在しない場合は何もしない
       return null;
     }
-    AnimationStorage storage = this.animations.get(name.toLowerCase());
-    if (storage == null || storage.frames.isEmpty()) {
+    AnimationStorage storage = this.animationStorages.get(name.toLowerCase());
+    if (storage == null || storage.frames.isEmpty()) { // アニメーションが見つからない場合も何もしない
       return null;
     }
-    int count = storage.frames.size();
-    if (count <= 0) {
+    int count = storage.frames.size(); // アニメーションの総フレーム数
+    if (count <= 0) { // アニメーションが存在するがフレームがない場合(そんなことはないはずだが)
       return null;
     }
-    int idx = frameIndex;
+    int idx = frameIndex; // 再生するべきフレームのインデックス
     if (loop) {
-      idx = Math.floorMod(frameIndex, count);
+      idx = Math.floorMod(frameIndex, count); // ループ再生の場合はフレーム数で割った余りをインデックスとする
     } else {
-      idx = Math.max(0, Math.min(frameIndex, count - 1));
+      idx = Math.max(0, Math.min(frameIndex, count - 1)); // ループ再生でない場合はフレーム数の範囲内にインデックスを収める
     }
     return storage.frames.get(idx);
   }
@@ -141,7 +142,7 @@ public class AnimationManager {
     if (name == null) {
       return 0;
     }
-    AnimationStorage storage = this.animations.get(name.toLowerCase());
+    AnimationStorage storage = this.animationStorages.get(name.toLowerCase());
     if (storage == null) {
       return 0;
     }

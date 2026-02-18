@@ -1,10 +1,10 @@
 package io.github.sasori_256.town_planning.map.model;
 
 /**
- * Ken Perlin's Improved Noise implementation (static helper).
+ * Ken Perlin's Improved Noise アルゴリズムの実装。
  */
 public final class ImprovedNoise {
-  private static final int[] p;
+  private static final int[] p; // 乱数表(255個の値を2回繰り返す)
 
   static {
     int[] permutation = { 151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140, 36, 103, 30, 69,
@@ -17,17 +17,15 @@ public final class ImprovedNoise {
         221, 153, 101, 155, 167, 43, 172, 9, 129, 22, 39, 253, 19, 98, 108, 110, 79, 113, 224, 232, 178, 185, 112, 104,
         218, 246, 97, 228, 251, 34, 242, 193, 238, 210, 144, 12, 191, 179, 162, 241, 81, 51, 145, 235, 249, 14, 239,
         107, 49, 192, 214, 31, 181, 199, 106, 157, 184, 84, 204, 176, 115, 121, 50, 45, 127, 4, 150, 254, 138, 236, 205,
-        93, 222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180 };
+        93, 222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180 }; // 乱数表(0-255の値をシャッフルしたもの)
     p = new int[512];
-    for (int i = 0; i < 512; i++) {
+    for (int i = 0; i < 512; i++) { // 乱数表を2回繰り返したものをpに格納
       p[i] = permutation[i & 255];
     }
+    // 乱数表を2回繰り返す理由は、インデックスが255を超える場合に255で割った余りを使用する際に、インデックスの範囲を確保するためです。
   }
 
-  private ImprovedNoise() {
-  }
-
-  private static double fade(double t) {
+  private static double fade(double t) { //
     return t * t * t * (t * (t * 6 - 15) + 10);
   }
 
@@ -42,9 +40,6 @@ public final class ImprovedNoise {
     return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);
   }
 
-  /**
-   * Returns Perlin noise value in range approximately [-1,1].
-   */
   public static double noise(double x, double y, double z) {
     int X = (int) Math.floor(x) & 255;
     int Y = (int) Math.floor(y) & 255;

@@ -25,7 +25,7 @@ import io.github.sasori_256.town_planning.map.model.GameMap;
 import io.github.sasori_256.town_planning.map.model.MapCell;
 
 /**
- * 建物を描画するためのクラス
+ * ゲームオブジェクト(ゲームエンティティと同義)を描画するためのクラス
  */
 public class PaintGameObject {
   private static final double DEAD_ROTATION_DEGREES = 90.0;
@@ -236,21 +236,10 @@ public class PaintGameObject {
     Graphics2D g2d = (Graphics2D) g;
     // 建物または地形の描画
     ImageStorage imageStorage = imageManager.getImageStorage(name);
-    if (imageStorage != null) {
-      Point2D.Double renderPos = pos;
-      if (snapToGrid) {
-        renderPos = new Point2D.Double(Math.round(pos.x), Math.round(pos.y));
-      }
-      Point2D.Double screenPos = camera.isoToScreen(renderPos);
-      double cameraScale = camera.getScale();
-      Point2D.Double posShift = calculateShiftImage(imageStorage.size, cameraScale);
-      Point2D.Double imageScale = imageStorage.size;
-      int xPos = (int) Math.round(screenPos.x + posShift.x);
-      int yPos = (int) Math.round(screenPos.y + posShift.y);
-      int width = (int) (imageScale.x * cameraScale);
-      int height = (int) (imageScale.y * cameraScale);
-      g2d.drawImage(imageStorage.image, xPos, yPos, width, height, panel);
+    if (imageStorage == null || imageStorage.image == null) {
+      return;
     }
+    paintImage(g, pos, imageStorage.image, camera, panel, snapToGrid);
   }
 
   private void paintImage(Graphics g, Point2D.Double pos, BufferedImage image, Camera camera,

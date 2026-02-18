@@ -33,27 +33,80 @@ public class AnimationManager {
 
   /** resources/animations にある画像を読み込む。 */
   public void loadAnimations() {
-    URL animationsUrl = this.getClass().getClassLoader().getResource("animations");
-    String path = animationsUrl != null ? animationsUrl.getPath() : null;
-    File dir = path != null ? new File(path) : null;
+    ClassLoader cl = this.getClass().getClassLoader();
+    List<String> resourcePaths = new ArrayList<>();
 
-    List<File> fileList = new ArrayList<>();
-    if (dir != null && dir.exists()) {
-      Deque<File> stack = new ArrayDeque<>();
-      stack.push(dir);
-      while (!stack.isEmpty()) {
-        File current = stack.pop();
-        File[] children = current.listFiles();
-        if (children == null) {
-          continue;
-        }
-        for (File child : children) {
-          if (child.isDirectory()) {
-            stack.push(child);
-          } else if (child.getName().toLowerCase().endsWith(".png")) {
-            fileList.add(child);
+    try {
+      java.net.URL dirURL = cl.getResource("animations");
+      if (dirURL != null) {
+        String protocol = dirURL.getProtocol();
+        if ("file".equals(protocol)) {
+          // ディレクトリとして読み込める場合 (IDE実行など)
+          java.io.File root = new java.io.File(dirURL.toURI());
+          Deque<java.io.File> stack = new ArrayDeque<>();
+          stack.push(root);
+          while (!stack.isEmpty()) {
+            java.io.File cur = stack.pop();
+            java.io.File[] children = cur.listFiles();
+            if (children == null)
+              continue;
+            for (java.io.File child : children) {
+              if (child.isDirectory()) {
+                stack.push(child);
+              } else if (child.getName().toLowerCase().endsWith(".png")) {
+                // resources 内の相対パスを作る
+                String rel = root.toURI().relativize(child.toURI()).getPath();
+                // resource path は "animations/..." の形式
+                resourcePaths.add("animations/" + rel);
+              }
+            }
+          }
+        } else if ("jar".equals(protocol)) {
+          // JAR 内の場合は JarFile を開いて entries を走査
+          String path = dirURL.getPath(); // like file:/path/to/jar.jar!/animations
+          int bang = path.indexOf("!");
+          String jarPath = (bang >= 0) ? path.substring(0, bang) : path;
+          if (jarPath.startsWith("file:")) {
+            jarPath = jarPath.substring("file:".length());
+          }
+          jarPath = java.net.URLDecoder.decode(jarPath, "UTF-8");
+          java.util.jar.JarFile jar = null;
+          try {
+            jar = new java.util.jar.JarFile(jarPath);
+            java.util.Enumeration<java.util.jar.JarEntry> entries = jar.entries();
+            while (entries.hasMoreElements()) {
+              java.util.jar.JarEntry entry = entries.nextElement();
+              String name = entry.getName();
+              if (name.startsWith("animations/") && name.toLowerCase().endsWith(".png")) {
+                resourcePaths.add(name);
+              }
+            }
+          } finally {
+            if (jar != null) {
+              jar.close();
+            }
           }
         }
+      }
+    } catch (Exception e) {
+      System.err.println("Error locating animation resources: " + e.getMessage());
+      e.printStackTrace();
+    }
+
+    // 読み込んだリソースパスからファイルを作成
+    List<File> fileList = new ArrayList<>();
+    for (String resPath : resourcePaths) {
+      URL url = cl.getResource(resPath);
+      if (url != null) {
+        try {
+          File f = new File(url.toURI());
+          fileList.add(f);
+        } catch (Exception e) {
+          System.err.println("Error accessing animation resource: " + resPath + " - " + e.getMessage());
+          e.printStackTrace();
+        }
+      } else {
+        System.err.println("Resource not found for animation: " + resPath);
       }
     }
 

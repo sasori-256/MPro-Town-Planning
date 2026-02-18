@@ -5,7 +5,11 @@ import java.awt.Graphics2D;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.RescaleOp;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
@@ -22,7 +26,7 @@ public class ImageManager extends Component {
    */
   public void loadImages() {
     ClassLoader cl = this.getClass().getClassLoader();
-    java.util.List<String> resourcePaths = new java.util.ArrayList<>();
+    List<String> resourcePaths = new ArrayList<>();
 
     try {
       java.net.URL dirURL = cl.getResource("images");
@@ -31,7 +35,7 @@ public class ImageManager extends Component {
         if ("file".equals(protocol)) {
           // ディレクトリとして読み込める場合 (IDE実行など)
           java.io.File root = new java.io.File(dirURL.toURI());
-          java.util.Deque<java.io.File> stack = new java.util.ArrayDeque<>();
+          Deque<java.io.File> stack = new ArrayDeque<>();
           stack.push(root);
           while (!stack.isEmpty()) {
             java.io.File cur = stack.pop();
@@ -71,25 +75,13 @@ public class ImageManager extends Component {
             }
           } finally {
             if (jar != null) {
-              try {
-                jar.close();
-              } catch (Exception ignored) {
-              }
+              jar.close();
             }
           }
-        } else {
-          // その他のプロトコル (例: vfs, etc.) - 試しに URL からストリームを直接探し、失敗したら何もしない
-        }
-      } else {
-        // images ディレクトリが見つからない場合は試しにクラスパス全体を検索 (簡易)
-        java.util.Enumeration<java.net.URL> roots = cl.getResources("");
-        while (roots.hasMoreElements()) {
-          java.net.URL u = roots.nextElement();
-          // ここでは通常のケースは上の file/jar でカバーされるため特別な処理は行わない
         }
       }
     } catch (Exception e) {
-      System.err.println("Error locating image resources");
+      System.err.println("Error locating image resources: " + e.getMessage());
       e.printStackTrace();
     }
 
@@ -113,8 +105,6 @@ public class ImageManager extends Component {
       }
     }
 
-    // プレビュー用画像の生成と保存
-    // TODO: PATHから画像を取得できるようになったらbuildingだけを対象にする。
     Map<String, ImageStorage> previewStorages = new HashMap<>();
     for (ImageStorage baseStorage : new HashMap<>(this.imageStorages).values()) {
       createAndCachePreview(baseStorage, true, previewStorages);

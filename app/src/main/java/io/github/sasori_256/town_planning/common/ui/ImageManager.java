@@ -245,5 +245,6 @@ public class ImageManager extends Component {
      */
     public Point2D.Double getSize() {
       return size;
+    }
   }
 }

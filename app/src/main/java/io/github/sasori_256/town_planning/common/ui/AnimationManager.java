@@ -99,7 +99,7 @@ public class AnimationManager {
       URL url = cl.getResource(resPath);
       if (url != null) {
         try {
-          File file = new File(url.toURI());
+          File file = new File(url.getPath());
           if (file.exists() && file.isFile()) {
             fileList.add(file);
           } else {

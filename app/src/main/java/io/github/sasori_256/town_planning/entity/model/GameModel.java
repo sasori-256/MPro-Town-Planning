@@ -552,20 +552,16 @@ public class GameModel implements GameContext, SimulationStep {
       townHallY = centerY;
     }
 
-    // TODO: 町の中心として一旦青い屋根の家を使用 正しい建物タイプに変更する必要あり
-    // TODO: 町の中心に相当する建物タイプに置き換える。
     Point2D.Double townHallPos = new Point2D.Double(townHallX, townHallY);
     Building townHall = new Building(townHallPos, BuildingType.BLUE_ROOFED_HOUSE);
     if (gameMap.placeBuilding(townHallPos, townHall)) {
-      // ------- プレゼンのための一時的なコード -------
-      int population = 15;
-      townHall.setCurrentPopulation(population); // TODO: 初期住人をもとに戻す(2二人)
+      int population = 2;
+      townHall.setCurrentPopulation(population);
       spawnEntity(townHall);
       for (int i = 0; i < population; i++) {
         spawnEntity(new Resident(new Point2D.Double(townHallPos.y, townHallPos.x), ResidentType.CITIZEN,
             ResidentState.AT_HOME, townHallPos));
       }
-      // ------- プレゼンのための一時的なコード -------
     }
   }
 }

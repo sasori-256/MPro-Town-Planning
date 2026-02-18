@@ -73,6 +73,5 @@ public class ActionDisasterHandler
       gameMapController.setActionOnClick(new ClickGameMapHandler());
       gameMapController.setActionOnMove(new MoveGameMapHandler());
     }
-
   }
 }

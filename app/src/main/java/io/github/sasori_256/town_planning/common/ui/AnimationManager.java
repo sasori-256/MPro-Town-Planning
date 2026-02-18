@@ -99,8 +99,12 @@ public class AnimationManager {
       URL url = cl.getResource(resPath);
       if (url != null) {
         try {
-          File f = new File(url.toURI());
-          fileList.add(f);
+          File file = new File(url.toURI());
+          if (file.exists() && file.isFile()) {
+            fileList.add(file);
+          } else {
+            System.err.println("Resource URL does not point to a valid file: " + resPath);
+          }
         } catch (Exception e) {
           System.err.println("Error accessing animation resource: " + resPath + " - " + e.getMessage());
           e.printStackTrace();

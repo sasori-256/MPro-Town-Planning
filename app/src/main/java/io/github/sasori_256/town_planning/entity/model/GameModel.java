@@ -213,12 +213,6 @@ public class GameModel implements GameContext, SimulationStep {
     return populationManager.getTotalDeaths();
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public double getDeltaTime() {
-    return withReadLock(() -> lastDeltaTime);
-  }
-
   /**
    * Spawns a new entity into the game world.
    * 
@@ -279,19 +273,6 @@ public class GameModel implements GameContext, SimulationStep {
         resident.damage(amount);
       }
     }
-
-    withWriteLock(() -> {
-      // ライフサイクルメソッドの呼び出し
-      entity.onRemoved();
-
-      if (entity instanceof Resident) {
-        residentEntities.remove(entity);
-      } else if (entity instanceof Building) {
-        buildingEntities.remove(entity);
-      } else if (entity instanceof Disaster) {
-        disasterEntities.remove(entity);
-      }
-    });
   }
 
   // --- Game Logic API ---
@@ -599,32 +580,4 @@ public class GameModel implements GameContext, SimulationStep {
     }
   }
 
-  /**
-   * Process deferred entity lifecycle operations that were queued during the
-   * update cycle.
-   * This method should only be called while holding the write lock.
-   */
-  private void processDeferredOperations() {
-    // Process entities to remove first
-    for (BaseGameEntity entity : entitiesToRemove) {
-      // Call lifecycle method
-      entity.onRemoved();
-
-      // Remove from appropriate list
-      if (entity instanceof Resident) {
-        residentEntities.remove(entity);
-      } else if (entity instanceof Building) {
-        buildingEntities.remove(entity);
-      } else if (entity instanceof Disaster) {
-        disasterEntities.remove(entity);
-      }
-    }
-    entitiesToRemove.clear();
-
-    // Process entities to spawn
-    for (BaseGameEntity entity : entitiesToSpawn) {
-      spawnEntityInternal(entity);
-    }
-    entitiesToSpawn.clear();
-  }
 }

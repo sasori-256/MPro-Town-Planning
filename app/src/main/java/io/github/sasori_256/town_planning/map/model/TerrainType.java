@@ -122,12 +122,6 @@ public enum TerrainType implements Terrain {
     return weight;
   }
 
-  /** {@inheritDoc} */
-  @Override
-  public int getMoveCost() {
-    return moveCost;
-  }
-
   @Override
   public void draw() {
   }

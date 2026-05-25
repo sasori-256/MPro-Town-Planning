@@ -215,6 +215,27 @@ public class GameModel implements GameContext, SimulationStep {
 
   /** {@inheritDoc} */
   @Override
+  public double getDeltaTime() {
+    return withReadLock(() -> lastDeltaTime);
+  }
+
+  /**
+   * Spawns a new entity into the game world.
+   * 
+   * <p>
+   * If called during an update cycle (i.e., from within an entity's update
+   * method),
+   * the spawn operation is automatically deferred and will be processed after all
+   * entity updates complete. This prevents nested lock acquisition and potential
+   * deadlocks.
+   * 
+   * <p>
+   * If called outside an update cycle, the entity is spawned immediately.
+   * 
+   * @param entity The entity to spawn
+   * @param <T>    The entity type
+   */
+  @Override
   public <T extends BaseGameEntity> void spawnEntity(T entity) {
     entityManager.spawnEntity(entity, this);
   }
@@ -258,6 +279,19 @@ public class GameModel implements GameContext, SimulationStep {
         resident.damage(amount);
       }
     }
+
+    withWriteLock(() -> {
+      // ライフサイクルメソッドの呼び出し
+      entity.onRemoved();
+
+      if (entity instanceof Resident) {
+        residentEntities.remove(entity);
+      } else if (entity instanceof Building) {
+        buildingEntities.remove(entity);
+      } else if (entity instanceof Disaster) {
+        disasterEntities.remove(entity);
+      }
+    });
   }
 
   // --- Game Logic API ---
@@ -563,5 +597,34 @@ public class GameModel implements GameContext, SimulationStep {
             ResidentState.AT_HOME, townHallPos));
       }
     }
+  }
+
+  /**
+   * Process deferred entity lifecycle operations that were queued during the
+   * update cycle.
+   * This method should only be called while holding the write lock.
+   */
+  private void processDeferredOperations() {
+    // Process entities to remove first
+    for (BaseGameEntity entity : entitiesToRemove) {
+      // Call lifecycle method
+      entity.onRemoved();
+
+      // Remove from appropriate list
+      if (entity instanceof Resident) {
+        residentEntities.remove(entity);
+      } else if (entity instanceof Building) {
+        buildingEntities.remove(entity);
+      } else if (entity instanceof Disaster) {
+        disasterEntities.remove(entity);
+      }
+    }
+    entitiesToRemove.clear();
+
+    // Process entities to spawn
+    for (BaseGameEntity entity : entitiesToSpawn) {
+      spawnEntityInternal(entity);
+    }
+    entitiesToSpawn.clear();
   }
 }

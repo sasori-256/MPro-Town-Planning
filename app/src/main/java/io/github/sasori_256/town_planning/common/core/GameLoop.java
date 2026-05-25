@@ -10,31 +10,41 @@ import javax.swing.SwingUtilities;
  */
 public class GameLoop implements Runnable {
   private final AtomicBoolean running = new AtomicBoolean(false);
+  private final AtomicBoolean paused = new AtomicBoolean(false);
   private final AtomicBoolean renderPending = new AtomicBoolean(false);
 
   /**
    * CallBackによる更新処理
    * CallBackを使うことで、GameLoopクラスが特定のゲームロジックに依存しないようにする
-   * ゲームロジックを知っているMainクラスでUpdateとRenderの具体的な処理を提供する
+   * ゲームロジックを知っているAppクラスでUpdateとRenderの具体的な処理を提供する
    */
   private final DoubleConsumer updateCallback;
   private final Runnable renderCallback;
   private Thread thread = null;
 
   // 30 FPS target
-  // TODO: マジックナンバーを定数化して外部から変更できるようにする
-  private static final double TIME_STEP = 1.0 / 30.0;
+  private static final double TIME_STEP = GameConfig.getGameLoopTimeStepSeconds();
   private static final long TIME_STEP_NANO = (long) (TIME_STEP * 1_000_000_000);
 
+  /**
+   * ゲームループを生成する。
+   *
+   * @param updateCallback 更新処理
+   * @param renderCallback 描画処理
+   */
   public GameLoop(DoubleConsumer updateCallback, Runnable renderCallback) {
     this.updateCallback = updateCallback;
     this.renderCallback = renderCallback;
   }
 
+  /**
+   * ゲームループを開始する。
+   */
   public synchronized void start() {
     if (thread == null) {
       try {
         if (running.compareAndSet(false, true)) {
+          paused.set(false);
           thread = new Thread(this, "GameLoop-Thread");
           thread.setDaemon(true); // アプリ終了時に自動で落ちるように
           thread.start();
@@ -51,8 +61,9 @@ public class GameLoop implements Runnable {
    * ゲームループを停止する。
    * 
    * <p>
-   * このメソッドは、EDT（Event Dispatch Thread）から呼び出された場合でも安全に動作します。
-   * EDTから呼び出された場合、ゲームループスレッドの終了を待機せず、すぐに戻ります。
+   * このメソッドは、呼び出し元のスレッドに関わらずゲームループに停止を指示します。
+   * EDT（Event Dispatch Thread）から呼び出された場合でも安全に動作します。
+   * EDTから呼び出された場合は、ゲームループスレッドの終了を待機せず、停止指示だけを行ってすぐに戻ります。
    * これは、ゲームループがSwingUtilities.invokeLater()を使用してEDTにレンダリングタスクを
    * ディスパッチしている可能性があるため、EDTでの待機はデッドロックを引き起こす可能性があるためです。
    * 
@@ -83,6 +94,38 @@ public class GameLoop implements Runnable {
     }
   }
 
+  public void pause() {
+    paused.set(true);
+  }
+
+  public void resume() {
+    paused.set(false);
+  }
+
+  /**
+   * ポーズ状態をトグルする。
+   * 書き換え中に状態が変わった時のためにCASループで処理。
+   * ロックするまでは必要ないためCASループを採用
+   *
+   * @return トグル後のポーズ状態
+   */
+  public boolean togglePause() {
+    boolean current;
+    boolean next;
+    do {
+      current = paused.get();
+      next = !current;
+    } while (!paused.compareAndSet(current, next));
+    return next;
+  }
+
+  public boolean isPaused() {
+    return paused.get();
+  }
+
+  /**
+   * ループ処理を実行する。
+   */
   @Override
   public void run() {
     long lastTime = System.nanoTime(); // 前フレームの時刻
@@ -100,12 +143,16 @@ public class GameLoop implements Runnable {
           frameTime = 250_000_000;
         }
 
-        accumulator += frameTime;
+        if (!paused.get()) {
+          accumulator += frameTime;
 
-        // 修正ループ: 固定タイムステップで更新を行う
-        while (accumulator >= TIME_STEP_NANO) {
-          updateCallback.accept(TIME_STEP);
-          accumulator -= TIME_STEP_NANO;
+          // 修正ループ: 固定タイムステップで更新を行う
+          while (accumulator >= TIME_STEP_NANO) {
+            updateCallback.accept(TIME_STEP);
+            accumulator -= TIME_STEP_NANO;
+          }
+        } else {
+          accumulator = 0.0;
         }
 
         // 描画処理はEDTに委譲する

@@ -1,0 +1,134 @@
+classDiagram
+    %% --- Main Controllers ---
+    class GameFlowController {
+        -GameModel model
+        -SceneNavigator navigator
+        +handleSceneChange(SceneId)
+    }
+
+    class GameMapController {
+        -GameModel model
+        -GameMapPanel view
+        -ClickGameMapHandler clickHandler
+        -MoveGameMapHandler moveHandler
+        -ActionDisasterHandler disasterHandler
+        -PlaceBuildingHandler buildHandler
+        -PreviewBuildingHandler previewHandler
+        +onClick(MouseEvent)
+        +onDrag(MouseEvent)
+        +onMove(MouseEvent)
+        +onRightClick(MouseEvent)
+    }
+
+    %% --- Input Handlers ---
+    class ClickGameMapHandler {
+        -GameModel model
+        +handleClick(Point2D)
+    }
+
+    class MoveGameMapHandler {
+        -GameModel model
+        +handleMove(Point)
+    }
+
+    class PlaceBuildingHandler {
+        -GameModel model
+        +place(BuildingType, Point2D)
+    }
+
+    class PreviewBuildingHandler {
+        -GameModel model
+        +updatePreview(Point2D, BuildingType)
+    }
+
+    class ActionDisasterHandler {
+        -GameModel model
+        +triggerDisaster(DisasterType, Point2D)
+    }
+
+    %% --- UI Specific Controllers ---
+    class BuildPreviewEventHandler {
+        -GameModel model
+        -BuildAccept acceptCmd
+        -BuildCancel cancelCmd
+        -BuildRotate rotateCmd
+        +handleInput()
+    }
+
+    class BuildAccept {
+        +execute()
+    }
+    class BuildCancel {
+        +execute()
+    }
+    class BuildRotate {
+        +execute()
+    }
+
+    class NodeMenuInitializer {
+        +initialize(GameMapController)
+    }
+
+    %% --- Menu Logic ---
+    class MenuNode {
+        -String label
+        -List~MenuNode~ children
+        +onClick()
+    }
+
+    class BuildingNode {
+        -BuildingType type
+        -PlaceBuildingHandler handler
+        +onClick()
+    }
+
+    class DisasterNode {
+        -DisasterType type
+        -ActionDisasterHandler handler
+        +onClick()
+    }
+
+    %% --- Events ---
+    class EventBus {
+        <<Singleton>>
+        +publish(Object event)
+        +subscribe(Class, Consumer)
+    }
+
+    %% --- Model Ref ---
+    class GameModel {
+        <<Model>>
+        +constructBuilding()
+        +applyDisasterImpact()
+    }
+
+    %% --- Relationships ---
+    
+    %% GameMapController Composition
+    GameMapController o-- GameModel : controls
+    GameMapController *-- ClickGameMapHandler
+    GameMapController *-- MoveGameMapHandler
+    GameMapController *-- ActionDisasterHandler
+    GameMapController *-- PlaceBuildingHandler
+    GameMapController *-- PreviewBuildingHandler
+
+    %% Handler Logic
+    PlaceBuildingHandler --> GameModel : calls constructBuilding
+    ActionDisasterHandler --> GameModel : calls applyDisasterImpact
+    PreviewBuildingHandler --> GameModel : updates preview
+
+    %% Build Preview Logic
+    BuildPreviewEventHandler *-- BuildAccept
+    BuildPreviewEventHandler *-- BuildCancel
+    BuildPreviewEventHandler *-- BuildRotate
+
+    %% Menu Logic
+    MenuNode <|-- BuildingNode
+    MenuNode <|-- DisasterNode
+    BuildingNode --> PlaceBuildingHandler : uses
+    DisasterNode --> ActionDisasterHandler : uses
+    NodeMenuInitializer ..> MenuNode : creates structure
+
+    %% Event Bus Usage
+    GameFlowController ..> EventBus : uses
+    GameMapController ..> EventBus : uses

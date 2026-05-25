@@ -1,0 +1,150 @@
+classDiagram
+    %% ==========================================
+    %% Relationships Only (No Methods, No Blocks)
+    %% ==========================================
+
+    %% --- Inheritance (IS-A) ---
+    %% Core & Base Interfaces
+    Animatable <|.. BaseGameEntity
+    SimulationStep <|.. GameModel
+    
+    %% Entity Hierarchies
+    GameEntity <|.. BaseGameEntity
+    LifecycleAware <|.. BaseGameEntity
+    GameContext <|.. GameModel
+    
+    BaseGameEntity <|-- Building
+    BaseGameEntity <|-- Resident
+    BaseGameEntity <|-- Disaster
+
+    %% UI Hierarchies
+    CustomPanel <|-- GameMapPanel
+    CustomPanel <|-- TitlePanel
+    CustomPanel <|-- EndPanel
+    CustomPanel <|-- BuildPreviewUI
+    CustomPanel <|-- ResourceViewerPanel
+    CustomPanel <|-- PaintObjectSelectUI
+    CustomPanel <|-- ToastPanel
+
+    UiRefreshable <|.. GameMapPanel
+    UiRefreshable <|.. TitlePanel
+    UiRefreshable <|.. EndPanel
+    
+    SceneNavigator <|.. GameFlowNavigator
+
+    %% Strategy & Action Hierarchies
+    UpdateStrategy <|.. CompositeUpdateStrategy
+    
+    GameAction <|.. ResidentBehaviorAction
+    GameAction <|.. PanicMoveAction
+    GameAction <|.. DestinationMoveAction
+    GameAction <|.. MeteorDisasterAction
+
+    GameEffect <|.. CompositeGameEffect
+    GameEffect <|.. PopulationGrowthEffect
+    GameEffect <|.. ResidentLifeCycleEffect
+    GameEffect <|.. ResidentCorpseCleanupEffect
+
+    %% Map Hierarchies
+    MapContext <|.. GameMap
+
+    %% Menu Hierarchies
+    MenuNode <|-- CategoryNode
+    MenuNode <|-- BuildingNode
+    MenuNode <|-- DisasterNode
+
+
+    %% --- Composition (HAS-A) ---
+    %% App -> UI
+    App *-- GameWindow
+    GameWindow *-- GameFlowController
+    
+    %% Game Model Structure (Central Hub)
+    GameModel *-- EntityManager
+    GameModel *-- SoulManager
+    GameModel *-- TimeManager
+    GameModel *-- RelocationManager
+    GameModel *-- PopulationManager
+    GameModel *-- BuildingManager
+    GameModel *-- ResidentPanicManager
+    GameModel *-- GameMap
+    GameModel *-- BuildingPreview
+    GameModel *-- GameLoop
+
+    %% Map Structure
+    GameMap "1" *-- "many" MapCell
+    MapCell *-- Terrain
+    MapCell o-- Building
+
+    %% Entity Structure
+    BaseGameEntity o-- UpdateStrategy
+    CompositeUpdateStrategy o-- GameAction
+    CompositeUpdateStrategy o-- GameEffect
+    EntityManager o-- "many" BaseGameEntity : manages
+
+    %% UI Structure
+    GameFlowController *-- GameFlowNavigator
+    GameFlowController o-- GameModel
+    
+    GameMapPanel *-- BuildPreviewUI
+    GameMapPanel *-- ResourceViewerPanel
+    GameMapPanel *-- PaintObjectSelectUI
+    GameMapPanel *-- ToastPanel
+    GameMapPanel o-- GameMapController
+    GameMapPanel o-- GameModel
+
+    %% Controller Structure
+    GameMapController *-- ClickGameMapHandler
+    GameMapController *-- MoveGameMapHandler
+    GameMapController *-- ActionDisasterHandler
+    GameMapController *-- PlaceBuildingHandler
+    GameMapController *-- PreviewBuildingHandler
+    GameMapController o-- GameModel
+
+    %% Sub-Controller / Handlers
+    BuildPreviewUI o-- BuildPreviewEventHandler
+    BuildPreviewEventHandler o-- GameModel
+    BuildPreviewEventHandler *-- BuildAccept
+    BuildPreviewEventHandler *-- BuildCancel
+    BuildPreviewEventHandler *-- BuildRotate
+
+    %% Menu Logic
+    PaintObjectSelectUI o-- NodeMenuInitializer
+    NodeMenuInitializer ..> MenuNode : creates
+    BuildingNode --> PlaceBuildingHandler : uses
+    DisasterNode --> ActionDisasterHandler : uses
+
+
+    %% --- Dependencies (USES / References) ---
+    %% Type Definitions
+    Building --> BuildingType
+    Resident --> ResidentType
+    Resident --> ResidentState
+    Disaster --> DisasterType
+    Terrain --> TerrainType
+
+    %% Logic Connections
+    PlaceBuildingHandler ..> GameModel : constructs
+    ActionDisasterHandler ..> GameModel : impacts
+    PreviewBuildingHandler ..> BuildingPreview : modifies
+    ClickGameMapHandler ..> GameModel : queries
+    MoveGameMapHandler ..> GameModel : moves camera (implied)
+
+    %% Rendering Connections
+    PaintGameObject ..> ImageManager : uses
+    PaintGameObject ..> AnimationManager : uses
+    GameMapPanel ..> PaintGameObject : delegates paint
+    PaintResourceViewerUI ..> ImageManager : uses
+    ResourceViewerPanel ..> PaintResourceViewerUI : delegates paint
+    
+    %% Managers to Logic
+    BuildingManager ..> GameMap : places on
+    BuildingManager ..> SoulManager : consumes soul
+    PopulationManager ..> EntityManager : counts residents
+
+    %% Event Bus Connections
+    GameModel ..> EventBus : publishes
+    GameMap ..> EventBus : publishes
+    ToastManager ..> EventBus : subscribes
+    GameMapPanel ..> EventBus : subscribes
+    GameFlowController ..> EventBus : subscribes

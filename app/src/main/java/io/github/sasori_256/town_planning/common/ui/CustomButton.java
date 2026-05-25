@@ -9,29 +9,146 @@ import java.awt.image.RescaleOp;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 
-class CustomButton extends JButton {
+import io.github.sasori_256.town_planning.common.ui.ImageManager.ImageStorage;
+
+/**
+ * 画像表示や押下アニメーション付きのボタン。
+ */
+public class CustomButton extends JButton {
   private int originalWidth;
   private int originalHeight;
   private int centerX;
   private int centerY;
-  private static final float SCALE_FACTOR = 0.95f; // 押下時に95%のサイズに変更
-  private static final int ANIMATION_DURATION = 100; // アニメーション時間（ミリ秒）
+  private final String textContent; // 元のテキスト内容を保持
+  private float ScaleFactor = 0.9f; // 押下時に90%のサイズに変更
+  private int AnimationDuration = 100; // アニメーション時間（ミリ秒）
   private Thread animationThread;
+  private final Image originalImage;
+  private double animationProgress = 0.0;
+  private double UIScale = 1.0;
 
-  public CustomButton(String text) {
-    super(text);
+  private void addChangeListenerToModel() {
     // ボタンモデルにリスナーを追加
     getModel().addChangeListener(e -> {
       if (getModel().isPressed()) {
         startPressAnimation();
-      } else {
+      } else if (animationProgress > 0.0) {
         startReleaseAnimation();
       }
     });
   }
 
-  public void setCustomBounds(int x, int y, int width, int height) {
-    super.setBounds(x, y, width, height);
+  private void textPositionOptimize() {
+    this.setHorizontalTextPosition(JButton.CENTER);
+    this.setVerticalTextPosition(JButton.BOTTOM);
+  }
+
+  /**
+   * テキストのみのボタンを生成する。
+   *
+   * @param text   表示テキスト
+   * @param xPos   ボタンの位置X (中心指定)
+   * @param yPos   ボタンの位置Y (中心指定)
+   * @param width  ボタンの幅
+   * @param height ボタンの高さ
+   */
+  public CustomButton(String text, int xPos, int yPos, int width, int height) {
+    this.textContent = text;
+    this.originalImage = null;
+    // いい感じに折り返せるようにHTMLを使う
+    super("<html><div style='text-align: center;'>" + text + "</div></html>");
+    this.UIScale = 1.0; // デフォルトのUIスケールを設定
+    addChangeListenerToModel();
+    textPositionOptimize();
+    setCustomBounds(xPos, yPos, width, height);
+    setFocusable(false);
+    setRolloverEnabled(false);
+  }
+
+  /**
+   * 画像付きのボタンを生成する。
+   *
+   * @param text         表示テキスト
+   * @param imageStorage 画像情報
+   * @param xPos         ボタンの位置X (中心指定)
+   * @param yPos         ボタンの位置Y (中心指定)
+   * @param width        ボタンの幅 (ない場合は画像の幅)
+   * @param height       ボタンの高さ (ない場合は画像の高さ)
+   */
+  public CustomButton(String text, ImageStorage imageStorage, int xPos, int yPos, int width, int height) {
+    this.textContent = text;
+    this.originalImage = imageStorage.getImage();
+    super();
+    this.UIScale = 1.0; // デフォルトのUIスケールを設定
+    addChangeListenerToModel();
+    setImage(imageStorage.getImage(), width, height);
+    setCustomBounds(xPos, yPos, width, height);
+    setFocusable(false);
+    setRolloverEnabled(false);
+  }
+
+  public CustomButton(String text, ImageStorage imageStorage, int xPos, int yPos) {
+    int width = imageStorage.getImage().getWidth(null);
+    int height = imageStorage.getImage().getHeight(null);
+    this(text, imageStorage, xPos, yPos, width, height); // ボタンサイズが指定されていない場合は画像のサイズを使用
+  }
+
+  /**
+   * 元のテキストを返す。
+   *
+   * @return テキスト
+   */
+  public String getTextContent() {
+    return textContent;
+  }
+
+  /**
+   * UIの拡大率を設定する。
+   * 
+   * @param scale スケール値
+   */
+  public void setUIScale(double scale) {
+    this.UIScale = scale;
+    // UIスケールに基づいて位置とサイズを再設定
+    int xPos = (int) (getX());
+    int yPos = (int) (getY());
+    int newWidth = (int) (originalWidth * UIScale);
+    int newHeight = (int) (originalHeight * UIScale);
+    setCustomBounds(xPos, yPos, newWidth, newHeight);
+  }
+
+  public double getUIScale() {
+    return this.UIScale;
+  }
+
+  /**
+   * マウス押下・解放時の拡大縮小率を設定する。
+   * 
+   * @param scaleFactor 拡大縮小率 (例: 0.9f は90%)
+   */
+  public void setScaleFactor(float scaleFactor) {
+    this.ScaleFactor = scaleFactor;
+  }
+
+  /**
+   * アニメーションの継続時間を設定する。
+   * 
+   * @param duration 継続時間(ms)
+   */
+  public void setAnimationDuration(int duration) {
+    this.AnimationDuration = duration;
+  }
+
+  /**
+   * 表示位置とサイズを設定し、内部の基準座標を更新する。
+   *
+   * @param x      左上X
+   * @param y      左上Y
+   * @param width  幅
+   * @param height 高さ
+   */
+  public final void setCustomBounds(int x, int y, int width, int height) {
+    setBounds(x, y, width, height);
     this.setPreferredSize(new Dimension(width, height));
     this.originalWidth = width;
     this.originalHeight = height;
@@ -39,25 +156,66 @@ class CustomButton extends JButton {
     this.centerY = y + height / 2;
   }
 
-  private void setBoundsCentered(int width, int height) {
-    int x = centerX - width / 2;
-    int y = centerY - height / 2;
-    super.setBounds(x, y, width, height);
-    setPreferredSize(new Dimension(width, height));
+  /**
+   * レイアウト更新時に位置とサイズを更新する。
+   *
+   * @param x      左上X
+   * @param y      左上Y
+   * @param width  幅
+   * @param height 高さ
+   */
+  public void updateLayout(int x, int y, int width, int height) {
+    setCustomBounds(x, y, width, height);
+    if (originalImage != null) {
+      setImage(originalImage, width, height);
+    }
   }
 
-  public void setImage(Image image, int width, int height) {
+  /**
+   * 中心座標を基準に表示位置とサイズを設定する。
+   *
+   * @param width  幅
+   * @param height 高さ
+   */
+  private void setBoundsCentered(int width, int height) {
+    if (originalImage != null) {
+      setImage(originalImage, width, height);
+    } else {
+      int x = centerX - width / 2;
+      int y = centerY - height / 2;
+      setBounds(x, y, width, height);
+      setPreferredSize(new Dimension(width, height));
+    }
+  }
+
+  @Override
+  public void setBounds(int x, int y, int width, int height) {
+    super.setBounds(x, y, width, height);
+    this.centerX = x + width / 2;
+    this.centerY = y + height / 2;
+  }
+
+  /**
+   * 表示画像とサイズを設定する。
+   *
+   * @param image  画像
+   * @param width  幅
+   * @param height 高さ
+   */
+  public final void setImage(Image image, int width, int height) {
     // 通常のボタンの外観を非表示にする
     this.setContentAreaFilled(false);
     this.setBorderPainted(false);
+    this.setText("");
     // 通常時の画像を設定
     ImageIcon icon = new ImageIcon(image.getScaledInstance(width, height, Image.SCALE_SMOOTH));
     this.setIcon(icon);
+    this.setHideActionText(true);
     // 押下時の画像を通常時の画像の少し暗くしたバージョンに設定
     ImageIcon pressedIcon = new ImageIcon(darkenImage(icon.getImage(), width, height, 0.7f));
     this.setPressedIcon(pressedIcon);
     // フォーカス時の画像を通常時の画像の少し明るくしたバージョンに設定
-    ImageIcon rolloverIcon = new ImageIcon(brightenImage(icon.getImage(), width, height, 1.3f));
+    ImageIcon rolloverIcon = new ImageIcon(brightenImage(icon.getImage(), width, height, 1.15f));
     this.setRolloverIcon(rolloverIcon);
   }
 
@@ -102,21 +260,31 @@ class CustomButton extends JButton {
     // 押下時：縮小アニメーション
     animationThread = new Thread(() -> {
       long startTime = System.currentTimeMillis();
-      int targetWidth = (int) (originalWidth * SCALE_FACTOR);
-      int targetHeight = (int) (originalHeight * SCALE_FACTOR);
+      double startProgress = this.animationProgress;
+      int targetWidth = (int) (originalWidth * ScaleFactor);
+      int targetHeight = (int) (originalHeight * ScaleFactor);
 
-      while (System.currentTimeMillis() - startTime < ANIMATION_DURATION) {
+      while (this.animationProgress < 1.0) {
         if (Thread.currentThread().isInterrupted()) {
           break;
         }
 
         long elapsed = System.currentTimeMillis() - startTime;
-        float progress = (float) elapsed / ANIMATION_DURATION;
+        this.animationProgress = (double) elapsed / AnimationDuration + startProgress;
 
-        int currentWidth = (int) (originalWidth + (targetWidth - originalWidth) * progress);
-        int currentHeight = (int) (originalHeight + (targetHeight - originalHeight) * progress);
+        int currentWidth = (int) (originalWidth + (targetWidth - originalWidth) * this.animationProgress);
+        if (currentWidth < 1) {
+          System.out.println("currentWidth is negative: " + currentWidth + ", originalWidth: " + originalWidth
+              + ", targetWidth: " + targetWidth + ", animationProgress: " + this.animationProgress);
+        }
+        int currentHeight = (int) (originalHeight + (targetHeight - originalHeight) * this.animationProgress);
 
         CustomButton.this.setBoundsCentered(currentWidth, currentHeight);
+        // 画像のサイズを更新
+        if (CustomButton.this.originalImage != null) {
+          CustomButton.this.setImage(CustomButton.this.originalImage, currentWidth, currentHeight);
+        }
+
         CustomButton.this.revalidate();
         CustomButton.this.repaint();
 
@@ -140,22 +308,26 @@ class CustomButton extends JButton {
     // 解放時：拡大アニメーション
     animationThread = new Thread(() -> {
       long startTime = System.currentTimeMillis();
-      Dimension currentSize = CustomButton.this.getPreferredSize();
-      int startWidth = currentSize.width;
-      int startHeight = currentSize.height;
-
-      while (System.currentTimeMillis() - startTime < ANIMATION_DURATION) {
+      double startProgress = this.animationProgress;
+      int targetWidth = (int) (originalWidth * ScaleFactor);
+      int targetHeight = (int) (originalHeight * ScaleFactor);
+      while (0 < this.animationProgress) {
         if (Thread.currentThread().isInterrupted()) {
           break;
         }
 
         long elapsed = System.currentTimeMillis() - startTime;
-        float progress = (float) elapsed / ANIMATION_DURATION;
+        this.animationProgress = -(double) elapsed / AnimationDuration + startProgress;
 
-        int currentWidth = (int) (startWidth + (originalWidth - startWidth) * progress);
-        int currentHeight = (int) (startHeight + (originalHeight - startHeight) * progress);
+        int currentWidth = (int) (originalWidth + (targetWidth - originalWidth) * this.animationProgress);
+        int currentHeight = (int) (originalHeight + (targetHeight - originalHeight) * this.animationProgress);
 
         CustomButton.this.setBoundsCentered(currentWidth, currentHeight);
+        // 画像のサイズを更新
+        if (CustomButton.this.originalImage != null) {
+          CustomButton.this.setImage(CustomButton.this.originalImage, currentWidth, currentHeight);
+        }
+
         CustomButton.this.revalidate();
         CustomButton.this.repaint();
 
@@ -166,16 +338,12 @@ class CustomButton extends JButton {
           break;
         }
       }
-
-      // 最終的に元のサイズに戻す
-      CustomButton.this.setSize(new Dimension(originalWidth,
-          originalHeight));
-      CustomButton.this.revalidate();
-      CustomButton.this.repaint();
+      // this.animationProgress = 0.0;
     });
     animationThread.start();
   }
 
+  /** {@inheritDoc} */
   @Override
   public void removeNotify() { // コンポーネントが破棄されるときにアニメーションを停止
     if (animationThread != null && animationThread.isAlive()) {

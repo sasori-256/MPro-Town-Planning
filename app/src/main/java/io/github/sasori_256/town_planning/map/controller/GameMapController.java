@@ -16,37 +16,101 @@ import java.util.concurrent.locks.ReadWriteLock;
 
 import javax.swing.SwingUtilities;
 
+import io.github.sasori_256.town_planning.common.event.EventBus;
+import io.github.sasori_256.town_planning.common.event.events.CancelBuildEvent;
+import io.github.sasori_256.town_planning.common.event.events.SoulHarvestedEvent;
+import io.github.sasori_256.town_planning.common.event.events.TemporaryBuildEvent;
 import io.github.sasori_256.town_planning.entity.Camera;
 import io.github.sasori_256.town_planning.entity.model.BaseGameEntity;
 import io.github.sasori_256.town_planning.map.controller.handler.*;
 
+/**
+ * マップ操作に関する入力イベントを扱うコントローラ。
+ */
 public class GameMapController implements MouseListener, MouseMotionListener, KeyListener, MouseWheelListener {
   private Camera camera;
+  private final EventBus eventBus = EventBus.getInstance();
   private final ReadWriteLock stateLock;
   private BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> actionOnClick;
+  private BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> actionOnMove;
   private Function<Point2D.Double, ? extends BaseGameEntity> selectedEntityGenerator;
   private Point previousMiddleMousePos;
+  private boolean isContinue = false;
 
+  /**
+   * マップコントローラを生成する。
+   *
+   * @param camera    カメラ
+   * @param stateLock 状態ロック
+   */
   public GameMapController(Camera camera, ReadWriteLock stateLock) {
     this.camera = camera;
     this.stateLock = stateLock;
     this.actionOnClick = new ClickGameMapHandler();
+    this.actionOnMove = new MoveGameMapHandler();
     this.selectedEntityGenerator = (point) -> null;
+
+    eventBus.subscribe(CancelBuildEvent.class, event -> {
+      this.selectedEntityGenerator = (point) -> null;
+      this.actionOnClick = new ClickGameMapHandler();
+      this.actionOnMove = new MoveGameMapHandler();
+    });
+    eventBus.subscribe(TemporaryBuildEvent.class, event -> {
+      this.actionOnClick = new ClickGameMapHandler();
+      this.actionOnMove = new MoveGameMapHandler();
+    });
   }
 
   /**
    * GameMap上でのクリック時の動作を設定する
-   * 
+   *
    * @param action
    */
   public void setActionOnClick(BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> action) {
     this.actionOnClick = action;
   }
 
+  /**
+   * GameMap上での移動時の動作を設定する
+   * 
+   * @param action
+   */
+  public void setActionOnMove(BiConsumer<Point2D.Double, Function<Point2D.Double, ? extends BaseGameEntity>> action) {
+    this.actionOnMove = action;
+  }
+
+  /**
+   * 選択中のエンティティ生成関数を設定する。
+   *
+   * @param entityGenerator 生成関数
+   */
   public void setSelectedEntityGenerator(Function<Point2D.Double, ? extends BaseGameEntity> entityGenerator) {
     this.selectedEntityGenerator = entityGenerator;
   }
 
+  /**
+   * 継続モードを設定する。
+   *
+   * @param isContinue 継続モードかどうか
+   */
+  public void setIsContinue(boolean isContinue) {
+    this.isContinue = isContinue;
+  }
+
+  /**
+   * 継続モードかどうかを返す。
+   *
+   * @return 継続モードかどうか
+   */
+  public boolean getIsContinue() {
+    return this.isContinue;
+  }
+
+  /**
+   * クリック時の処理を行う。
+   *
+   * @param e マウスイベント
+   */
   @Override
   public void mouseClicked(MouseEvent e) {
     if (SwingUtilities.isLeftMouseButton(e)) {
@@ -61,6 +125,11 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
     }
   }
 
+  /**
+   * マウス押下時の処理を行う。
+   *
+   * @param e マウスイベント
+   */
   @Override
   public void mousePressed(MouseEvent e) {
     if (SwingUtilities.isMiddleMouseButton(e)) {
@@ -68,6 +137,11 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
     }
   }
 
+  /**
+   * マウス解放時の処理を行う。
+   *
+   * @param e マウスイベント
+   */
   @Override
   public void mouseReleased(MouseEvent e) {
     if (SwingUtilities.isMiddleMouseButton(e)) {
@@ -75,6 +149,11 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
     }
   }
 
+  /**
+   * マウスドラッグ時の処理を行う。
+   *
+   * @param e マウスイベント
+   */
   @Override
   public void mouseDragged(MouseEvent e) {
     if (SwingUtilities.isMiddleMouseButton(e) && previousMiddleMousePos != null) {
@@ -86,6 +165,11 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
     }
   }
 
+  /**
+   * マウスホイール操作時の処理を行う。
+   *
+   * @param e マウスイベント
+   */
   @Override
   public void mouseWheelMoved(MouseWheelEvent e) {
     int notches = e.getWheelRotation();
@@ -96,18 +180,40 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
     }
   }
 
+  /**
+   * マウスが領域に入った際の処理を行う。
+   *
+   * @param e マウスイベント
+   */
   @Override
   public void mouseEntered(MouseEvent e) {
   }
 
+  /**
+   * マウスが領域から出た際の処理を行う。
+   *
+   * @param e マウスイベント
+   */
   @Override
   public void mouseExited(MouseEvent e) {
   }
 
+  /**
+   * マウス移動時の処理を行う。
+   *
+   * @param e マウスイベント
+   */
   @Override
   public void mouseMoved(MouseEvent e) {
+    Point2D.Double isoPoint = camera.screenToIso(new Point2D.Double(e.getX(), e.getY()));
+    actionOnMove.accept(isoPoint, selectedEntityGenerator);
   }
 
+  /**
+   * キー押下時の処理を行う。
+   *
+   * @param e キーイベント
+   */
   @Override
   public void keyPressed(KeyEvent e) {
     int k = e.getKeyCode();
@@ -124,15 +230,39 @@ public class GameMapController implements MouseListener, MouseMotionListener, Ke
       case KeyEvent.VK_D:
         camera.moveRight();
         break;
+      case KeyEvent.VK_UP:
+        eventBus.publish(new SoulHarvestedEvent(500));
+        break;
+      case KeyEvent.VK_SHIFT:
+        this.setIsContinue(true);
+        break;
       default:
         break;
     }
   }
 
+  /**
+   * キー解放時の処理を行う。
+   *
+   * @param e キーイベント
+   */
   @Override
   public void keyReleased(KeyEvent e) {
+    int k = e.getKeyCode();
+    switch (k) {
+      case KeyEvent.VK_SHIFT:
+        this.setIsContinue(false);
+        break;
+      default:
+        break;
+    }
   }
 
+  /**
+   * キー入力時の処理を行う。
+   *
+   * @param e キーイベント
+   */
   @Override
   public void keyTyped(KeyEvent e) {
   }

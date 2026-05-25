@@ -1,10 +1,11 @@
 package io.github.sasori_256.town_planning.entity.model;
 
-import io.github.sasori_256.town_planning.common.event.EventBus;
 import io.github.sasori_256.town_planning.entity.building.Building;
 import io.github.sasori_256.town_planning.entity.disaster.Disaster;
+import io.github.sasori_256.town_planning.entity.disaster.DisasterType;
 import io.github.sasori_256.town_planning.entity.resident.Resident;
 import io.github.sasori_256.town_planning.map.model.GameMap;
+import java.awt.geom.Point2D;
 
 // Streamとは
 // Streamは、Java 8で導入されたjava.util.streamパッケージに属するクラスであり、
@@ -25,22 +26,114 @@ import java.util.stream.Stream;
  * DI (Dependency Injection) のような役割を果たす。
  */
 public interface GameContext {
-  EventBus getEventBus();
 
+  /**
+   * マップを返す。
+   *
+   * @return マップ
+   */
   GameMap getMap();
 
+  /**
+   * 建物エンティティのストリームを返す。
+   *
+   * @return 建物エンティティのストリーム
+   */
   Stream<Building> getBuildingEntities();
 
+  /**
+   * 住民エンティティのストリームを返す。
+   *
+   * @return 住民エンティティのストリーム
+   */
   Stream<Resident> getResidentEntities();
 
+  /**
+   * 災害エンティティのストリームを返す。
+   *
+   * @return 災害エンティティのストリーム
+   */
   Stream<Disaster> getDisasterEntities();
 
+  /**
+   * 前フレームからの経過時間(秒)を返す。
+   *
+   * @return 経過時間(秒)
+   */
   double getDeltaTime(); // 前フレームからの経過時間（秒）
+
+  /**
+   * 現在のゲーム内日数を返す。
+   */
+  int getDay();
+
+  /**
+   * 1日の経過秒を返す。
+   */
+  double getTimeOfDaySeconds();
+
+  /**
+   * 1日の経過率(0.0-1.0)を返す。
+   */
+  double getTimeOfDayNormalized();
+
+  /**
+   * 1日の長さ(秒)を返す。
+   */
+  double getDayLengthSeconds();
+
+  /**
+   * 現在の魂所持量を返す。
+   *
+   * @return 魂所持量
+   */
+  int getSoul();
+
+  /**
+   * 総住民数(生存者のみ)を返す。
+   *
+   * @return 総住民数
+   */
+  int getPopulationTotal();
+
+  /**
+   * 生存住民数を返す。
+   *
+   * @return 生存住民数
+   */
+  int getPopulationAlive();
+
+  /**
+   * 死亡住民数を返す。
+   *
+   * @return 死亡住民数
+   */
+  int getPopulationDead();
 
   // Entity Lifecycle
 
+  /**
+   * エンティティを生成してゲームに追加する。
+   *
+   * @param entity 追加するエンティティ
+   * @param <T>    エンティティ型
+   */
   <T extends BaseGameEntity> void spawnEntity(T entity);
 
+  /**
+   * エンティティをゲームから削除する。
+   *
+   * @param entity 削除するエンティティ
+   * @param <T>    エンティティ型
+   */
   <T extends BaseGameEntity> void removeEntity(T entity);
+
+  /**
+   * 天災の影響をゲーム世界に適用する。
+   *
+   * @param center 着弾位置
+   * @param type   天災種別
+   */
+  void applyDisasterImpact(Point2D.Double center, DisasterType type);
 
 }

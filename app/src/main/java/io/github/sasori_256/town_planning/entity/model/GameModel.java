@@ -2,7 +2,7 @@ package io.github.sasori_256.town_planning.entity.model;
 
 import java.awt.geom.Point2D;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Random;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -10,133 +10,207 @@ import java.util.function.DoubleConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import io.github.sasori_256.town_planning.common.core.GameConfig;
 import io.github.sasori_256.town_planning.common.core.GameLoop;
-import io.github.sasori_256.town_planning.common.core.Updatable;
+import io.github.sasori_256.town_planning.common.core.SimulationStep;
 import io.github.sasori_256.town_planning.common.event.EventBus;
-import io.github.sasori_256.town_planning.common.event.events.DayPassedEvent;
-import io.github.sasori_256.town_planning.common.event.events.DisasterOccurredEvent;
-import io.github.sasori_256.town_planning.common.event.events.MapUpdatedEvent;
-import io.github.sasori_256.town_planning.common.event.events.ResidentBornEvent;
-import io.github.sasori_256.town_planning.common.event.events.SoulChangedEvent;
-import io.github.sasori_256.town_planning.common.event.events.SoulHarvestedEvent;
+import io.github.sasori_256.town_planning.common.event.events.EntitySpawnFailureReason;
+import io.github.sasori_256.town_planning.common.event.events.ResidentDiedEvent;
 import io.github.sasori_256.town_planning.entity.building.Building;
 import io.github.sasori_256.town_planning.entity.building.BuildingType;
 import io.github.sasori_256.town_planning.entity.disaster.Disaster;
+import io.github.sasori_256.town_planning.entity.disaster.DisasterType;
+import io.github.sasori_256.town_planning.entity.model.manager.BuildingManager;
+import io.github.sasori_256.town_planning.entity.model.manager.EntityManager;
+import io.github.sasori_256.town_planning.entity.model.manager.PopulationManager;
+import io.github.sasori_256.town_planning.entity.model.manager.ResidentPanicManager;
+import io.github.sasori_256.town_planning.entity.model.manager.RelocationManager;
+import io.github.sasori_256.town_planning.entity.model.manager.SoulManager;
+import io.github.sasori_256.town_planning.entity.model.manager.TimeManager;
 import io.github.sasori_256.town_planning.entity.resident.Resident;
 import io.github.sasori_256.town_planning.entity.resident.ResidentState;
+import io.github.sasori_256.town_planning.entity.resident.ResidentType;
+import io.github.sasori_256.town_planning.map.model.BuildingPreview;
 import io.github.sasori_256.town_planning.map.model.GameMap;
+import io.github.sasori_256.town_planning.map.model.TerrainType;
 
 /**
  * ゲームの環境情報を管理するモデルクラス。
  * GameContextの実装であり、GameLoopのホストでもある。
- * 
- * <h2>Thread Safety and Locking</h2>
- * This class uses a ReadWriteLock to ensure thread-safe access to game state.
- * To prevent nested locking issues and potential deadlocks, entity lifecycle
- * operations
- * (spawnEntity/removeEntity) are automatically deferred when called during the
- * update cycle.
- * 
- * <p>
- * During the update cycle:
- * <ul>
- * <li>Calls to spawnEntity() are queued and processed after all entity updates
- * complete</li>
- * <li>Calls to removeEntity() are queued and processed after all entity updates
- * complete</li>
- * <li>This prevents entity update methods from attempting to acquire locks that
- * are already held</li>
- * </ul>
- * 
- * <p>
- * This design allows entity update strategies to safely call GameContext
- * methods like
- * removeEntity() without causing deadlocks or nested lock acquisitions.
+ *
+ * <h2>スレッド安全性とロック</h2>
+ * 本クラスはReadWriteLockで状態アクセスを保護する。
+ * ネストしたロック取得やデッドロックを避けるため、更新サイクル中に呼ばれた
+ * エンティティの生成・削除はEntityManagerでキューに積み、更新後にまとめて処理する。
  */
-public class GameModel implements GameContext, Updatable {
-  private final EventBus eventBus;
+public class GameModel implements GameContext, SimulationStep {
+  /** 初期魂所持量。 */
+  private static final int INITIAL_SOUL = GameConfig.getSoulInitialAmount();
+  /** アニメーション進行の固定ステップ(秒)。 */
+  private static final double ANIMATION_STEP = GameConfig.getAnimationStepSeconds();
+
+  /** イベント通知に使用するイベントバス。 */
+  private final EventBus eventBus = EventBus.getInstance();
+  /** マップ状態の本体。 */
   private final GameMap gameMap;
+  /** 共有状態を保護する読み書きロック。 */
   private final ReadWriteLock stateLock = new ReentrantReadWriteLock();
-  private GameLoop gameLoop; // 現在は未使用だが、startGameLoopで使われることを想定
+  /** 建設プレビュー情報。 */
+  private final BuildingPreview buildingPreview;
+  /** ゲームループの参照。startGameLoop() で初期化される。 */
+  private GameLoop gameLoop;
 
-  // スレッドセーフなリストを使用
-  private final List<Building> buildingEntities = new CopyOnWriteArrayList<>();
-  private final List<Resident> residentEntities = new CopyOnWriteArrayList<>();
-  private final List<Disaster> disasterEntities = new CopyOnWriteArrayList<>();
+  /** エンティティ管理。 */
+  private final EntityManager entityManager;
+  /** 魂管理。 */
+  private final SoulManager soulManager;
+  /** 時間管理。 */
+  private final TimeManager timeManager;
+  /** 引っ越し管理。 */
+  private final RelocationManager relocationManager;
+  /** 住民数管理。 */
+  private final PopulationManager populationManager;
+  /** 建物管理。 */
+  private final BuildingManager buildingManager;
+  /** 住民のパニック管理。 */
+  private final ResidentPanicManager residentPanicManager;
 
-  private int souls = 100;
-  private int day = 1;
-  private double dayTimer = 0;
-  private static final double DAY_LENGTH = 10.0; // 10秒で1日
-  // UPDATE_STEP is 1/30s and ANIMATION_STEP is 1/6s, so animations advance every
-  // 5 update steps.
-  private static final double UPDATE_STEP = 1.0 / 30.0;
-  private static final double ANIMATION_STEP = 1.0 / 6.0;
+  /** アニメーション進行用の経過時間バッファ。 */
   private double animationAccumulator = 0.0;
-
+  /** 前フレームからの経過秒。 */
   private double lastDeltaTime = 0;
 
-  // Thread-local flag to track if we're currently in an update cycle
-  private final ThreadLocal<Boolean> inUpdateCycle = ThreadLocal.withInitial(() -> false);
+  /**
+   * ゲームモデルを生成する。
+   *
+   * @param mapWidth  マップの横幅
+   * @param mapHeight マップの縦幅
+   */
+  public GameModel(int mapWidth, int mapHeight, long seed) {
+    this.gameMap = new GameMap(mapWidth, mapHeight, seed);
+    this.buildingPreview = new BuildingPreview(stateLock, gameMap);
+    this.entityManager = new EntityManager(stateLock);
+    this.soulManager = new SoulManager(stateLock, entityManager, INITIAL_SOUL);
+    this.timeManager = new TimeManager(stateLock);
+    this.relocationManager = new RelocationManager(stateLock, entityManager);
+    this.populationManager = new PopulationManager(stateLock, entityManager);
+    this.buildingManager = new BuildingManager(gameMap, stateLock, soulManager,
+        entityManager);
+    this.residentPanicManager = new ResidentPanicManager(stateLock, entityManager);
 
-  // Lists to defer entity lifecycle operations during update to prevent nested
-  // locking
-  private final List<BaseGameEntity> entitiesToSpawn = new CopyOnWriteArrayList<>();
-  private final List<BaseGameEntity> entitiesToRemove = new CopyOnWriteArrayList<>();
-
-  public GameModel(int mapWidth, int mapHeight, EventBus eventBus) {
-    this.eventBus = eventBus;
-
-    // マップサイズ 100x100
-    this.gameMap = new GameMap(mapWidth, mapHeight, eventBus);
-    // Event Subscriptions
-    // SoulHarvestedEventを購読
-    this.eventBus.subscribe(SoulHarvestedEvent.class, event -> {
-      addSouls(event.amount());
-    });
-
-    // GameLoopはstartGameLoopでインスタンス化されるためここではnull
     this.gameLoop = null;
+
+    GameConfig.preload();
+    GenerateTownHall(seed); // マップ中央付近に町の中心を生成
   }
 
+  /**
+   * ゲームループを起動する。
+   *
+   * @param renderCallback 描画コールバック
+   */
   public void startGameLoop(Runnable renderCallback) {
-    DoubleConsumer updateCallback = dt -> update(this, dt);
-    // GameLoopのインスタンスは新しいものが作られるため、既存のgameLoopフィールドとの整合性は要検討
+    DoubleConsumer updateCallback = this::step;
     this.gameLoop = new GameLoop(updateCallback, renderCallback);
     this.gameLoop.start();
   }
 
   // --- GameContext Implementation ---
 
-  @Override
-  public EventBus getEventBus() {
-    return eventBus;
-  }
-
+  /** {@inheritDoc} */
   @Override
   public GameMap getMap() {
     return gameMap;
   }
 
-  // GameContextの定義に合わせて実装
+  /** {@inheritDoc} */
   @Override
   public Stream<Building> getBuildingEntities() {
-    return buildingEntities.stream();
+    return entityManager.getBuildingEntities();
   }
 
+  /** {@inheritDoc} */
   @Override
   public Stream<Resident> getResidentEntities() {
-    return residentEntities.stream();
+    return entityManager.getResidentEntities();
   }
 
+  /** {@inheritDoc} */
   @Override
   public Stream<Disaster> getDisasterEntities() {
-    return disasterEntities.stream();
+    return entityManager.getDisasterEntities();
   }
 
+  /** {@inheritDoc} */
   @Override
   public double getDeltaTime() {
     return withReadLock(() -> lastDeltaTime);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int getDay() {
+    return timeManager.getDay();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getTimeOfDaySeconds() {
+    return timeManager.getTimeOfDaySeconds();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getTimeOfDayNormalized() {
+    return timeManager.getTimeOfDayNormalized();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getDayLengthSeconds() {
+    return timeManager.getDayLengthSeconds();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int getSoul() {
+    return soulManager.getSoul();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int getPopulationTotal() {
+    return populationManager.getTotalPopulation();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int getPopulationAlive() {
+    return populationManager.getAlivePopulation();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int getPopulationDead() {
+    return populationManager.getDeadPopulation();
+  }
+
+  /**
+   * 最大生存住民数を返す。
+   *
+   * @return 最大生存住民数
+   */
+  public int getPopulationMax() {
+    return populationManager.getMaxPopulation();
+  }
+
+  /**
+   * 累計死亡住民数を返す。
+   *
+   * @return 累計死亡住民数
+   */
+  public int getPopulationTotalDeaths() {
+    return populationManager.getTotalDeaths();
   }
 
   /**
@@ -157,260 +231,214 @@ public class GameModel implements GameContext, Updatable {
    */
   @Override
   public <T extends BaseGameEntity> void spawnEntity(T entity) {
-    // If called during an update cycle, defer the operation to avoid nested locking
-    if (inUpdateCycle.get()) {
-      entitiesToSpawn.add(entity);
-      return;
-    }
-
-    if (entity instanceof Resident) {
-      addResidentEntity((Resident) entity);
-    } else if (entity instanceof Building) {
-      addBuildingEntity((Building) entity);
-    } else if (entity instanceof Disaster) {
-      addDisasterEntity((Disaster) entity);
-    }
+    entityManager.spawnEntity(entity, this);
   }
 
-  /**
-   * Internal method to spawn an entity without acquiring locks.
-   * Should only be called when a write lock is already held.
-   */
-  private <T extends BaseGameEntity> void spawnEntityInternal(T entity) {
-    if (entity instanceof Resident) {
-      addResidentEntityInternal((Resident) entity);
-    } else if (entity instanceof Building) {
-      addBuildingEntityInternal((Building) entity);
-    } else if (entity instanceof Disaster) {
-      addDisasterEntityInternal((Disaster) entity);
-    }
-  }
-
-  /**
-   * Removes an entity from the game world.
-   * 
-   * <p>
-   * If called during an update cycle (i.e., from within an entity's update
-   * method),
-   * the remove operation is automatically deferred and will be processed after
-   * all
-   * entity updates complete. This prevents nested lock acquisition and potential
-   * deadlocks.
-   * 
-   * <p>
-   * If called outside an update cycle, the entity is removed immediately.
-   * 
-   * <p>
-   * The entity's onRemoved() lifecycle method will be called before removal.
-   * 
-   * @param entity The entity to remove
-   * @param <T>    The entity type
-   */
+  /** {@inheritDoc} */
   @Override
   public <T extends BaseGameEntity> void removeEntity(T entity) {
-    if (entity == null) {
+    entityManager.removeEntity(entity, this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void applyDisasterImpact(Point2D.Double center, DisasterType type) {
+    if (center == null || type == null) {
       return;
     }
-
-    // If called during an update cycle, defer the operation to avoid nested locking
-    if (inUpdateCycle.get()) {
-      entitiesToRemove.add(entity);
-      return;
-    }
-
+    double damageRadius = type.getRadius();
+    int damage = type.getDamage();
+    double panicRadius = damageRadius + GameConfig.getDisasterPanicRadiusOffsetTiles();
     withWriteLock(() -> {
-      // ライフサイクルメソッドの呼び出し
-      entity.onRemoved();
-
-      if (entity instanceof Resident) {
-        residentEntities.remove(entity);
-      } else if (entity instanceof Building) {
-        buildingEntities.remove(entity);
-      } else if (entity instanceof Disaster) {
-        disasterEntities.remove(entity);
-      }
+      damageResidentsWithin(center, damageRadius, damage);
+      List<Building> destroyed = buildingManager.damageBuildings(this, center, damageRadius, damage);
+      residentPanicManager.panicResidentsByDestroyedBuildings(this, destroyed);
+      residentPanicManager.panicResidentsInRing(this, center, damageRadius, panicRadius);
     });
+  }
+
+  private void damageResidentsWithin(Point2D.Double center, double radius, double amount) {
+    if (center == null || radius <= 0.0) {
+      return;
+    }
+    double radiusSq = radius * radius;
+    for (Resident resident : entityManager.snapshotResidents()) {
+      if (resident == null) {
+        continue;
+      }
+      if (resident.getState() == ResidentState.DEAD || resident.getState() == ResidentState.AT_HOME) {
+        continue;
+      }
+      if (resident.getPosition().distanceSq(center) <= radiusSq) {
+        resident.damage(amount);
+      }
+    }
   }
 
   // --- Game Logic API ---
 
+  /**
+   * 住民エンティティを追加する。
+   *
+   * @param entity 住民
+   */
   public void addResidentEntity(Resident entity) {
-    withWriteLock(() -> {
-      addResidentEntityInternal(entity);
-    });
+    spawnEntity(entity);
   }
 
   /**
-   * Internal method to add a resident entity without acquiring locks.
-   * Should only be called when a write lock is already held.
+   * 建物エンティティを追加する。
+   *
+   * @param entity 建物
    */
-  private void addResidentEntityInternal(Resident entity) {
-    residentEntities.add(entity);
-    eventBus.publish(new ResidentBornEvent(entity.getPosition()));
-  }
-
   public void addBuildingEntity(Building entity) {
-    withWriteLock(() -> {
-      addBuildingEntityInternal(entity);
-    });
+    spawnEntity(entity);
   }
 
   /**
-   * Internal method to add a building entity without acquiring locks.
-   * Should only be called when a write lock is already held.
+   * 災害エンティティを追加する。
+   *
+   * @param entity 災害
    */
-  private void addBuildingEntityInternal(Building entity) {
-    buildingEntities.add(entity);
-    eventBus.publish(new MapUpdatedEvent(entity.getPosition()));
-  }
-
   public void addDisasterEntity(Disaster entity) {
-    withWriteLock(() -> {
-      addDisasterEntityInternal(entity);
-    });
+    spawnEntity(entity);
   }
 
   /**
-   * Internal method to add a disaster entity without acquiring locks.
-   * Should only be called when a write lock is already held.
+   * 建物エンティティを削除する。
+   *
+   * @param entity 建物
    */
-  private void addDisasterEntityInternal(Disaster entity) {
-    disasterEntities.add(entity);
-    eventBus.publish(new DisasterOccurredEvent(entity.getType()));
-  }
-
   public void removeBuildingEntity(Building entity) {
-    withWriteLock(() -> {
-      gameMap.removeBuilding(entity.getPosition());
-      eventBus.publish(new MapUpdatedEvent(entity.getPosition()));
-    });
-  }
-
-  public int getSouls() {
-    return withReadLock(() -> souls);
-  }
-
-  public void addSouls(int amount) {
-    withWriteLock(() -> {
-      addSoulsInternal(amount);
-    });
+    buildingManager.removeBuildingEntity(entity);
   }
 
   /**
-   * Internal method to add souls without acquiring locks.
-   * Should only be called when a write lock is already held.
+   * 魂を加算する。
+   *
+   * @param amount 追加量
    */
-  private void addSoulsInternal(int amount) {
-    this.souls += amount;
-    eventBus.publish(new SoulChangedEvent(souls));
+  public void addSoul(int amount) {
+    soulManager.addSoul(amount);
+  }
+
+  /**
+   * 魂所持量を設定する。
+   *
+   * @param soul 魂所持量
+   */
+  public void setSoul(int soul) {
+    soulManager.setSoul(soul);
   }
 
   /**
    * 指定座標付近の死体から魂を刈り取る。
+   *
+   * @param pos 対象位置
+   * @return 収穫できた場合はtrue
    */
-  public boolean harvestSoulAt(java.awt.geom.Point2D pos) {
-    double harvestRadius = 1.0;
-
-    java.util.Optional<Resident> target = residentEntities.stream()
-        .filter(e -> {
-          ResidentState state = e.getState();
-          return state == ResidentState.DEAD;
-        })
-        .filter(e -> e.getPosition().distance(pos) <= harvestRadius)
-        .findFirst();
-
-    if (target.isPresent()) {
-      Resident deadResident = target.get();
-
-      int soulAmount = 10;
-      int faith = deadResident.getFaith();
-      soulAmount += faith / 5;
-
-      // 魂回収イベント発行
-      eventBus.publish(new SoulHarvestedEvent(soulAmount));
-      removeEntity(deadResident);
-      return true;
-    }
-    return false;
+  public boolean harvestSoulAt(Point2D pos) {
+    return soulManager.harvestSoulAt(this, pos);
   }
 
+  /**
+   * 建物を建設する。
+   *
+   * @param pos  設置位置
+   * @param type 建物種別
+   * @return 建設できた場合はtrue
+   */
   public boolean constructBuilding(Point2D.Double pos, BuildingType type) {
-    return withWriteLock(() -> {
-      if (souls < type.getCost()) {
-        return false;
-      }
+    boolean constructed = buildingManager.constructBuilding(this, pos, type);
+    if (constructed) {
+      // 建設直後に住民の割り当てを再計算し、空き家への移動を促す。
+      relocationManager.rebalanceResidents();
+    }
+    return constructed;
+  }
 
-      if (!gameMap.isValidPosition(pos) || !gameMap.getCell(pos).canBuild()) {
-        return false;
-      }
-
-      addSoulsInternal(-type.getCost());
-
-      Building building = new Building(pos, type);
-
-      if (gameMap.placeBuilding(pos, building)) {
-        spawnEntityInternal(building);
-        return true;
-      } else {
-        addSoulsInternal(type.getCost());
-        return false;
-      }
-    });
+  /**
+   * 建物の建設可否を判定する。
+   *
+   * @param pos  設置位置
+   * @param type 建物種別
+   * @return 問題があれば失敗理由、問題なければnull
+   */
+  public EntitySpawnFailureReason validateConstruction(Point2D.Double pos, BuildingType type) {
+    return buildingManager.validateConstruction(pos, type);
   }
 
   // getters / setters
-  public int getDay() {
-    return withReadLock(() -> day);
-  }
-
+  /**
+   * マップを返す。
+   *
+   * @return マップ
+   */
   public GameMap getGameMap() {
     return gameMap;
   }
 
+  /**
+   * 状態ロックを返す。
+   *
+   * @return 状態ロック
+   */
   public ReadWriteLock getStateLock() {
     return stateLock;
   }
 
+  /**
+   * ゲームループを返す。
+   *
+   * @return ゲームループ
+   */
   public GameLoop getGameLoop() {
     return gameLoop;
   } // 現状、startGameLoopで新しいループが作られるので、このgetterの用途は不明
 
-  public void setSouls(int souls) {
-    withWriteLock(() -> {
-      this.souls = souls;
-    });
+  /**
+   * 建設プレビュー情報を返す。
+   *
+   * @return 建設プレビュー情報
+   */
+  public BuildingPreview getBuildingPreview() {
+    return buildingPreview;
   }
 
+  /**
+   * 日数を設定する。
+   *
+   * @param day 日数
+   */
   public void setDay(int day) {
-    withWriteLock(() -> {
-      this.day = day;
-    });
+    timeManager.setDay(day);
   }
 
-  public double getDayTimer() {
-    return withReadLock(() -> dayTimer);
-  }
-
-  public void setDayTimer(double dayTimer) {
-    withWriteLock(() -> {
-      this.dayTimer = dayTimer;
-    });
-  }
-
-  public static double getDayLength() {
-    return DAY_LENGTH;
-  }
-
+  /**
+   * 直近のdelta timeを返す。
+   *
+   * @return delta time
+   */
   public double getLastDeltaTime() {
     return withReadLock(() -> lastDeltaTime);
   }
 
+  /**
+   * 直近のdelta timeを設定する。
+   *
+   * @param lastDeltaTime delta time
+   */
   public void setLastDeltaTime(double lastDeltaTime) {
     withWriteLock(() -> {
       this.lastDeltaTime = lastDeltaTime;
     });
   }
 
+  /**
+   * 読み込みロック内で引数なし返り値ありの関数を実行する。
+   *
+   * @param supplier 取得処理
+   */
   private <T> T withReadLock(Supplier<T> supplier) {
     Lock readLock = stateLock.readLock();
     readLock.lock();
@@ -421,6 +449,11 @@ public class GameModel implements GameContext, Updatable {
     }
   }
 
+  /**
+   * 書き込みロック内でrun関数を実行する。
+   *
+   * @param action 実行処理
+   */
   private void withWriteLock(Runnable action) {
     withWriteLock(() -> {
       action.run();
@@ -428,6 +461,11 @@ public class GameModel implements GameContext, Updatable {
     });
   }
 
+  /**
+   * 書き込みロック内で引数なし返り値ありの関数を実行する。
+   *
+   * @param supplier 状態更新処理
+   */
   private <T> T withWriteLock(Supplier<T> supplier) {
     Lock writeLock = stateLock.writeLock();
     writeLock.lock();
@@ -438,117 +476,108 @@ public class GameModel implements GameContext, Updatable {
     }
   }
 
+  /**
+   * 現在ステップのゲーム状態を更新する。
+   *
+   * @param dt 前回からの経過秒
+   */
   @Override
-  public void update(GameContext context) {
-    update(context, UPDATE_STEP);
+  public void step(double dt) {
+    stepInternal(this, dt);
   }
 
   /**
-   * Updates the game state for the current frame.
-   * 
-   * <p>
-   * This method acquires a write lock and updates all entities. To prevent nested
-   * locking issues, any calls to spawnEntity() or removeEntity() made during
-   * entity
-   * updates are automatically deferred and processed after all updates complete.
-   * 
-   * <p>
-   * The update process:
-   * <ol>
-   * <li>Acquire write lock</li>
-   * <li>Update day timer and game state</li>
-   * <li>Update all residents, buildings, and disasters (which may queue
-   * spawn/remove operations)</li>
-   * <li>Advance animations</li>
-   * <li>Process all deferred spawn/remove operations</li>
-   * <li>Release write lock</li>
-   * </ol>
-   * 
-   * @param context The game context
-   * @param dt      Delta time in seconds since the last update
+   * 実際の更新処理をまとめて実行する内部メソッド。
+   *
+   * @param context ゲームコンテキスト
+   * @param dt      経過秒
    */
-  public void update(GameContext context, double dt) {
+  private void stepInternal(GameContext context, double dt) {
     withWriteLock(() -> {
-      // Set flag to indicate we're in an update cycle
-      inUpdateCycle.set(true);
-
+      // updateサイクル中の生成/削除を遅延する
+      entityManager.beginUpdateCycle();
       try {
         this.lastDeltaTime = dt;
 
-        dayTimer += dt;
-        if (dayTimer >= DAY_LENGTH) {
-          dayTimer = 0;
-          day++;
-          eventBus.publish(new DayPassedEvent(day));
-        }
+        // 日付進行と日次処理をまとめて実行
+        timeManager.advance(dt, day -> relocationManager.rebalanceResidents());
 
-        for (Resident resident : residentEntities) {
-          resident.update(context);
-        }
+        // 住民・建物・災害の更新
+        entityManager.updateEntities(context);
 
-        for (Building building : buildingEntities) {
-          building.update(context);
-        }
-
-        for (Disaster disaster : disasterEntities) {
-          disaster.update(context);
-        }
-
+        // 6fps相当のアニメーション進行
         animationAccumulator += dt;
         while (animationAccumulator >= ANIMATION_STEP) {
           animationAccumulator -= ANIMATION_STEP;
-          advanceAnimations();
+          entityManager.advanceAnimations(ANIMATION_STEP);
         }
 
-        // Process deferred entity lifecycle operations
-        processDeferredOperations();
+        // update中に溜まった生成/削除を反映
+        entityManager.processDeferredOperations(context);
       } finally {
-        // Clear flag when exiting update cycle
-        inUpdateCycle.set(false);
+        entityManager.endUpdateCycle();
       }
     });
   }
 
-  private void advanceAnimations() {
-    for (Resident resident : residentEntities) {
-      resident.advanceAnimation();
-    }
-
-    for (Building building : buildingEntities) {
-      building.advanceAnimation();
-    }
-
-    for (Disaster disaster : disasterEntities) {
-      disaster.advanceAnimation();
-    }
-  }
-
   /**
-   * Process deferred entity lifecycle operations that were queued during the
-   * update cycle.
-   * This method should only be called while holding the write lock.
+   * マップ中央付近に町の中心を生成する。
+   * 
+   * @param seed シード値
    */
-  private void processDeferredOperations() {
-    // Process entities to remove first
-    for (BaseGameEntity entity : entitiesToRemove) {
-      // Call lifecycle method
-      entity.onRemoved();
-
-      // Remove from appropriate list
-      if (entity instanceof Resident) {
-        residentEntities.remove(entity);
-      } else if (entity instanceof Building) {
-        buildingEntities.remove(entity);
-      } else if (entity instanceof Disaster) {
-        disasterEntities.remove(entity);
+  private void GenerateTownHall(long seed) {
+    int width = gameMap.getWidth();
+    int height = gameMap.getHeight();
+    int centerX = width / 2;
+    int centerY = height / 2;
+    Random rand = new Random(seed);
+    final int MAX_LOOP_COUNT = 10;
+    // マップの中央を基準に正規分布に従ってオフセットを決定
+    // 配置しようとした位置が海だった場合はseedを変えて再試行する
+    int offsetX, offsetY, townHallX = width / 2, townHallY = height / 2, loopCount = 0;
+    boolean foundProperPos = false; // 陸地が見つかったかどうか
+    while (loopCount < MAX_LOOP_COUNT) {
+      offsetX = (int) Math.round(rand.nextGaussian() * width / 10);
+      offsetY = (int) Math.round(rand.nextGaussian() * height / 10);
+      townHallX = centerX + offsetX;
+      townHallY = centerY + offsetY;
+      if (gameMap.getCell(new Point2D.Double(townHallX, townHallY)).getTerrain() != TerrainType.WATER) {
+        foundProperPos = true;
+        break;
+      }
+      loopCount++;
+      rand.setSeed(seed + loopCount); // townHallPosが海だった場合はシードを変えて再試行
+    }
+    // 10回試行しても陸地が見つからない場合はマップを全探索し、最初に見つけた陸地に配置する
+    for (int y = 0; y < height && !foundProperPos; y++) {
+      for (int x = 0; x < width && !foundProperPos; x++) {
+        if (gameMap.getCell(new Point2D.Double(x, y)).getTerrain() != TerrainType.WATER) {
+          townHallX = x;
+          townHallY = y;
+          foundProperPos = true;
+          System.out
+              .println("Warning: マップ中央付近に適切な陸地が見つかりませんでした。最初に見つかった陸地に町の中心を配置します。");
+        }
       }
     }
-    entitiesToRemove.clear();
-
-    // Process entities to spawn
-    for (BaseGameEntity entity : entitiesToSpawn) {
-      spawnEntityInternal(entity);
+    if (!foundProperPos) {
+      // 陸地が一つもないマップの場合は強制的に中央に配置
+      System.out.println("Warning: マップに陸地が存在しません。町の中心をマップ中央に強制配置します。");
+      townHallX = centerX;
+      townHallY = centerY;
     }
-    entitiesToSpawn.clear();
+
+    Point2D.Double townHallPos = new Point2D.Double(townHallX, townHallY);
+    Building townHall = new Building(townHallPos, BuildingType.BLUE_ROOFED_HOUSE);
+    if (gameMap.placeBuilding(townHallPos, townHall)) {
+      int population = 2;
+      townHall.setCurrentPopulation(population);
+      spawnEntity(townHall);
+      for (int i = 0; i < population; i++) {
+        spawnEntity(new Resident(new Point2D.Double(townHallPos.y, townHallPos.x), ResidentType.CITIZEN,
+            ResidentState.AT_HOME, townHallPos));
+      }
+    }
   }
+
 }

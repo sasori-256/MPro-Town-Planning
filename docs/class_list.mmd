@@ -1,0 +1,177 @@
+classDiagram
+    namespace app {
+        class App
+    }
+
+    namespace common_core {
+        class GameLoop
+        class GameConfig
+        class FontManager
+        class Animatable { <<interface>> }
+        class SimulationStep { <<interface>> }
+    }
+
+    namespace common_core_strategy {
+        class UpdateStrategy { <<interface>> }
+        class CompositeUpdateStrategy
+        class CompositeGameEffect
+    }
+
+    namespace common_event {
+        class EventBus
+        class Subscription
+    }
+
+    namespace common_event_events {
+        class TemporaryBuildEvent
+        class SoulHarvestedEvent
+        class SoulChangedEvent
+        class ResidentDiedEvent
+        class ResidentBornEvent
+        class MapUpdatedEvent
+        class GameOverEvent
+        class EntitySpawnKind { <<enumeration>> }
+        class EntitySpawnFailureReason { <<enumeration>> }
+        class EntitySpawnFailedEvent
+        class DisasterOccurredEvent
+        class DayPassedEvent
+        class ConfigLoadFailedEvent
+        class CancelBuildEvent
+    }
+
+    namespace common_ui {
+        class ToastPanel
+        class ToastManager
+        class PaintGameObject
+        class ImageManager
+        class CustomPanel
+        class CustomLabel
+        class CustomButton
+        class AnimationManager
+    }
+
+    namespace common_ui_main {
+        class GameWindow
+        class GameSession
+        class GameResult
+        class GameFlowNavigator
+        class GameFlowController
+        class SceneNavigator { <<interface>> }
+        class SceneId { <<enumeration>> }
+        class UiRefreshable { <<interface>> }
+    }
+
+    namespace common_ui_main_scene {
+        class TitlePanel
+        class GameMapPanel
+        class EndPanel
+    }
+
+    namespace common_ui_buildPreview {
+        class BuildPreviewUI
+        class PreviewButtonType { <<enumeration>> }
+    }
+
+    namespace common_ui_buildPreview_controller {
+        class BuildPreviewEventHandler
+        class BuildAccept
+        class BuildCancel
+        class BuildRotate
+    }
+
+    namespace common_ui_gameObjectSelect_view {
+        class PaintObjectSelectUI
+    }
+
+    namespace common_ui_gameObjectSelect_controller {
+        class NodeMenuInitializer
+        class MenuNode
+        class DisasterNode
+        class CategoryNode
+        class BuildingNode
+    }
+
+    namespace common_ui_resourceViewer {
+        class ResourceType { <<enumeration>> }
+    }
+
+    namespace common_ui_resourceViewer_view {
+        class ResourceViewerPanel
+        class PaintResourceViewerUI
+    }
+
+    namespace entity_model {
+        class GameModel
+        class GameContext { <<interface>> }
+        class GameEntity { <<interface>> }
+        class BaseGameEntity { <<abstract>> }
+        class GameEffect { <<interface>> }
+        class GameAction { <<interface>> }
+        class LifecycleAware { <<interface>> }
+        class CategoryType { <<enumeration>> }
+        class GameTime
+    }
+
+    namespace entity_model_manager {
+        class EntityManager
+        class SoulManager
+        class TimeManager
+        class RelocationManager
+        class PopulationManager
+        class BuildingManager
+        class ResidentPanicManager
+    }
+
+    namespace entity_building {
+        class Building
+        class BuildingType { <<enumeration>> }
+    }
+
+    namespace entity_building_strategy {
+        class PopulationGrowthEffect
+    }
+
+    namespace entity_resident {
+        class Resident
+        class ResidentType { <<enumeration>> }
+        class ResidentState { <<enumeration>> }
+    }
+
+    namespace entity_resident_strategy {
+        class ResidentLifeCycleEffect
+        class ResidentCorpseCleanupEffect
+        class ResidentBehaviorAction
+        class PanicMoveAction
+        class DestinationMoveAction
+    }
+
+    namespace entity_disaster {
+        class Disaster
+        class DisasterType { <<enumeration>> }
+    }
+
+    namespace entity_disaster_strategy {
+        class MeteorDisasterAction
+    }
+
+    namespace map_model {
+        class GameMap
+        class MapContext { <<interface>> }
+        class MapCell
+        class Terrain
+        class TerrainType { <<enumeration>> }
+        class ImprovedNoise
+        class BuildingPreview
+    }
+
+    namespace map_controller {
+        class GameMapController
+    }
+
+    namespace map_controller_handler {
+        class ClickGameMapHandler
+        class PlaceBuildingHandler
+        class PreviewBuildingHandler
+        class MoveGameMapHandler
+        class ActionDisasterHandler
+    }

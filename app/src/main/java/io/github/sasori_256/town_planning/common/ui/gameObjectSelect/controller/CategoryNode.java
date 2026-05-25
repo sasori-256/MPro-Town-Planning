@@ -2,25 +2,58 @@ package io.github.sasori_256.town_planning.common.ui.gameObjectSelect.controller
 
 import java.util.ArrayList;
 
+import io.github.sasori_256.town_planning.common.event.EventBus;
+import io.github.sasori_256.town_planning.common.event.events.CancelBuildEvent;
+
+/**
+ * メニューのカテゴリノード。
+ */
 public class CategoryNode implements MenuNode {
+    private final EventBus eventBus = EventBus.getInstance();
     private final String name;
     private ArrayList<MenuNode> children = new ArrayList<>();
 
-    public CategoryNode(String name) { this.name = name; }
-    public void add(MenuNode node) { children.add(node); }
-    
-    @Override
-    public String getName() { return name; }
+    /**
+     * カテゴリノードを生成する。
+     *
+     * @param name 表示名
+     */
+    public CategoryNode(String name) {
+        this.name = name;
+    }
 
-    @Override
-    public boolean isLeaf() { return false; }
+    /**
+     * 子ノードを追加する。
+     *
+     * @param node 追加するノード
+     */
+    public void add(MenuNode node) {
+        children.add(node);
+    }
 
+    /** {@inheritDoc} */
     @Override
-    public ArrayList<MenuNode> getChildren() { return children; }
-    
+    public String getName() {
+        return name;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public boolean isLeaf() {
+        return false;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public ArrayList<MenuNode> getChildren() {
+        return children;
+    }
+
+    /** {@inheritDoc} */
     @Override
     public void actionPerformed(java.awt.event.ActionEvent e) {
-        //TODO: Viewと連携する.
+        // TODO: Viewと連携する.
+        eventBus.publish(new CancelBuildEvent());
     }
 
 }

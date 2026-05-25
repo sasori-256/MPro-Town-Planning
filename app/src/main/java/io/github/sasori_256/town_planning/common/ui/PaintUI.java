@@ -65,15 +65,14 @@ public class PaintUI {
           break;
       }
       String imageName = prefix + buttonText.toLowerCase();
-      CustomButton button = new CustomButton(buttonText); // 画像が見つからない場合はテキストだけのボタンを使用
+      CustomButton button = new CustomButton(buttonText, xPos, yPos, width, height);
       button.setFocusable(false); // mapPannelでのキーイベントを受け取るため、ボタンにフォーカスしないようにフォーカスを外す
       ImageStorage imageStorage = imageManager.getImageStorage(imageName);
-      if (imageStorage == null || imageStorage.name == null || imageStorage.name.equals("error")) {
+      if (imageStorage == null || imageStorage.getName() == null || imageStorage.getName().equals("error")) {
         // System.err.println("Warning: Image not found: " + imageName);
       } else {
-        button.setImage(imageStorage.image, width, height);
+        button.setImage(imageStorage.getImage(), width, height);
       }
-      button.setCustomBounds(xPos, yPos, width, height);
       // ボタンの画像を指定
       button.addActionListener(actionListener);
       if (objectNode != null) {
